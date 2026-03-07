@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: product-service
+              uri: lb://product
+              predicates:
+                - Path= /api/product/**,/api/category/**, /api/admin/product/**, /api/admin/category/**
+
+            - id: order-service
+              uri: lb://order
+              predicates:
+                - Path= /api/order/**,/api/cart/**, /api/admin/order/**,/api/admin/cart/**
+            - id: auth-service
+              uri: lb://auth-service
+              predicates:
+                - Path= /api/auth/**
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        cloud:
+          gateway:
+            route:
+              RouteDefinitionLocator: INFO
+
+server:
+  port: 8080
+

@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: auth-service
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+server:
+  port: 8083
+keycloak:
+  server-url: ${KEYCLOAK_BASE_URL:http://localhost:8181}
+  issuer: ${KEYCLOAK_ISSUER:http://localhost:8181/realms/bkeuty}
+  realm: ${REALM:bkeuty}
+  client-id: ${CLIENT_ID:bkeuty-auth-service}
+  client-secret: ${CLIENT_SECRET:clVCje5asBd7CICO43vaZ1wZsTXmh6YP}
+  jwks-uri: ${JWKS_URI:http://localhost:8181/realms/bkeuty/protocol/openid-connect/certs}
