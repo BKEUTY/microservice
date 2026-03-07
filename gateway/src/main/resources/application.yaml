@@ -19,10 +19,33 @@ spring:
               uri: lb://auth-service
               predicates:
                 - Path= /api/auth/**
+            - id: promotion-service
+              uri: lb://promotion-service
+              predicates:
+                - Path= /api/promotion/**
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path= /api/user/**
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Product Service
+        url: /api/product/v3/api-docs
+      - name: Order Service
+        url: /api/order/v3/api-docs
+      - name: Auth Service
+        url: /api/auth/v3/api-docs
+      - name: User Service
+        url: /api/user/v3/api-docs
+      - name: Promotion Service
+        url: /api/promotion/v3/api-docs
 
 logging:
   level:
