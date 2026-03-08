@@ -23,7 +23,7 @@ public class ProductOptionValue {
     private String optionValueName;
     @ManyToOne
     @JoinColumn(name = "option_id")
-    private ProductOption product;
+    private ProductOption option;
     @ManyToMany(mappedBy = "optionValues")
     private Set<ProductVariant> productVariants;
 }

@@ -1,5 +1,6 @@
 package com.bkeuty.product.service;
 
+import com.bkeuty.product.dto.admin.AdminProductDto;
 import com.bkeuty.product.dto.admin.AdminProductVariantDto;
 import com.bkeuty.product.dto.admin.CreateProductDto.CreateProductOptionDto;
 import com.bkeuty.product.dto.admin.CreateProductDto.CreateProductRequestDto;
@@ -40,6 +41,20 @@ public class AdminProductService {
         this.productOptionRepository = productOptionRepository;
         this.productOptionValueRepository = productOptionValueRepository;
         this.productVariantRepository = productVariantsRepository;
+    }
+
+    public Page<AdminProductDto> getAllProducts(Pageable pageable) {
+        return productRepository.findAll(pageable).map(this::toAdminProductDto);
+    }
+
+    private AdminProductDto toAdminProductDto(Product product) {
+        return AdminProductDto.builder()
+                .productId(product.getId())
+                .name(product.getName())
+                .image(product.getImage())
+                .description(product.getDescription())
+                .categories(product.getCategories().stream().map(ProductCategory::getCategoryName).collect(Collectors.toList()))
+                .build();
     }
     public List<AdminProductVariantDto> getAllProductVariants(Integer productId) {
         return productVariantRepository.findAllByProductId(productId).stream().map(this::toAdminProductVariantDto).toList();
@@ -92,7 +107,7 @@ public class AdminProductService {
 
                 ProductOptionValue newOptionValue = new ProductOptionValue();
                 newOptionValue.setOptionValueName(optionValue);
-                newOptionValue.setProduct(newOption);
+                newOptionValue.setOption(newOption);
                 newOptionValue = productOptionValueRepository.save(newOptionValue);
                 productOptionValueEntities.add(newOptionValue);
             }
