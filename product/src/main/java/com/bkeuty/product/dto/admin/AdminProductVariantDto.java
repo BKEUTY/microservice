@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -21,6 +22,7 @@ public class AdminProductVariantDto {
     private String description;
     private String productImageUrl;
     private List<String> optionValues;
+    private Map<String, String> variantOptions;
     private ProductStatus status;
     private String productName;
 }

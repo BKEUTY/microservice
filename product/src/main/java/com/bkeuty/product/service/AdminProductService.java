@@ -60,12 +60,20 @@ public class AdminProductService {
         return productVariantRepository.findAllByProductId(productId).stream().map(this::toAdminProductVariantDto).toList();
     }
     private AdminProductVariantDto toAdminProductVariantDto(ProductVariant productVariant){
+        Map<String, String> options = productVariant.getOptionValues().stream()
+                .collect(Collectors.toMap(
+                        ov -> ov.getOption().getOptionName(),
+                        ov -> ov.getOptionValueName(),
+                        (existing, replacement) -> existing
+                ));
+
         return AdminProductVariantDto.builder()
                 .id(productVariant.getId())
                 .productImageUrl(productVariant.getProductImageUrl())
                 .productName(productVariant.getProduct().getName())
                 .price(productVariant.getPrice())
                 .optionValues(productVariant.getOptionValues().stream().map(ProductOptionValue::getOptionValueName).toList())
+                .variantOptions(options)
                 .status(productVariant.getStatus())
                 .stockQuantity(productVariant.getStockQuantity())
                 .description(productVariant.getDescription())
