@@ -1,8 +1,12 @@
 package com.bkeuty.product.repository;
 
+import com.bkeuty.product.entity.ProductOption;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import com.bkeuty.product.entity.ProductOption;
+
+import java.util.List;
+
 @Repository
-public interface ProductOptionRepository extends JpaRepository<ProductOption,Integer> {
+public interface ProductOptionRepository extends JpaRepository<ProductOption, Integer> {
+    List<ProductOption> findAllByProductId(Integer productId);
 }

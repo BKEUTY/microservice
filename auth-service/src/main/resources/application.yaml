@@ -18,5 +18,5 @@ keycloak:
   issuer: ${KEYCLOAK_ISSUER:http://localhost:8181/realms/bkeuty}
   realm: ${REALM:bkeuty}
   client-id: ${CLIENT_ID:bkeuty-auth-service}
-  client-secret: ${CLIENT_SECRET:clVCje5asBd7CICO43vaZ1wZsTXmh6YP}
+  client-secret: ${CLIENT_SECRET:f1oVHEHXYazUjdpPX5KPBPVSF5TM0kUv}
   jwks-uri: ${JWKS_URI:http://localhost:8181/realms/bkeuty/protocol/openid-connect/certs}

@@ -10,23 +10,48 @@ spring:
               uri: lb://product
               predicates:
                 - Path= /api/product/**,/api/category/**, /api/admin/product/**, /api/admin/category/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
 
             - id: order-service
               uri: lb://order
               predicates:
                 - Path= /api/order/**,/api/cart/**, /api/admin/order/**,/api/admin/cart/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: auth-service
               uri: lb://auth-service
               predicates:
                 - Path= /api/auth/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: promotion-service
               uri: lb://promotion-service
               predicates:
                 - Path= /api/promotion/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: user-service
               uri: lb://user-service
               predicates:
                 - Path= /api/user/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
 eureka:
   client:
     service-url:
