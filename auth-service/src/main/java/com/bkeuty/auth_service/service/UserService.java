@@ -44,7 +44,8 @@ public class UserService {
         // Keycloak expects a Map<String, List<String>>
         user.setAttributes(Map.of(
                 "phoneNumber", List.of(dto.getPhoneNumber()),
-                "mainAddress", List.of(dto.getMainAddress())
+                "mainAddress", List.of(dto.getMainAddress()),
+                "userRole", List.of("user")
         ));
 
         // Call the API

@@ -32,11 +32,11 @@ public class ProductController {
             @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-//        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-//        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
-//                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
+       TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+       if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+               || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+           return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+       }
         return ResponseEntity.status(HttpStatus.OK)
                 .body(adminProductService.getAllProducts(PageRequest.of(page, size)));
     }
@@ -45,22 +45,22 @@ public class ProductController {
     public ResponseEntity<List<AdminProductVariantDto>> getAllProductVariants(
             @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @PathVariable Integer productId) {
-//        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-//        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
-//                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
+       TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+       if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+               || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+           return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+       }
         return ResponseEntity.status(HttpStatus.OK).body(adminProductService.getAllProductVariants(productId));
     }
 
     @PostMapping()
     public ResponseEntity<CreateProductResponseDto> createProduct(@RequestHeader(value = "Authorization", required = false) String bearerToken,
             @Valid @RequestBody CreateProductRequestDto createProductRequestDTO) {
-//        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-//        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
-//                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
+       TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+       if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+               || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+           return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+       }
         CreateProductResponseDto savedProduct = adminProductService.createProduct(createProductRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedProduct);
     }
@@ -69,11 +69,11 @@ public class ProductController {
     public ResponseEntity<UpdateProductResponseDto> updateProduct(
             @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @Valid @RequestBody UpdateProductRequestDto updateProductRequestDTO) {
-//        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-//        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
-//                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
+       TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+       if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+               || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+           return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+       }
         return ResponseEntity.status(HttpStatus.OK).body(adminProductService.updateProduct(updateProductRequestDTO));
     }
 
@@ -81,11 +81,11 @@ public class ProductController {
     public ResponseEntity<UpdateProductVariantResponseDto> updateProductVariant(
             @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @Valid @RequestBody UpdateProductVariantRequestDto updateProductVariantRequestDTO) {
-//        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-//        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
-//                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
+       TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+       if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+               || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+           return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+       }
         return ResponseEntity.status(HttpStatus.OK)
                 .body(adminProductService.updateProductVariant(updateProductVariantRequestDTO));
     }
@@ -93,11 +93,11 @@ public class ProductController {
     @PostMapping("/options")
     public ResponseEntity<List<AdminProductVariantDto>> createOption(@RequestHeader(value = "Authorization", required = false) String bearerToken,
             @Valid @RequestBody CreateProductOptionDto createProductOptionDTO) {
-//        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-//        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
-//                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-//            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-//        }
+       TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+       if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+               || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+           return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+       }
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(adminProductService.createOptionValue(createProductOptionDTO));
     }
