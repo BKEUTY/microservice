@@ -4,15 +4,11 @@ import com.bkeuty.auth_service.dto.*;
 import com.bkeuty.auth_service.jwtUtil.AccessTokenValidator;
 import com.bkeuty.auth_service.service.AuthService;
 import com.bkeuty.auth_service.service.UserService;
-import jakarta.ws.rs.core.Response;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/auth")
@@ -30,10 +26,19 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.registerUser(dto));
     }
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginDto) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginDto, HttpServletResponse response) {
         try {
-            LoginResponseDto response = authService.loginUser(loginDto);
-            return ResponseEntity.ok(response);
+            LoginResponseDto loginResponse = authService.loginUser(loginDto);
+
+            Cookie refreshTokenCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
+            refreshTokenCookie.setHttpOnly(true);
+            refreshTokenCookie.setSecure(false); // Set to true in production with HTTPS
+            refreshTokenCookie.setPath("/");
+            refreshTokenCookie.setMaxAge(loginResponse.getRefreshTokenExpiresIn());
+            response.addCookie(refreshTokenCookie);
+
+            loginResponse.setRefreshToken(null); 
+            return ResponseEntity.ok(loginResponse);
         } catch (RuntimeException e) {
             if (e.getMessage().equals("Wrong credentials")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong credentials");
@@ -42,13 +47,31 @@ public class AuthController {
         }
     }
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequestDto refreshTokenDto) {
+    public ResponseEntity<?> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken, 
+                                        @RequestBody(required = false) RefreshTokenRequestDto refreshTokenDto,
+                                        HttpServletResponse response) {
         try {
-            RefreshTokenResponseDto response = authService.refreshToken(refreshTokenDto);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
+            String tokenToUse = refreshToken != null ? refreshToken : (refreshTokenDto != null ? refreshTokenDto.getRefreshToken() : null);
+            
+            if (tokenToUse == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Refresh token is missing");
+            }
 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid refresh token");
+            RefreshTokenResponseDto refreshResponse = authService.refreshToken(new RefreshTokenRequestDto(tokenToUse));
+            
+            return ResponseEntity.ok(refreshResponse);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid refresh token: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
+        response.addCookie(refreshTokenCookie);
+        return ResponseEntity.ok("Logged out successfully");
     }
 }
