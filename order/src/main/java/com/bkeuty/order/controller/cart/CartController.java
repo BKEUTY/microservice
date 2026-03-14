@@ -6,6 +6,7 @@ import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.cart.CartItemResponseDto;
 import com.bkeuty.order.service.auth.AuthService;
 import com.bkeuty.order.service.cart.CartService;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,8 @@ public class CartController {
         this.authService = authService;
     }
     @GetMapping()
-    public ResponseEntity<?> getCartItems(@RequestHeader("Authorization") String bearerToken){
+    public ResponseEntity<?> getCartItems(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto.getUserId() == null||tokenValidationResponseDto.getUserRole()==null || !"user".equals(tokenValidationResponseDto.getUserRole())){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
@@ -31,7 +33,9 @@ public class CartController {
         return ResponseEntity.ok(cartService.getListCartItem(tokenValidationResponseDto));
     }
     @PostMapping()
-    public ResponseEntity<?> addToCart(@RequestHeader("Authorization") String bearerToken, @RequestBody AddToCartRequestDto request){
+    public ResponseEntity<?> addToCart(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestBody AddToCartRequestDto request) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto.getUserId() == null||tokenValidationResponseDto.getUserRole()==null || !"user".equals(tokenValidationResponseDto.getUserRole())){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
