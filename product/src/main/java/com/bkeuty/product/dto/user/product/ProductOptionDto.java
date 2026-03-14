@@ -11,12 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductDetailDto {
-    private Integer id;
+public class ProductOptionDto {
     private String name;
-    private String description;
-    private String image;
-    private List<ProductVariantDto> variants;
-    private List<ProductOptionDto> options;
-    private List<CategoryDto> categories;
+    private List<String> values;
 }
