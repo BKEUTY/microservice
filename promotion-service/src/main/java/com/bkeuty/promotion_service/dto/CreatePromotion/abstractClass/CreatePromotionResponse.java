@@ -1,33 +1,25 @@
-package com.bkeuty.promotion_service.entity;
+package com.bkeuty.promotion_service.dto.CreatePromotion.abstractClass;
 
 import com.bkeuty.promotion_service.enums.DiscountType;
 import com.bkeuty.promotion_service.enums.PromotionStatus;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
-
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Entity
 @Data
-@DiscriminatorColumn(name = "promotion_type")
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-public abstract class Promotion {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public abstract class CreatePromotionResponse {
     private Integer id;
     private String title;
     private String description;
-    private LocalDateTime createAt;
-    private LocalDateTime updateAt;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
-    private PromotionStatus status;
+    private String type;
     private DiscountType discountType;
+    private PromotionStatus status;
     private Integer discountValue;
 }
-

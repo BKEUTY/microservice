@@ -40,3 +40,9 @@ eureka:
 springdoc:
   api-docs:
     path: /api/order/v3/api-docs
+
+sepay:
+  api-key: 9DKDHVTKR4JGQFNIFXLO2NEZMHMSTVKDNIQTTQJ9DRQ0BLPUM4HPEEYHXVIVP5G5
+  account-number: SEPQUANG210804
+  bank: OCB
+  template: compact

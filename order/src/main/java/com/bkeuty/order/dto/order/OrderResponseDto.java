@@ -13,9 +13,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderResponseDto {
+    private String orderId;
     private BigDecimal total;
     private String paymentMethod;
     private LocalDate orderDate;
     private String address;
+    private String qrCodeLink;
     private List<AddToCartResponseDto> items;
 }

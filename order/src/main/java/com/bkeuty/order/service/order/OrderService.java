@@ -7,10 +7,12 @@ import com.bkeuty.order.dto.order.*;
 import com.bkeuty.order.entity.CartItem;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
+import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.exception.CartItemNotFound;
 import com.bkeuty.order.repository.CartItemRepository;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,12 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
     private final WebClient productWebClient;
+    @Value("${sepay.account-number}")
+    private String accountNumber;
+    @Value("${sepay.bank}")
+    private String bank;
+    @Value("${sepay.template}")
+    private String template;
     public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
@@ -41,6 +49,7 @@ public class OrderService {
                 .orderDate(LocalDate.now())
                 .address(request.getAddress())
                 .paymentMethod(request.getPaymentMethod()).userId(userInfo.getUserId())
+                .status(PaymentStatus.UNPAID)
                 .build();
 
         Order orderSave = orderRepository.save(order);
@@ -82,6 +91,7 @@ public class OrderService {
                     .productVariantId(decreaseStockResponseDto.getProductVariantId())
                     .productVariantName(decreaseStockResponseDto.getProductVariantName())
                     .quantity(decreaseStockResponseDto.getQuantity())
+                    .productVariantImage(decreaseStockResponseDto.getProductVariantImage())
                     .build();
             totalAmount = totalAmount.add(
                     addToCartResponseDTO.getPrice().multiply(BigDecimal.valueOf(addToCartResponseDTO.getQuantity()))
@@ -91,12 +101,17 @@ public class OrderService {
         orderSave.setTotal(totalAmount);
         orderRepository.save(orderSave);
         OrderResponseDto placeOrderResponseDTO = new OrderResponseDto();
+        placeOrderResponseDTO.setOrderId(orderSave.getId().toString());
         placeOrderResponseDTO.setOrderDate(LocalDate.now());
         placeOrderResponseDTO.setAddress(request.getAddress());
         placeOrderResponseDTO.setPaymentMethod(request.getPaymentMethod());
         placeOrderResponseDTO.setTotal(totalAmount);
         placeOrderResponseDTO.setItems(items);
+        placeOrderResponseDTO.setQrCodeLink(generateQrCode(totalAmount,orderSave.getId()));
         return ResponseEntity.ok(placeOrderResponseDTO);
+    }
+    private String generateQrCode(BigDecimal total, Integer orderId){
+        return "https://qr.sepay.vn/img?acc="+accountNumber+"&bank="+bank+"&amount="+total+"&des=DH"+orderId+"&template="+template+"&download=false";
     }
     public ResponseEntity<List<OrderResponseDto>> getListOrders(String userId){
         List<Order> listOrders = orderRepository.findByUserId(userId);

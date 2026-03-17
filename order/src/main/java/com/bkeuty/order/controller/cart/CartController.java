@@ -42,4 +42,12 @@ public class CartController {
         }
         return cartService.addToCart(tokenValidationResponseDto,request);
     }
+    @PutMapping("/{cartId}/minus")
+    public ResponseEntity<?> addToCart(@RequestHeader("Authorization") String bearerToken, @PathVariable Integer cartId){
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if(tokenValidationResponseDto.getUserId() == null||tokenValidationResponseDto.getUserRole()==null || !"user".equals(tokenValidationResponseDto.getUserRole())){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return cartService.minusToCart(tokenValidationResponseDto,cartId);
+    }
 }

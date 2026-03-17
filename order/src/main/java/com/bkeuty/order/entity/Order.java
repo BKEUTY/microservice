@@ -1,5 +1,6 @@
 package com.bkeuty.order.entity;
 
+import com.bkeuty.order.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,8 @@ public class Order {
     private String address;
     @Column(name = "user_id", nullable = false)
     private String userId;
+
+    private PaymentStatus status = PaymentStatus.UNPAID;
 
 
 }

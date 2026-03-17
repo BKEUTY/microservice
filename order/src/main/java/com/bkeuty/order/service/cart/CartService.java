@@ -6,6 +6,7 @@ import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.cart.CartItemResponseDto;
 import com.bkeuty.order.dto.cart.ProductVariantDto;
 import com.bkeuty.order.entity.CartItem;
+import com.bkeuty.order.exception.CartItemNotFound;
 import com.bkeuty.order.repository.CartItemRepository;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -53,7 +54,8 @@ public class CartService {
 
         if(itemInCartItem!= null){
             itemInCartItem.setQuantity(itemInCartItem.getQuantity()+addToCartRequest.getQuantity());
-            cartItemRepository.save(itemInCartItem);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
         }
 //        Users user = usersRepository.findById(addToCartRequest.getUserId()).orElseThrow(()-> new UserNotFoundException("User not found"));
 //        ProductVariant productVariant = productVariantsRepository.findById(addToCartRequest.getProductVariantId()).orElseThrow(() -> new ProductVariantNotFoundException("Can not find product SKU"));
@@ -64,6 +66,24 @@ public class CartService {
                 .userId(tokenValidationResponseDto.getUserId()).build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(cartItems)));
+
+    }
+    public ResponseEntity<AddToCartResponseDto> minusToCart(TokenValidationResponseDto tokenValidationResponseDto, Integer cartItemId) {
+        CartItem itemInCartItem = cartItemRepository.findByIdAndUserId(cartItemId,tokenValidationResponseDto.getUserId());
+
+        if(itemInCartItem!= null){
+            itemInCartItem.setQuantity(itemInCartItem.getQuantity()-1);
+            if(itemInCartItem.getQuantity()==0){
+                cartItemRepository.deleteById(cartItemId);
+                return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(itemInCartItem));
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
+        }
+//        Users user = usersRepository.findById(addToCartRequest.getUserId()).orElseThrow(()-> new UserNotFoundException("User not found"));
+//        ProductVariant productVariant = productVariantsRepository.findById(addToCartRequest.getProductVariantId()).orElseThrow(() -> new ProductVariantNotFoundException("Can not find product SKU"));
+
+        throw new CartItemNotFound("Cart Item not found",cartItemId);
 
     }
     public AddToCartResponseDto toAddToCartResponseDTO(CartItem cartItems) {
