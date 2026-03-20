@@ -14,7 +14,6 @@ import com.bkeuty.product.entity.*;
 import com.bkeuty.product.exception.ProductNotFoundException;
 import com.bkeuty.product.exception.ProductVariantNotFoundException;
 import com.bkeuty.product.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -67,6 +66,16 @@ public class AdminProductService {
                 .toList();
     }
 
+    public Page<AdminProductVariantDto> getAllVariantsPaginated(String pattern, Integer categoryId, Pageable pageable) {
+        if (pattern != null && !pattern.isEmpty()) {
+            pattern = "%" + pattern.toLowerCase() + "%";
+        } else {
+            pattern = null;
+        }
+        return productVariantRepository.findWithFilters(pattern, categoryId, pageable)
+                .map(this::toAdminProductVariantDto);
+    }
+
     private AdminProductVariantDto toAdminProductVariantDto(ProductVariant productVariant) {
         Map<String, String> options = productVariant.getOptionValues().stream()
                 .collect(Collectors.toMap(
@@ -74,8 +83,13 @@ public class AdminProductService {
                         ov -> ov.getOptionValueName(),
                         (existing, replacement) -> existing));
 
+        List<String> categories = productVariant.getProduct().getCategories().stream()
+                .map(ProductCategory::getCategoryName)
+                .collect(Collectors.toList());
+
         return AdminProductVariantDto.builder()
                 .id(productVariant.getId())
+                .productId(productVariant.getProduct().getId())
                 .productImageUrl(productVariant.getProductImageUrl())
                 .productName(productVariant.getProduct().getName())
                 .price(productVariant.getPrice())
@@ -86,10 +100,10 @@ public class AdminProductService {
                 .stockQuantity(productVariant.getStockQuantity())
                 .description(productVariant.getDescription())
                 .productVariantName(productVariant.getProductVariantName())
+                .categories(categories)
                 .build();
     }
 
-    // Create product
     public CreateProductResponseDto createProduct(CreateProductRequestDto requestDto) {
         Product product = Product.builder()
                 .name(requestDto.getName())
@@ -158,8 +172,13 @@ public class AdminProductService {
     }
 
     private AdminProductVariantDto toProductVariantDTO(ProductVariant productVariant) {
+        List<String> categories = productVariant.getProduct().getCategories().stream()
+                .map(ProductCategory::getCategoryName)
+                .collect(Collectors.toList());
+
         return AdminProductVariantDto.builder()
                 .id(productVariant.getId())
+                .productId(productVariant.getProduct().getId())
                 .productImageUrl(productVariant.getProductImageUrl())
                 .productName(productVariant.getProduct().getName())
                 .price(productVariant.getPrice())
@@ -169,6 +188,7 @@ public class AdminProductService {
                 .stockQuantity(productVariant.getStockQuantity())
                 .description(productVariant.getDescription())
                 .productVariantName(productVariant.getProductVariantName())
+                .categories(categories)
                 .build();
     }
 
@@ -209,7 +229,7 @@ public class AdminProductService {
         if (dto.getProductCategories() != null) {
             Set<ProductCategory> categories = dto.getProductCategories().stream()
                     .map(productCategoryRepository::findById)
-                    .flatMap(Optional::stream) // Cleaner than filter + map
+                    .flatMap(Optional::stream) 
                     .collect(Collectors.toSet());
             updateProduct.setCategories(categories);
         }

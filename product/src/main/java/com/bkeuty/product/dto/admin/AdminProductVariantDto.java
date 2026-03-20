@@ -16,6 +16,7 @@ import java.util.Map;
 @Builder
 public class AdminProductVariantDto {
     private Integer id;
+    private Integer productId;
     private BigDecimal price;
     private String productVariantName;
     private Integer stockQuantity;
@@ -25,4 +26,5 @@ public class AdminProductVariantDto {
     private Map<String, String> variantOptions;
     private ProductStatus status;
     private String productName;
+    private List<String> categories;
 }

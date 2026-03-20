@@ -14,8 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class CartService {
@@ -27,19 +30,47 @@ public class CartService {
         this.productWebClient = productWebClient;
     }
 
-    public List<CartItemResponseDto> getListCartItem (TokenValidationResponseDto tokenValidationResponseDto) {
+    public List<CartItemResponseDto> getListCartItem(TokenValidationResponseDto tokenValidationResponseDto) {
         List<CartItem> userCartItems = cartItemRepository.findByUserId(tokenValidationResponseDto.getUserId());
-        List<Integer> productVariantIds = userCartItems.stream().map(CartItem::getProductVariant).toList();
+
+        if (userCartItems == null || userCartItems.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Integer> productVariantIds = userCartItems.stream()
+                .map(CartItem::getProductVariant)
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (productVariantIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         Map<Integer, ProductVariantDto> productVariants = productWebClient.post()
                 .uri("/api/product/internal/variants/batch")
                 .bodyValue(productVariantIds).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {
                 }).block();
 
-        return cartItemRepository.findByUserId(tokenValidationResponseDto.getUserId()).stream().map(cartItem -> toCartItemResponseDto(cartItem,productVariants)).toList();
+        return userCartItems.stream()
+                .filter(cartItem -> cartItem.getProductVariant() != null)
+                .map(cartItem -> toCartItemResponseDto(cartItem, productVariants))
+                .toList();
     }
+
     public CartItemResponseDto toCartItemResponseDto(CartItem cartItem, Map<Integer, ProductVariantDto> productVariants) {
-        /// Call to Product service to fetch item
-        ProductVariantDto productVariant = productVariants.get(cartItem.getProductVariant());
+        ProductVariantDto productVariant = productVariants != null ? productVariants.get(cartItem.getProductVariant()) : null;
+        
+        if (productVariant == null) {
+            return CartItemResponseDto.builder()
+                    .productVariantId(cartItem.getProductVariant())
+                    .cartId(cartItem.getId())
+                    .price(BigDecimal.ZERO)
+                    .image(null)
+                    .name("Sản phẩm không còn tồn tại")
+                    .quantity(cartItem.getQuantity())
+                    .build();
+        }
+
         return CartItemResponseDto.builder()
                 .productVariantId(cartItem.getProductVariant())
                 .cartId(cartItem.getId())
@@ -49,16 +80,15 @@ public class CartService {
                 .quantity(cartItem.getQuantity())
                 .build();
     }
-    public ResponseEntity<AddToCartResponseDto> addToCart(TokenValidationResponseDto tokenValidationResponseDto,AddToCartRequestDto addToCartRequest) {
-        CartItem itemInCartItem = cartItemRepository.findByUserIdAndProductVariant(tokenValidationResponseDto.getUserId(),addToCartRequest.getProductVariantId());
 
-        if(itemInCartItem!= null){
-            itemInCartItem.setQuantity(itemInCartItem.getQuantity()+addToCartRequest.getQuantity());
+    public ResponseEntity<AddToCartResponseDto> addToCart(TokenValidationResponseDto tokenValidationResponseDto, AddToCartRequestDto addToCartRequest) {
+        CartItem itemInCartItem = cartItemRepository.findByUserIdAndProductVariant(tokenValidationResponseDto.getUserId(), addToCartRequest.getProductVariantId());
+
+        if (itemInCartItem != null) {
+            itemInCartItem.setQuantity(itemInCartItem.getQuantity() + addToCartRequest.getQuantity());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
         }
-//        Users user = usersRepository.findById(addToCartRequest.getUserId()).orElseThrow(()-> new UserNotFoundException("User not found"));
-//        ProductVariant productVariant = productVariantsRepository.findById(addToCartRequest.getProductVariantId()).orElseThrow(() -> new ProductVariantNotFoundException("Can not find product SKU"));
 
         CartItem cartItems  = CartItem.builder()
                 .productVariant(addToCartRequest.getProductVariantId())
@@ -68,27 +98,36 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(cartItems)));
 
     }
-    public ResponseEntity<AddToCartResponseDto> minusToCart(TokenValidationResponseDto tokenValidationResponseDto, Integer cartItemId) {
-        CartItem itemInCartItem = cartItemRepository.findByIdAndUserId(cartItemId,tokenValidationResponseDto.getUserId());
 
-        if(itemInCartItem!= null){
-            itemInCartItem.setQuantity(itemInCartItem.getQuantity()-1);
-            if(itemInCartItem.getQuantity()==0){
+    public ResponseEntity<AddToCartResponseDto> minusToCart(TokenValidationResponseDto tokenValidationResponseDto, Integer cartItemId) {
+        CartItem itemInCartItem = cartItemRepository.findByIdAndUserId(cartItemId, tokenValidationResponseDto.getUserId());
+
+        if (itemInCartItem != null) {
+            itemInCartItem.setQuantity(itemInCartItem.getQuantity() - 1);
+            if (itemInCartItem.getQuantity() == 0) {
                 cartItemRepository.deleteById(cartItemId);
                 return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(itemInCartItem));
             }
 
             return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
         }
-//        Users user = usersRepository.findById(addToCartRequest.getUserId()).orElseThrow(()-> new UserNotFoundException("User not found"));
-//        ProductVariant productVariant = productVariantsRepository.findById(addToCartRequest.getProductVariantId()).orElseThrow(() -> new ProductVariantNotFoundException("Can not find product SKU"));
 
-        throw new CartItemNotFound("Cart Item not found",cartItemId);
+        throw new CartItemNotFound("Cart Item not found", cartItemId);
 
     }
+
     public AddToCartResponseDto toAddToCartResponseDTO(CartItem cartItems) {
-        ProductVariantDto productVariant = productWebClient.get().uri("/api/product/internal/variant/{productVariantId}",cartItems.getProductVariant())
+        ProductVariantDto productVariant = productWebClient.get().uri("/api/product/internal/variant/{productVariantId}", cartItems.getProductVariant())
                 .retrieve().bodyToMono(ProductVariantDto.class).block();
+                
+        if (productVariant == null) {
+            return AddToCartResponseDto.builder()
+                    .quantity(cartItems.getQuantity())
+                    .productVariantId(cartItems.getProductVariant())
+                    .productVariantName("Sản phẩm không còn tồn tại")
+                    .build();
+        }        
+                
         return  AddToCartResponseDto.builder()
                 .quantity(cartItems.getQuantity())
                 .price(productVariant.getPrice())
