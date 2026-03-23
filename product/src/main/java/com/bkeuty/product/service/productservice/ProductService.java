@@ -1,10 +1,6 @@
 package com.bkeuty.product.service.productservice;
 
-import com.bkeuty.product.dto.user.product.CategoryDto;
-import com.bkeuty.product.dto.user.product.ProductDetailDto;
-import com.bkeuty.product.dto.user.product.ProductDto;
-import com.bkeuty.product.dto.user.product.ProductOptionDto;
-import com.bkeuty.product.dto.user.product.ProductVariantDto;
+import com.bkeuty.product.dto.user.product.*;
 import com.bkeuty.product.entity.Product;
 import com.bkeuty.product.entity.ProductCategory;
 import com.bkeuty.product.entity.ProductOptionValue;
@@ -13,9 +9,11 @@ import com.bkeuty.product.repository.ProductCategoryRepository;
 import com.bkeuty.product.repository.ProductOptionValueRepository;
 import com.bkeuty.product.repository.ProductRepository;
 import com.bkeuty.product.repository.ProductVariantRepository;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,25 +26,47 @@ public class ProductService {
     private final ProductCategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ProductOptionValueRepository productOptionValueRepository;
-
+    private final WebClient promotionWebClient;
     public ProductService(ProductVariantRepository productVariantRepository,
             ProductCategoryRepository categoryRepository,
             ProductRepository productRepository,
-            ProductOptionValueRepository productOptionValueRepository) {
+            ProductOptionValueRepository productOptionValueRepository,
+            WebClient promotionWebClient) {
         this.productVariantRepository = productVariantRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.productOptionValueRepository = productOptionValueRepository;
+        this.promotionWebClient = promotionWebClient;
     }
 
     public Page<ProductDto> getListProducts(Pageable pageable, String name, Integer categoryId) {
+
         return productRepository.findAll(pageable).map(this::toProductDto);
     }
 
     public Page<ProductVariantDto> getListProductVariants(Pageable pageable, String name, Integer categoryId) {
+        Page<ProductVariant> productRes =  productVariantRepository.findWithFilters(name, categoryId, pageable);
+        List<ProductPromotionDto> productPromotionDtos = productRes.getContent().stream().map(this::toProductPromotionDto).collect(Collectors.toList());
+        Map<Integer,ProductPromotionDto> promotionPrice = promotionWebClient.post()
+                                                                            .uri("/api/promotion/internal/check-promotion-price/batch")
+                .bodyValue(productPromotionDtos).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer,ProductPromotionDto>>() {
+                }).block();
+//        productPromotionDtos.forEach(p->{
+//
+//        })
+
         return productVariantRepository.findWithFilters(name, categoryId, pageable).map(this::toDto);
     }
-
+    private ProductPromotionDto toProductPromotionDto(ProductVariant  productVariant) {
+        Product product = productVariant.getProduct();
+        return ProductPromotionDto.builder()
+                .productVariantId(productVariant.getId())
+                .brandId(product.getBrand().getId())
+                .productId(product.getId())
+                .categoryIds(product.getCategories().stream().map(ProductCategory::getId).collect(Collectors.toList()))
+                .price(productVariant.getPrice())
+                .build();
+    }
     public ProductDetailDto getProductDetailById(Integer productId) {
         return productRepository.findById(productId).map(this::toDetailDto).orElse(null);
     }

@@ -1,4 +1,4 @@
-package com.bkeuty.promotion_service.service.CreatePromotionService;
+package com.bkeuty.promotion_service.service;
 
 import com.bkeuty.promotion_service.dto.CreatePromotion.abstractClass.CreatePromotionRequest;
 import com.bkeuty.promotion_service.dto.CreatePromotion.abstractClass.CreatePromotionResponse;

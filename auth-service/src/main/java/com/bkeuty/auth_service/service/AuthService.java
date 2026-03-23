@@ -42,7 +42,7 @@ public class AuthService {
         try {
             ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
             Map<String, Object> body = response.getBody();
-
+            System.out.println(body.get("refresh_token"));
             return new LoginResponseDto(
                     (String) body.get("access_token"),
                     (String) body.get("refresh_token"),

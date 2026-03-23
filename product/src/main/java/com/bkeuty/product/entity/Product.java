@@ -29,5 +29,8 @@ public class Product {
     private Set<ProductCategory> categories =  new HashSet<>();
     private String image;
     private ProductStatus status = ProductStatus.ACTIVE;
+    @ManyToOne
+    @JoinColumn(name = "product_brand")
+    private ProductBrand brand;
 }
 

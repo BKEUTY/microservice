@@ -16,4 +16,5 @@ public class CreateProductResponseDto {
     private String description = "";
     private List<String> categories = new ArrayList<>();
     private String image = "";
+    private String brandName = "";
 }

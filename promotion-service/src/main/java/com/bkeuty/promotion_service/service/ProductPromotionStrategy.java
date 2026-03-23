@@ -1,4 +1,4 @@
-package com.bkeuty.promotion_service.service.CreatePromotionService;
+package com.bkeuty.promotion_service.service;
 
 import com.bkeuty.promotion_service.dto.CreatePromotion.CreateProductPromotionRequest;
 import com.bkeuty.promotion_service.dto.CreatePromotion.CreateProductPromotionResponse;
@@ -44,6 +44,7 @@ public class ProductPromotionStrategy implements PromotionStrategy {
         promotion.setBrandIds(productReq.getBrandIds());
         promotion.setDiscountType(productReq.getDiscountType());
         promotion.setDiscountValue(productReq.getDiscountValue());
+        promotion.setMaxDiscount(productReq.getMaxDiscount());
         // 4. Save to database
         // Hibernate handles inserting into the main table AND the three @ElementCollection tables
         return toCreateProductResponseDTO(productPromotionRepository.save(promotion));
@@ -59,7 +60,9 @@ public class ProductPromotionStrategy implements PromotionStrategy {
                 .categoryIds(promotion.getCategoryIds())
                 .discountType(promotion.getDiscountType())
                 .discountValue(promotion.getDiscountValue())
-                .productIds(promotion.getProductIds()).build();
+                .productIds(promotion.getProductIds())
+                .maxDiscountValue(promotion.getMaxDiscount())
+                .build();
     }
     @Override
     public CreatePromotionResponse update(Integer promotionId, CreatePromotionRequest request){

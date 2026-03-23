@@ -1,8 +1,7 @@
-package com.bkeuty.promotion_service.entity;
+package com.bkeuty.promotion_service.dto;
 
 import com.bkeuty.promotion_service.enums.DiscountType;
 import com.bkeuty.promotion_service.enums.PromotionStatus;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,15 +9,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Entity
 @Data
-@DiscriminatorColumn(name = "promotion_type")
 @AllArgsConstructor
 @NoArgsConstructor
-public abstract class Promotion {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@Builder
+public class PromotionResponseDto {
     private Integer id;
     private String title;
     private String description;
@@ -30,7 +25,5 @@ public abstract class Promotion {
     private DiscountType discountType;
     private Integer discountValue;
     private Integer maxDiscount;
-    @Column(name = "promotion_type", insertable = false, updatable = false)
-    protected String promotionType;
+    private String promotionType;
 }
-

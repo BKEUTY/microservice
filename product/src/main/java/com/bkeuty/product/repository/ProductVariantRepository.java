@@ -18,7 +18,9 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant,I
                         "LEFT JOIN pv.product p " +
                         "LEFT JOIN p.categories c " +
                         "WHERE (:pattern IS NULL OR LOWER(pv.productVariantName) LIKE :pattern) AND " +
-                        "(:categoryId IS NULL OR c.id = :categoryId)")
+                        "(:categoryId IS NULL OR c.id = :categoryId)" +
+                        "AND pv.status = com.bkeuty.product.enums.ProductStatus.ACTIVE"
+        )
         Page<ProductVariant> findWithFilters(
                         @Param("pattern") String pattern,
                         @Param("categoryId") Integer categoryId,

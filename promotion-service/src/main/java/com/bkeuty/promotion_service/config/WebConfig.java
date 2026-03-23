@@ -1,4 +1,4 @@
-package com.bkeuty.product.config;
+package com.bkeuty.promotion_service.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -22,7 +22,6 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(false);
     }
-
     @Bean
     @LoadBalanced // This is the "bridge" between WebClient and Eureka
     public WebClient.Builder webClientBuilder() {
@@ -33,10 +32,8 @@ public class WebConfig implements WebMvcConfigurer {
     public WebClient authWebClient(WebClient.Builder builder) {
         return builder.baseUrl("http://auth-service").build();
     }
-    @Bean
-    public WebClient promotionWebClient(WebClient.Builder builder) {
-        return builder.baseUrl("http://promotion-service").build();
-    }
+
+
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";

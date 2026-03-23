@@ -37,7 +37,7 @@ spring:
             - id: promotion-service
               uri: lb://promotion-service
               predicates:
-                - Path= /api/promotion/**
+                - Path= /api/promotion/**, /api/admin/promotion/**
               filters:
                 - RemoveResponseHeader=Access-Control-Allow-Origin
                 - RemoveResponseHeader=Access-Control-Allow-Methods

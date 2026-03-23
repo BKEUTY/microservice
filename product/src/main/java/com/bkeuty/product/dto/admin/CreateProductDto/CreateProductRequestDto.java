@@ -17,6 +17,7 @@ public class CreateProductRequestDto {
     private String name;
     private String description = "";
     private List<Integer> productCategories;
+    private Integer brandId = null;
     private String image = "";
 
 }

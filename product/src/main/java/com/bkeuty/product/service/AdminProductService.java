@@ -36,15 +36,19 @@ public class AdminProductService {
     private final ProductOptionValueRepository productOptionValueRepository;
 
     private final ProductVariantRepository productVariantRepository;
+    private final ProductBrandRepository productBrandRepository;
 
     public AdminProductService(ProductRepository productRepository, ProductCategoryRepository productCategoryRepository,
             ProductOptionRepository productOptionRepository, ProductOptionValueRepository productOptionValueRepository,
-            ProductVariantRepository productVariantsRepository) {
+            ProductVariantRepository productVariantsRepository,
+                               ProductBrandRepository productBrandRepository) {
         this.productRepository = productRepository;
         this.productCategoryRepository = productCategoryRepository;
         this.productOptionRepository = productOptionRepository;
         this.productOptionValueRepository = productOptionValueRepository;
         this.productVariantRepository = productVariantsRepository;
+        this.productBrandRepository = productBrandRepository;
+
     }
 
     public Page<AdminProductDto> getAllProducts(Pageable pageable) {
@@ -99,6 +103,8 @@ public class AdminProductService {
                 .map(categoryId -> productCategoryRepository.findById(categoryId).get()).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         product.setCategories(setCategories);
+        ProductBrand productBrand = productBrandRepository.findById(requestDto.getBrandId()).orElseThrow(()-> new RuntimeException("Brand not found"));
+        product.setBrand(productBrand);
         return toCreateProductResponseDto(productRepository.save(product));
 
     }
@@ -111,6 +117,7 @@ public class AdminProductService {
         createProductResponseDto.setImage(product.getImage());
         createProductResponseDto.setCategories(
                 product.getCategories().stream().map(ProductCategory::getCategoryName).collect(Collectors.toList()));
+        createProductResponseDto.setBrandName(product.getBrand().getBrandName());
         return createProductResponseDto;
 
     }

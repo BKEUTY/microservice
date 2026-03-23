@@ -28,4 +28,5 @@ public abstract class CreatePromotionRequest {
     private DiscountType discountType;
     private PromotionStatus status;
     private Integer discountValue;
+    private Integer maxDiscount;
 }

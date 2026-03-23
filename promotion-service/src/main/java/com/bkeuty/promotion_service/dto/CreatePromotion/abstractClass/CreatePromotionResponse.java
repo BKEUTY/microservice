@@ -22,4 +22,5 @@ public abstract class CreatePromotionResponse {
     private DiscountType discountType;
     private PromotionStatus status;
     private Integer discountValue;
+    private Integer maxDiscountValue;
 }
