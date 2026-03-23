@@ -25,10 +25,10 @@ public class Order {
     private String paymentMethod;
     private LocalDate orderDate;
     private String address;
+    
     @Column(name = "user_id", nullable = false)
     private String userId;
 
+    @Builder.Default
     private PaymentStatus status = PaymentStatus.UNPAID;
-
-
 }

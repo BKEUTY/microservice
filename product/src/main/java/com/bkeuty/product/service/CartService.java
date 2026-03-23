@@ -17,16 +17,17 @@ public class CartService {
     }
 
     public Map<Integer, ProductVariantDto> findDtoByProductVariantIdIn(List<Integer> productVariantIds) {
+        if (productVariantIds == null || productVariantIds.isEmpty()) {
+            return new HashMap<>(); 
+        }
         List<ProductVariantDto> dtos = productVariantRepository.findDtoByProductVariantIdIn(productVariantIds);
-        Map<Integer, ProductVariantDto> responseMap = dtos.stream().collect(Collectors.toMap(
-           ProductVariantDto::getId,dto -> dto,
-                (existing, replacement) -> existing
-        ));
-        productVariantIds.forEach(id -> {
-            if(!responseMap.containsKey(id)) {
-                responseMap.put(id, null);
-            }
-        });
+        Map<Integer, ProductVariantDto> responseMap = new HashMap<>();
+        for (ProductVariantDto dto : dtos) {
+            responseMap.put(dto.getId(), dto);
+        }
+        for (Integer id : productVariantIds) {
+            responseMap.putIfAbsent(id, null);
+        }
         return responseMap;
     }
 

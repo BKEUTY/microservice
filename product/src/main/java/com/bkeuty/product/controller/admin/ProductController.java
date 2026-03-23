@@ -54,6 +54,22 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK).body(adminProductService.getAllProductVariants(productId));
     }
 
+    @GetMapping("/variants/page")
+    public ResponseEntity<Page<AdminProductVariantDto>> getAllVariantsPaginated(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page, size)));
+    }
+
     @PostMapping()
     public ResponseEntity<CreateProductResponseDto> createProduct(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @Valid @RequestBody CreateProductRequestDto createProductRequestDTO) {
