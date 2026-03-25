@@ -1,4 +1,4 @@
-package com.bkeuty.product.controller.admin;
+package com.bkeuty.product.controller.internal;
 
 import com.bkeuty.product.dto.user.order.DecreaseStockRequestDto;
 import com.bkeuty.product.dto.user.order.DecreaseStockResponseDto;

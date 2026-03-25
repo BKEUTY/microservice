@@ -11,7 +11,7 @@ import java.util.List;
 public interface ProductPromotionRepository extends JpaRepository<ProductPromotion, Integer> {
     @Query("""
         SELECT p from ProductPromotion p
-        WHERE p.status = com.bkeuty.promotion_service.enums.PromotionStatus.STARTING 
+        WHERE p.status = com.bkeuty.promotion_service.enums.PromotionStatus.STARTING
         AND :now BETWEEN p.startAt AND p.endAt
         AND (p.productIds IS EMPTY OR :productId MEMBER OF p.productIds)
         AND (p.brandIds IS EMPTY OR (:brandId IS NOT NULL AND :brandId MEMBER OF p.brandIds))

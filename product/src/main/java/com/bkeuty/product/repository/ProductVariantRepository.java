@@ -1,6 +1,6 @@
 package com.bkeuty.product.repository;
 
-import com.bkeuty.product.dto.user.cart.ProductVariantDto;
+import com.bkeuty.product.dto.user.cart.CartProductVariantDto;
 import com.bkeuty.product.entity.ProductVariant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,15 +26,15 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant,I
                         @Param("categoryId") Integer categoryId,
                         Pageable pageable);
 
-        @Query("SELECT new com.bkeuty.product.dto.user.cart.ProductVariantDto(v.id,v.price, v.productImageUrl, v.productVariantName) FROM ProductVariant v where v.id IN :productVariantIds")
-        List<ProductVariantDto> findDtoByProductVariantIdIn(@Param("productVariantIds") List<Integer> productVariantIds);
+        @Query("SELECT v FROM ProductVariant v where v.id IN :productVariantIds")
+        List<ProductVariant> findDtoByProductVariantIdIn(@Param("productVariantIds") List<Integer> productVariantIds);
 
-        @Query("""
-                        SELECT new com.bkeuty.product.dto.user.cart.ProductVariantDto(v.id, v.price, v.productImageUrl, v.productVariantName)
-                        FROM ProductVariant v
-                        WHERE v.id = :productVariantId
-                        """)
-        ProductVariantDto findDtoByProductVariantId(@Param("productVariantId") Integer productVariantId);
+//        @Query("""
+//                        SELECT new com.bkeuty.product.dto.user.cart.CartProductVariantDto(v.id, v.price, v.productImageUrl, v.productVariantName)
+//                        FROM ProductVariant v
+//                        WHERE v.id = :productVariantId
+//                        """)
+//        CartProductVariantDto findDtoByProductVariantId(@Param("productVariantId") Integer productVariantId);
 
 
 }

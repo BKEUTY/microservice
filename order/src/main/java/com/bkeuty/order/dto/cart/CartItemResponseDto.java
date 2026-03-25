@@ -16,6 +16,7 @@ public class CartItemResponseDto {
     private Integer productVariantId;
     private String name;
     private BigDecimal price;
+    private BigDecimal promotionPrice;
     private String image;
     private Integer quantity;
 }

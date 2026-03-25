@@ -12,6 +12,8 @@ import java.math.BigDecimal;
 public class ProductVariantDto {
     private Integer id;
     private BigDecimal price;
+    private BigDecimal promotionPrice;
     private String productImageUrl;
     private String productVariantName;
+    private String productVariantDescription;
 }

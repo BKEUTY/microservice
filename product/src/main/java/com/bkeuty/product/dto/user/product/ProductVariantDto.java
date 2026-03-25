@@ -15,6 +15,7 @@ import java.util.Map;
 public class ProductVariantDto {
     private Integer id;
     private BigDecimal price;
+    private BigDecimal discount;
     private Integer stockQuantity;
     private String productImageUrl;
     private String productVariantName;

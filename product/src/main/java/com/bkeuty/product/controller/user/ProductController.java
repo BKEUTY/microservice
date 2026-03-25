@@ -1,6 +1,7 @@
 package com.bkeuty.product.controller.user;
 
 import com.bkeuty.product.dto.user.product.CategoryDto;
+import com.bkeuty.product.dto.user.product.DisplayProductDto;
 import com.bkeuty.product.dto.user.product.ProductDetailDto;
 import com.bkeuty.product.dto.user.product.ProductDto;
 import com.bkeuty.product.service.productservice.ProductService;
@@ -23,12 +24,13 @@ public class ProductController {
     }
 
     @GetMapping()
-    public ResponseEntity<Page<ProductDto>> getProducts(
+    public ResponseEntity<Page<DisplayProductDto>> getProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer categoryId) {
         Pageable pageable = PageRequest.of(page, 30);
-        return ResponseEntity.ok(productService.getListProducts(pageable, name, categoryId));
+//        return ResponseEntity.ok(productService.getListProducts(pageable, name, categoryId));
+        return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId));
     }
 
     @GetMapping("/categories")
@@ -38,7 +40,7 @@ public class ProductController {
 
     @GetMapping("/{productId}")
     public ResponseEntity<ProductDetailDto> getProductById(@PathVariable Integer productId) {
-        ProductDetailDto dto = productService.getProductDetailById(productId);
+        ProductDetailDto dto = productService.getProductVariantById(productId);
         if (dto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

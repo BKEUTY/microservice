@@ -78,6 +78,7 @@ public class CartService {
                 .image(productVariant.getProductImageUrl())
                 .name(productVariant.getProductVariantName())
                 .quantity(cartItem.getQuantity())
+                .promotionPrice(productVariant.getPromotionPrice())
                 .build();
     }
 
@@ -134,6 +135,7 @@ public class CartService {
                 .productVariantId(productVariant.getId())
                 .productVariantImage(productVariant.getProductImageUrl())
                 .productVariantName(productVariant.getProductVariantName())
+                .promotionPrice(productVariant.getPromotionPrice())
                 .build();
     }
 }

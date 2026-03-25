@@ -5,6 +5,8 @@ import com.bkeuty.product.entity.Product;
 import com.bkeuty.product.entity.ProductCategory;
 import com.bkeuty.product.entity.ProductOptionValue;
 import com.bkeuty.product.entity.ProductVariant;
+import com.bkeuty.product.exception.ProductVariantNotFoundException;
+import com.bkeuty.product.microservicecommunication.PromotionService;
 import com.bkeuty.product.repository.ProductCategoryRepository;
 import com.bkeuty.product.repository.ProductOptionValueRepository;
 import com.bkeuty.product.repository.ProductRepository;
@@ -26,17 +28,18 @@ public class ProductService {
     private final ProductCategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ProductOptionValueRepository productOptionValueRepository;
-    private final WebClient promotionWebClient;
+    private final PromotionService promotionService;
+
     public ProductService(ProductVariantRepository productVariantRepository,
-            ProductCategoryRepository categoryRepository,
-            ProductRepository productRepository,
-            ProductOptionValueRepository productOptionValueRepository,
-            WebClient promotionWebClient) {
+                          ProductCategoryRepository categoryRepository,
+                          ProductRepository productRepository,
+                          ProductOptionValueRepository productOptionValueRepository,
+                          PromotionService promotionService) {
         this.productVariantRepository = productVariantRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.productOptionValueRepository = productOptionValueRepository;
-        this.promotionWebClient = promotionWebClient;
+        this.promotionService = promotionService;
     }
 
     public Page<ProductDto> getListProducts(Pageable pageable, String name, Integer categoryId) {
@@ -44,35 +47,34 @@ public class ProductService {
         return productRepository.findAll(pageable).map(this::toProductDto);
     }
 
-    public Page<ProductVariantDto> getListProductVariants(Pageable pageable, String name, Integer categoryId) {
+    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String name, Integer categoryId) {
         Page<ProductVariant> productRes =  productVariantRepository.findWithFilters(name, categoryId, pageable);
-        List<ProductPromotionDto> productPromotionDtos = productRes.getContent().stream().map(this::toProductPromotionDto).collect(Collectors.toList());
-        Map<Integer,ProductPromotionDto> promotionPrice = promotionWebClient.post()
-                                                                            .uri("/api/promotion/internal/check-promotion-price/batch")
-                .bodyValue(productPromotionDtos).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer,ProductPromotionDto>>() {
-                }).block();
-//        productPromotionDtos.forEach(p->{
+        Map<Integer,PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes);
 //
-//        })
 
-        return productVariantRepository.findWithFilters(name, categoryId, pageable).map(this::toDto);
+        return productRes.map(productVariant -> toDisplayProductDto(productVariant,promotionPrice));
     }
-    private ProductPromotionDto toProductPromotionDto(ProductVariant  productVariant) {
-        Product product = productVariant.getProduct();
-        return ProductPromotionDto.builder()
-                .productVariantId(productVariant.getId())
-                .brandId(product.getBrand().getId())
-                .productId(product.getId())
-                .categoryIds(product.getCategories().stream().map(ProductCategory::getId).collect(Collectors.toList()))
-                .price(productVariant.getPrice())
+    private DisplayProductDto toDisplayProductDto(ProductVariant productVariant, Map<Integer,PromotionPriceDto> promotionPrice) {
+        return DisplayProductDto.builder()
+                .productId(productVariant.getId())
+                .variantName(productVariant.getProductVariantName())
+                .stock(productVariant.getStockQuantity())
+                .imageUrl(productVariant.getProductImageUrl())
+                .originPrice(productVariant.getPrice())
+                .discountPrice(promotionPrice.get(productVariant.getId()).getNewPrice())
                 .build();
     }
-    public ProductDetailDto getProductDetailById(Integer productId) {
-        return productRepository.findById(productId).map(this::toDetailDto).orElse(null);
-    }
 
-    public ProductVariantDto getProductById(Integer id) {
-        return productVariantRepository.findById(id).map(this::toDto).orElse(null);
+//    public ProductDetailDto getProductDetailById(Integer productVariantId, PromotionPriceDto promotionPrice, ProductVariantDto  productVariantDto) {
+//        return productRepository.findById(productId).map(this::toDetailDto).orElse(null);
+//    }
+
+    public ProductDetailDto getProductVariantById(Integer id) {
+        ProductVariant productVariant=  productVariantRepository.findById(id).orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with id: " + id));
+        PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
+        return toDetailDto(productVariant.getProduct(),promotionPriceDto,productVariant);
+
+
     }
 
     public List<CategoryDto> getAllCategories() {
@@ -98,7 +100,7 @@ public class ProductService {
                 .build();
     }
 
-    private ProductDetailDto toDetailDto(Product product) {
+    private ProductDetailDto toDetailDto(Product product, PromotionPriceDto promotionPrice, ProductVariant  productVariant) {
         List<ProductOptionValue> optionValues = productOptionValueRepository.findAllByOptionProductId(product.getId());
         List<ProductOptionDto> options = optionValues.stream()
                 .collect(Collectors.groupingBy(ov -> ov.getOption().getOptionName()))
@@ -110,12 +112,14 @@ public class ProductService {
                 .collect(Collectors.toList());
 
         return ProductDetailDto.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .description(product.getDescription())
-                .image(product.getImage())
+                .id(productVariant.getId())
+                .name(productVariant.getProductVariantName())
+                .description(productVariant.getDescription())
+                .image(productVariant.getProductImageUrl())
+                .originPrice(productVariant.getPrice())
+                .promotionPrice(promotionPrice.getNewPrice())
                 .categories(product.getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
-                .variants(productVariantRepository.findAllByProductId(product.getId()).stream().map(this::toDto)
+                .variants(productVariantRepository.findAllByProductId(product.getId()).stream().map(productVariantInstance ->toDto(productVariantInstance,new PromotionPriceDto(BigDecimal.ZERO)) )
                         .collect(Collectors.toList()))
                 .options(options)
                 .build();
@@ -128,7 +132,7 @@ public class ProductService {
                 .build();
     }
 
-    ProductVariantDto toDto(ProductVariant productVariant) {
+    ProductVariantDto toDto(ProductVariant productVariant, PromotionPriceDto promotionPrice) {
         Map<String, String> options = productVariant.getOptionValues().stream()
                 .collect(Collectors.toMap(
                         ov -> ov.getOption().getOptionName(),
@@ -142,6 +146,7 @@ public class ProductService {
                 .productImageUrl(productVariant.getProductImageUrl())
                 .stockQuantity(productVariant.getStockQuantity())
                 .variantOptions(options)
+                .discount(promotionPrice.getNewPrice())
                 .build();
     }
 }

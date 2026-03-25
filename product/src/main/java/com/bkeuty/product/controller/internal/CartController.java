@@ -1,6 +1,6 @@
-package com.bkeuty.product.controller.user;
+package com.bkeuty.product.controller.internal;
 
-import com.bkeuty.product.dto.user.cart.ProductVariantDto;
+import com.bkeuty.product.dto.user.cart.CartProductVariantDto;
 import com.bkeuty.product.service.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ public class CartController {
     }
 
     @PostMapping("/variants/batch")
-    public ResponseEntity<Map<Integer, ProductVariantDto>> getVariantsByProductIds(
+    public ResponseEntity<Map<Integer, CartProductVariantDto>> getVariantsByProductIds(
             @RequestBody List<Integer> requestedProductIds) {
 
         // 1. Fetch existing variants from DB
@@ -28,7 +28,8 @@ public class CartController {
         return ResponseEntity.ok(cartService.findDtoByProductVariantIdIn(requestedProductIds));
     }
     @GetMapping("/variant/{variantId}")
-    public ResponseEntity<ProductVariantDto> getVariantById(@PathVariable("variantId") Integer variantId) {
+    public ResponseEntity<CartProductVariantDto> getVariantById(@PathVariable("variantId") Integer variantId) {
+
         return ResponseEntity.ok(cartService.findDtoById(variantId));
     }
 

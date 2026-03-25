@@ -56,11 +56,15 @@ public class PromotionService {
         }
         return map;
     }
+    public ProductPromotionCheckResponseDTO getPromotion (ProductPromotionCheckRequestDTO productPromotionCheckRequestDto){
+        return new ProductPromotionCheckResponseDTO(getPromotionPrice(productPromotionCheckRequestDto));
+    }
     public BigDecimal getPromotionPrice(ProductPromotionCheckRequestDTO productPromotionCheckRequestDto) {
         List<ProductPromotion> applicableProductPromotions = productPromotionRepository.findApplicablePromotions(productPromotionCheckRequestDto.getProductId(),
                                                                                                                 productPromotionCheckRequestDto.getBrandId(),
                                                                                                                 productPromotionCheckRequestDto.getCategoryIds(),
                                                                                                                 LocalDateTime.now(ZoneOffset.UTC));
+
         BigDecimal newPrice = productPromotionCheckRequestDto.getPrice();
         for(ProductPromotion applicableProductPromotion : applicableProductPromotions) {
             if(applicableProductPromotion.getDiscountType().equals(DiscountType.PERCENTAGE)){

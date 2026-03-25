@@ -99,10 +99,11 @@ public class OrderService {
                             .productVariantName(dto.getProductVariantName())
                             .quantity(dto.getQuantity())
                             .productVariantImage(dto.getProductVariantImage())
+                            .promotionPrice(dto.getPromotionPrice())
                             .build();
 
                     if (dto.getPrice() != null && dto.getQuantity() != null) {
-                        totalAmount = totalAmount.add(dto.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+                        totalAmount = totalAmount.add(dto.getPromotionPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
                     }
                     items.add(addToCartResponseDTO);
                 }
@@ -172,10 +173,13 @@ public class OrderService {
                 addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
                 addToCartResponseDTO.setQuantity(orderItems.getQuantity());
 
+
                 if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
                     ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
                     addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
                     addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
+                    addToCartResponseDTO.setPrice(productVariant.getPrice());
+                    addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
                 }
                 itemList.add(addToCartResponseDTO);
             }

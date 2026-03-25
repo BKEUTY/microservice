@@ -4,10 +4,7 @@ import com.bkeuty.promotion_service.dto.internal.ProductPromotionCheckRequestDTO
 import com.bkeuty.promotion_service.dto.internal.ProductPromotionCheckResponseDTO;
 import com.bkeuty.promotion_service.service.PromotionService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -20,9 +17,13 @@ public class InternalController {
         this.promotionService = promotionService;
     }
 
-    @PostMapping("check-promotion-price/batch")
+    @PostMapping("/check-promotion-price/batch")
     public ResponseEntity<Map<Integer, ProductPromotionCheckResponseDTO>> getPromotionPriceBatch (@RequestBody List<ProductPromotionCheckRequestDTO> productPromotionCheckRequestDTOList) {
         return ResponseEntity.ok(promotionService.checkProductPromotion(productPromotionCheckRequestDTOList));
+    }
+    @PostMapping("/check-promotion-price")
+    public ResponseEntity<ProductPromotionCheckResponseDTO> getPromotionPrice (@RequestBody ProductPromotionCheckRequestDTO productPromotionCheckRequestDTO) {
+        return ResponseEntity.ok(promotionService.getPromotion(productPromotionCheckRequestDTO));
     }
 
 }
