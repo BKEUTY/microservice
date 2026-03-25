@@ -24,6 +24,6 @@ public class UserPromotion extends Promotion {
             name = "promotion_membership_level",
             joinColumns = @JoinColumn(name = "promotion_id")
     )
-    @Column(name = "birthdayMonth")
+    @Column(name = "membership_level")
     private Set<Integer> membershipLevel;
 }

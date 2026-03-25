@@ -26,49 +26,65 @@ INSERT INTO product_category (id, category_name) VALUES
 (14, 'Trang điểm mắt')
 ON CONFLICT (id) DO NOTHING;
 
--- 2. SẢN PHẨM (product)
--- Status: 0 = ACTIVE, 1 = INACTIVE
-INSERT INTO product (id, name, description, image, status) VALUES
-(1, 'Sữa Rửa Mặt CeraVe Foaming Cleanser', 'Sữa rửa mặt tạo bọt làm sạch sâu cho da dầu.', 'cerave_foaming.jpg', 0),
-(2, 'Sữa Rửa Mặt Cetaphil Gentle Skin Cleanser', 'Công thức dịu nhẹ không gây kích ứng.', 'cetaphil_gentle.jpg', 0),
-(3, 'Sữa Rửa Mặt La Roche-Posay Effaclar', 'Gel rửa mặt cho da dầu nhạy cảm.', 'lrp_effaclar.jpg', 0),
-(4, 'Sữa Rửa Mặt Cosrx Low pH Good Morning', 'Cân bằng độ pH tự nhiên cho da.', 'cosrx_low_ph.jpg', 0),
-(5, 'Sữa Rửa Mặt Innisfree Green Tea', 'Chiết xuất trà xanh giúp sạch sâu.', 'innisfree_greentea.jpg', 0),
-(6, 'Kem Chống Nắng Anessa Perfect UV', 'Công nghệ Aqua Booster chống nước mạnh mẽ.', 'anessa_uv.jpg', 0),
-(7, 'Kem Chống Nắng La Roche-Posay Anthelios', 'Khả năng chống nắng quang phổ rộng.', 'lrp_anthelios.jpg', 0),
-(8, 'Kem Chống Nắng Skin1004 Madagascar', 'Chiết xuất rau má làm dịu da.', 'skin1004_sun.jpg', 0),
-(9, 'Kem Chống Nắng Cell Fusion C Laser', 'Dành cho da sau điều trị laser.', 'cell_fusion_laser.jpg', 0),
-(10, 'Kem Chống Nắng L''Oreal Invisible Fluid', 'Kết cấu mỏng nhẹ không để lại vệt trắng.', 'loreal_invisible.jpg', 0),
-(11, 'Nước Hoa Hồng Lancôme Tonique Confort', 'Dưỡng ẩm sâu cho da khô.', 'lancome_toner.jpg', 0),
-(12, 'Toner Kiehl''s Calendula Herbal', 'Chiết xuất hoa cúc làm dịu da.', 'kiehls_calendula.jpg', 0),
-(13, 'Toner Mamonde Rose Water', '90.97% tinh chất hoa hồng.', 'mamonde_rose.jpg', 0),
-(14, 'Nước Hoa Hồng Klairs Supple Preparation', 'Cấp ẩm tức thì cho da.', 'klairs_toner.jpg', 0),
-(15, 'Toner Paula''s Choice Skin Balancing', 'Se khít lỗ chân lông.', 'paula_balancing.jpg', 0),
-(16, 'Serum Estee Lauder Advanced Night Repair', 'Phục hồi da ban đêm thần thánh.', 'estee_anr.jpg', 0),
-(17, 'Serum The Ordinary Niacinamide 10% + Zinc 1', 'Giảm thâm mụn và thu nhỏ lỗ chân lông.', 'to_niacinamide.jpg', 0),
-(18, 'Serum Skin1004 Madagascar Centella', '100% chiết xuất rau má tinh khiết.', 'skin1004_serum.jpg', 0),
-(19, 'Serum Klairs Freshly Juiced Vitamin C', 'Làm sáng da và mờ thâm.', 'klairs_vitc.jpg', 0),
-(20, 'Serum Timeless Vitamin B5 + Hyaluronic Acid', 'Cấp ẩm và phục hồi da tổn thương.', 'timeless_b5.jpg', 0),
-(21, 'Kem Dưỡng Neutrogena Hydro Boost Water Gel', 'Cấp ẩm chuyên sâu dạng gel.', 'neutrogena_gel.jpg', 0),
-(22, 'Kem Dưỡng Kiehl''s Ultra Facial Cream', 'Dưỡng ẩm suốt 24 giờ.', 'kiehls_ultra.jpg', 0),
-(23, 'Kem Dưỡng Phục Hồi La Roche-Posay Cicaplast B5', 'Hỗ trợ tái tạo màng bảo vệ da.', 'lrp_b5.jpg', 0),
-(24, 'Kem Dưỡng Clinique Dramatically Different', 'Cung cấp độ ẩm tối ưu.', 'clinique_yellow.jpg', 0),
-(25, 'Kem Dưỡng Laneige Water Bank Blue HA', 'Công nghệ HA mới dưỡng ẩm sâu.', 'laneige_waterbank.jpg', 0),
-(26, 'Phấn Nước Laneige Neo Cushion Matte', 'Che phủ cao và lâu trôi.', 'laneige_cushion.jpg', 0),
-(27, 'Kem Nền Estee Lauder Double Wear', 'Lớp nền hoàn hảo trứ danh.', 'estee_doublewear.jpg', 0),
-(28, 'Phấn Phủ Mac Studio Fix Powder Plus', 'Kết hợp nền và phấn 2 trong 1.', 'mac_studiofix.jpg', 0),
-(29, 'Cushion Hera Black Cushion', 'Đẳng cấp trang điểm Hàn Quốc.', 'hera_black.jpg', 0),
-(30, 'Kem Nền Maybelline Fit Me', 'Kiềm dầu hiệu quả.', 'fitme_foundation.jpg', 0),
-(31, 'Son Thỏi 3CE Velvet Lip Tint', 'Màu sắc trẻ trung, chất son mịn.', '3ce_lip.jpg', 0),
-(32, 'Son Kem Romand Juicy Lasting Tint', 'Hiệu ứng căng bóng môi.', 'romand_juicy.jpg', 0),
-(33, 'Son Dưỡng Dior Addict Lip Glow', 'Son dưỡng huyền thoại biến hóa màu sắc.', 'dior_lipglow.jpg', 0),
-(34, 'Son Thỏi MAC Matte Lipstick', 'Màu son chuẩn, lâu trôi.', 'mac_matte.jpg', 0),
-(35, 'Son Kem Black Rouge Air Fit Velvet Tint', 'Mềm lòng với bảng màu đa dạng.', 'blackrouge_tint.jpg', 0),
-(36, 'Nước Hoa Dior Sauvage Eau De Parfum', 'Mạnh mẽ, nam tính.', 'dior_sauvage.jpg', 0),
-(37, 'Nước Hoa Chanel Coco Mademoiselle', 'Quyến rũ và sang trọng.', 'chanel_coco.jpg', 0),
-(38, 'Bộ Quà Tặng Skincare L''Oreal Paris', 'Sự kết hợp hoàn hảo cho làn da.', 'loreal_giftset.jpg', 0),
-(39, 'Dụng Cụ Massage Nâng Cơ ReFa Carat', 'Công nghệ microcurrent tiên tiến.', 'refa_carat.jpg', 0),
-(40, 'Máy Rửa Mặt Foreo Luna 4', 'Làm sạch sâu gấp 35 lần.', 'foreo_luna4.jpg', 0)
+-- DATA DỰ PHÒNG CHO BRAND
+DELETE FROM brand;
+
+-- Cấu trúc giả định: id, name, description, image, brand_status
+INSERT INTO brand (id, name, description, image, brand_status) VALUES
+(1, 'CeraVe', 'Thương hiệu dược mỹ phẩm CeraVe', 'cerave_logo.png', 'ACTIVE'),
+(2, 'Cetaphil', 'Chăm sóc da dịu nhẹ', 'cetaphil_logo.png', 'ACTIVE'),
+(3, 'La Roche-Posay', 'Dược mỹ phẩm Pháp', 'lrp_logo.png', 'ACTIVE'),
+(4, '3CE', 'Thương hiệu mỹ phẩm Hàn Quốc', '3ce_logo.png', 'ACTIVE'),
+(5, 'Dior', 'Thương hiệu cao cấp', 'dior_logo.png', 'ACTIVE'),
+(6, 'Estee Lauder', 'Chăm sóc da cao cấp', 'estee_logo.png', 'ACTIVE'),
+(7, 'Khác', 'Các thương hiệu khác', 'default_brand.png', 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
+
+-- TRONG PHẦN SẢN PHẨM (product), BẠN CẦN THÊM CỘT brand_id
+-- Xóa bảng product cũ và insert lại với brand_id tương ứng
+DELETE FROM product;
+
+INSERT INTO product (id, name, description, image, status, brand_id) VALUES
+(1, 'Sữa Rửa Mặt CeraVe Foaming Cleanser', 'Sữa rửa mặt tạo bọt làm sạch sâu cho da dầu.', 'cerave_foaming.jpg', 0, 1),
+(2, 'Sữa Rửa Mặt Cetaphil Gentle Skin Cleanser', 'Công thức dịu nhẹ không gây kích ứng.', 'cetaphil_gentle.jpg', 0, 2),
+(3, 'Sữa Rửa Mặt La Roche-Posay Effaclar', 'Gel rửa mặt cho da dầu nhạy cảm.', 'lrp_effaclar.jpg', 0, 3),
+(4, 'Sữa Rửa Mặt Cosrx Low pH Good Morning', 'Cân bằng độ pH tự nhiên cho da.', 'cosrx_low_ph.jpg', 0, 7),
+(5, 'Sữa Rửa Mặt Innisfree Green Tea', 'Chiết xuất trà xanh giúp sạch sâu.', 'innisfree_greentea.jpg', 0, 7),
+(6, 'Kem Chống Nắng Anessa Perfect UV', 'Công nghệ Aqua Booster chống nước mạnh mẽ.', 'anessa_uv.jpg', 0, 7),
+(7, 'Kem Chống Nắng La Roche-Posay Anthelios', 'Khả năng chống nắng quang phổ rộng.', 'lrp_anthelios.jpg', 0, 3),
+(8, 'Kem Chống Nắng Skin1004 Madagascar', 'Chiết xuất rau má làm dịu da.', 'skin1004_sun.jpg', 0, 7),
+(9, 'Kem Chống Nắng Cell Fusion C Laser', 'Dành cho da sau điều trị laser.', 'cell_fusion_laser.jpg', 0, 7),
+(10, 'Kem Chống Nắng L''Oreal Invisible Fluid', 'Kết cấu mỏng nhẹ không để lại vệt trắng.', 'loreal_invisible.jpg', 0, 7),
+(11, 'Nước Hoa Hồng Lancôme Tonique Confort', 'Dưỡng ẩm sâu cho da khô.', 'lancome_toner.jpg', 0, 7),
+(12, 'Toner Kiehl''s Calendula Herbal', 'Chiết xuất hoa cúc làm dịu da.', 'kiehls_calendula.jpg', 0, 7),
+(13, 'Toner Mamonde Rose Water', '90.97% tinh chất hoa hồng.', 'mamonde_rose.jpg', 0, 7),
+(14, 'Nước Hoa Hồng Klairs Supple Preparation', 'Cấp ẩm tức thì cho da.', 'klairs_toner.jpg', 0, 7),
+(15, 'Toner Paula''s Choice Skin Balancing', 'Se khít lỗ chân lông.', 'paula_balancing.jpg', 0, 7),
+(16, 'Serum Estee Lauder Advanced Night Repair', 'Phục hồi da ban đêm thần thánh.', 'estee_anr.jpg', 0, 6),
+(17, 'Serum The Ordinary Niacinamide 10% + Zinc 1', 'Giảm thâm mụn và thu nhỏ lỗ chân lông.', 'to_niacinamide.jpg', 0, 7),
+(18, 'Serum Skin1004 Madagascar Centella', '100% chiết xuất rau má tinh khiết.', 'skin1004_serum.jpg', 0, 7),
+(19, 'Serum Klairs Freshly Juiced Vitamin C', 'Làm sáng da và mờ thâm.', 'klairs_vitc.jpg', 0, 7),
+(20, 'Serum Timeless Vitamin B5 + Hyaluronic Acid', 'Cấp ẩm và phục hồi da tổn thương.', 'timeless_b5.jpg', 0, 7),
+(21, 'Kem Dưỡng Neutrogena Hydro Boost Water Gel', 'Cấp ẩm chuyên sâu dạng gel.', 'neutrogena_gel.jpg', 0, 7),
+(22, 'Kem Dưỡng Kiehl''s Ultra Facial Cream', 'Dưỡng ẩm suốt 24 giờ.', 'kiehls_ultra.jpg', 0, 7),
+(23, 'Kem Dưỡng Phục Hồi La Roche-Posay Cicaplast B5', 'Hỗ trợ tái tạo màng bảo vệ da.', 'lrp_b5.jpg', 0, 3),
+(24, 'Kem Dưỡng Clinique Dramatically Different', 'Cung cấp độ ẩm tối ưu.', 'clinique_yellow.jpg', 0, 7),
+(25, 'Kem Dưỡng Laneige Water Bank Blue HA', 'Công nghệ HA mới dưỡng ẩm sâu.', 'laneige_waterbank.jpg', 0, 7),
+(26, 'Phấn Nước Laneige Neo Cushion Matte', 'Che phủ cao và lâu trôi.', 'laneige_cushion.jpg', 0, 7),
+(27, 'Kem Nền Estee Lauder Double Wear', 'Lớp nền hoàn hảo trứ danh.', 'estee_doublewear.jpg', 0, 6),
+(28, 'Phấn Phủ Mac Studio Fix Powder Plus', 'Kết hợp nền và phấn 2 trong 1.', 'mac_studiofix.jpg', 0, 7),
+(29, 'Cushion Hera Black Cushion', 'Đẳng cấp trang điểm Hàn Quốc.', 'hera_black.jpg', 0, 7),
+(30, 'Kem Nền Maybelline Fit Me', 'Kiềm dầu hiệu quả.', 'fitme_foundation.jpg', 0, 7),
+(31, 'Son Thỏi 3CE Velvet Lip Tint', 'Màu sắc trẻ trung, chất son mịn.', '3ce_lip.jpg', 0, 4),
+(32, 'Son Kem Romand Juicy Lasting Tint', 'Hiệu ứng căng bóng môi.', 'romand_juicy.jpg', 0, 7),
+(33, 'Son Dưỡng Dior Addict Lip Glow', 'Son dưỡng huyền thoại biến hóa màu sắc.', 'dior_lipglow.jpg', 0, 5),
+(34, 'Son Thỏi MAC Matte Lipstick', 'Màu son chuẩn, lâu trôi.', 'mac_matte.jpg', 0, 7),
+(35, 'Son Kem Black Rouge Air Fit Velvet Tint', 'Mềm lòng với bảng màu đa dạng.', 'blackrouge_tint.jpg', 0, 7),
+(36, 'Nước Hoa Dior Sauvage Eau De Parfum', 'Mạnh mẽ, nam tính.', 'dior_sauvage.jpg', 0, 5),
+(37, 'Nước Hoa Chanel Coco Mademoiselle', 'Quyến rũ và sang trọng.', 'chanel_coco.jpg', 0, 7),
+(38, 'Bộ Quà Tặng Skincare L''Oreal Paris', 'Sự kết hợp hoàn hảo cho làn da.', 'loreal_giftset.jpg', 0, 7),
+(39, 'Dụng Cụ Massage Nâng Cơ ReFa Carat', 'Công nghệ microcurrent tiên tiến.', 'refa_carat.jpg', 0, 7),
+(40, 'Máy Rửa Mặt Foreo Luna 4', 'Làm sạch sâu gấp 35 lần.', 'foreo_luna4.jpg', 0, 7)
 ON CONFLICT (id) DO NOTHING;
 
 -- 3. LIÊN KÊT SẢN PHẨM - DANH MỤC (product_categories)
