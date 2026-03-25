@@ -15,7 +15,7 @@ public class AuthService {
 
     public TokenValidationResponseDto validateToken(String authorizationHeader) {
         if (authorizationHeader == null) {
-            return null;
+            return new TokenValidationResponseDto();
         }
         String token = authorizationHeader.substring(7);
         TokenValidationResponseDto tokenValidationResponseDto = authWebClient.post()
