@@ -4,6 +4,7 @@ import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.product.entity.ProductCategory;
 import com.bkeuty.product.repository.ProductCategoryRepository;
 import com.bkeuty.product.service.authservice.AuthService;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,8 @@ public class AdminCategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductCategory>> getAllCategories(@RequestHeader("Authorization") String bearerToken) {
+    public ResponseEntity<List<ProductCategory>> getAllCategories(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -31,7 +33,9 @@ public class AdminCategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductCategory> createCategory(@RequestHeader("Authorization") String bearerToken,@RequestBody ProductCategory category) {
+    public ResponseEntity<ProductCategory> createCategory(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestBody ProductCategory category) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -41,7 +45,10 @@ public class AdminCategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductCategory> updateCategory(@RequestHeader("Authorization") String bearerToken,@PathVariable Integer id, @RequestBody ProductCategory categoryDetails) {
+    public ResponseEntity<ProductCategory> updateCategory(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @PathVariable Integer id, 
+            @RequestBody ProductCategory categoryDetails) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -54,7 +61,9 @@ public class AdminCategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@RequestHeader("Authorization") String bearerToken,@PathVariable Integer id) {
+    public ResponseEntity<Void> deleteCategory(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @PathVariable Integer id) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {

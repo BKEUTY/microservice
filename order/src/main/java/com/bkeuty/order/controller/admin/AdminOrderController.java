@@ -4,7 +4,7 @@ import com.bkeuty.order.dto.admin.AdminOrderDto;
 import com.bkeuty.order.dto.admin.AdminUpdateOrderStatusRequestDto;
 import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.service.auth.AuthService;
-import com.bkeuty.order.service.order.AdminOrderService;
+import com.bkeuty.order.service.admin.AdminOrderService;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,12 +31,24 @@ public class AdminOrderController {
             @RequestParam(defaultValue = "10") int size) {
             
         TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
-        if (tokenValidation.getUserId() == null || tokenValidation.getUserRole() == null
-                || !"admin".equals(tokenValidation.getUserRole())) {
+        if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         
         return ResponseEntity.ok(adminOrderService.getAllOrders(PageRequest.of(page, size)));
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<AdminOrderDto> getOrderById(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @PathVariable Integer orderId) {
+            
+        TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
+        if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        
+        return ResponseEntity.ok(adminOrderService.getOrderById(orderId));
     }
 
     @PutMapping("/{orderId}/status")
@@ -46,25 +58,10 @@ public class AdminOrderController {
             @RequestBody AdminUpdateOrderStatusRequestDto request) {
             
         TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
-        if (tokenValidation.getUserId() == null || tokenValidation.getUserRole() == null
-                || !"admin".equals(tokenValidation.getUserRole())) {
+        if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         
         return ResponseEntity.ok(adminOrderService.updateOrderStatus(orderId, request.getStatus()));
-    }
-
-    @GetMapping("/{orderId}")
-    public ResponseEntity<AdminOrderDto> getOrderById(
-            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer orderId) {
-            
-        TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
-        if (tokenValidation.getUserId() == null || tokenValidation.getUserRole() == null
-                || !"admin".equals(tokenValidation.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
-        
-        return ResponseEntity.ok(adminOrderService.getOrderById(orderId));
     }
 }

@@ -26,9 +26,10 @@ public class ProductController {
     @GetMapping()
     public ResponseEntity<Page<DisplayProductDto>> getProducts(
             @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer categoryId) {
-        Pageable pageable = PageRequest.of(page, 30);
+        Pageable pageable = PageRequest.of(page, size);
 //        return ResponseEntity.ok(productService.getListProducts(pageable, name, categoryId));
         return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId));
     }
