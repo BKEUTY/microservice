@@ -15,4 +15,5 @@ public class DecreaseStockResponseDto {
     private String productVariantImage;
     private Integer quantity;
     private BigDecimal price;
+    private BigDecimal promotionPrice;
 }
