@@ -103,7 +103,12 @@ public class OrderService {
                             .build();
 
                     if (dto.getPrice() != null && dto.getQuantity() != null) {
-                        totalAmount = totalAmount.add(dto.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+                        if(dto.getPromotionPrice() == null){
+                            totalAmount = totalAmount.add(dto.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+                        }
+                        else {
+                            totalAmount = totalAmount.add(dto.getPromotionPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+                        }
                     }
                     items.add(addToCartResponseDTO);
                 }
