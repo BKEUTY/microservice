@@ -19,7 +19,7 @@ public class ProductPromotion extends Promotion {
             joinColumns = @JoinColumn(name = "promotion_id") // Foreign key back to the main table
     )
     @Column(name = "category_id") // Name of the column holding the actual integer
-    private Set<Integer> categoryIds = new HashSet<>();;
+    private Set<Integer> categoryIds = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(
@@ -27,7 +27,7 @@ public class ProductPromotion extends Promotion {
             joinColumns = @JoinColumn(name = "promotion_id")
     )
     @Column(name = "product_id")
-    private Set<Integer> productIds = new HashSet<>();;
+    private Set<Integer> productIds = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(
