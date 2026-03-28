@@ -11,11 +11,10 @@ import com.bkeuty.product.repository.ProductCategoryRepository;
 import com.bkeuty.product.repository.ProductOptionValueRepository;
 import com.bkeuty.product.repository.ProductRepository;
 import com.bkeuty.product.repository.ProductVariantRepository;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -43,14 +42,13 @@ public class ProductService {
     }
 
     public Page<ProductDto> getListProducts(Pageable pageable, String name, Integer categoryId) {
-
         return productRepository.findAll(pageable).map(this::toProductDto);
     }
 
     public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String name, Integer categoryId) {
-        Page<ProductVariant> productRes =  productVariantRepository.findWithFilters(name, categoryId, pageable);
-        Map<Integer,PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes);
-//
+        String pattern = StringUtils.hasText(name) ? "%" + name.toLowerCase() + "%" : null;
+        Page<ProductVariant> productRes = productVariantRepository.findWithFilters(pattern, categoryId, pageable);
+        Map<Integer, PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes);
 
         return productRes.map(productVariant -> toDisplayProductDto(productVariant,promotionPrice));
     }
@@ -62,6 +60,8 @@ public class ProductService {
                 .imageUrl(productVariant.getProductImageUrl())
                 .originPrice(productVariant.getPrice())
                 .discountPrice(promotionPrice.get(productVariant.getId()).getNewPrice())
+                .brand(productVariant.getProduct().getBrand().getBrandName())
+                .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .build();
     }
 
@@ -73,8 +73,13 @@ public class ProductService {
         ProductVariant productVariant=  productVariantRepository.findById(id).orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with id: " + id));
         PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
         return toDetailDto(productVariant.getProduct(),promotionPriceDto,productVariant);
+    }
 
-
+    public ProductDetailDto getProductVariantByName(String variantName) {
+        ProductVariant productVariant = productVariantRepository.findFirstByProductVariantName(variantName)
+                .orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with name: " + variantName));
+        PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
+        return toDetailDto(productVariant.getProduct(), promotionPriceDto, productVariant);
     }
 
     public List<CategoryDto> getAllCategories() {
@@ -118,6 +123,7 @@ public class ProductService {
                 .image(productVariant.getProductImageUrl())
                 .originPrice(productVariant.getPrice())
                 .promotionPrice(promotionPrice.getNewPrice())
+                .brand(product.getBrand().getBrandName())
                 .categories(product.getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .variants(productVariantRepository.findAllByProductId(product.getId()).stream().map(productVariantInstance ->toDto(productVariantInstance,new PromotionPriceDto(BigDecimal.ZERO)) )
                         .collect(Collectors.toList()))
