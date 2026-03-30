@@ -5,6 +5,7 @@ import com.bkeuty.product.entity.Product;
 import com.bkeuty.product.entity.ProductCategory;
 import com.bkeuty.product.entity.ProductOptionValue;
 import com.bkeuty.product.entity.ProductVariant;
+import com.bkeuty.product.enums.ProductStatus;
 import com.bkeuty.product.exception.ProductVariantNotFoundException;
 import com.bkeuty.product.microservicecommunication.PromotionService;
 import com.bkeuty.product.repository.ProductCategoryRepository;
@@ -45,9 +46,10 @@ public class ProductService {
         return productRepository.findAll(pageable).map(this::toProductDto);
     }
 
-    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String name, Integer categoryId) {
+    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String name, Integer categoryId, String status) {
         String pattern = StringUtils.hasText(name) ? "%" + name.toLowerCase() + "%" : null;
-        Page<ProductVariant> productRes = productVariantRepository.findWithFilters(pattern, categoryId, pageable);
+        ProductStatus enumStatus = (status != null && !status.trim().isEmpty()) ? ProductStatus.valueOf(status) : null;
+        Page<ProductVariant> productRes = productVariantRepository.findWithFilters(pattern, categoryId, enumStatus, pageable);
         Map<Integer, PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes);
 
         return productRes.map(productVariant -> toDisplayProductDto(productVariant,promotionPrice));
@@ -62,6 +64,7 @@ public class ProductService {
                 .discountPrice(promotionPrice.get(productVariant.getId()).getNewPrice())
                 .brand(productVariant.getProduct().getBrand().getBrandName())
                 .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
+                .status(productVariant.getStatus().name())
                 .build();
     }
 
@@ -105,7 +108,7 @@ public class ProductService {
                 .build();
     }
 
-    private ProductDetailDto toDetailDto(Product product, PromotionPriceDto promotionPrice, ProductVariant  productVariant) {
+    private ProductDetailDto toDetailDto(Product product, PromotionPriceDto promotionPrice, ProductVariant productVariant) {
         List<ProductOptionValue> optionValues = productOptionValueRepository.findAllByOptionProductId(product.getId());
         List<ProductOptionDto> options = optionValues.stream()
                 .collect(Collectors.groupingBy(ov -> ov.getOption().getOptionName()))
@@ -128,6 +131,7 @@ public class ProductService {
                 .variants(productVariantRepository.findAllByProductId(product.getId()).stream().map(productVariantInstance ->toDto(productVariantInstance,new PromotionPriceDto(BigDecimal.ZERO)) )
                         .collect(Collectors.toList()))
                 .options(options)
+                .status(productVariant.getStatus().name())
                 .build();
     }
 
@@ -146,7 +150,8 @@ public class ProductService {
                         (existing, replacement) -> existing
                 ));
 
-        return ProductVariantDto.builder().productVariantName(productVariant.getProductVariantName())
+        return ProductVariantDto.builder()
+                .productVariantName(productVariant.getProductVariantName())
                 .id(productVariant.getId())
                 .price(productVariant.getPrice())
                 .productImageUrl(productVariant.getProductImageUrl())

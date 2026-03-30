@@ -76,7 +76,7 @@ public class AdminProductService {
         } else {
             pattern = null;
         }
-        return productVariantRepository.findWithFilters(pattern, categoryId, pageable)
+        return productVariantRepository.findWithFilters(pattern, categoryId, null, pageable)
                 .map(this::toAdminProductVariantDto);
     }
 
@@ -166,13 +166,12 @@ public class AdminProductService {
         for (List<ProductOptionValue> productOptionValues : combinations) {
             ProductVariant variant = new ProductVariant();
             variant.setProduct(product);
-            for (ProductOptionValue productOptionValue : productOptionValues) {
-                System.out.println("productOptionValue" + productOptionValue.getOptionValueName());
-            }
             variant.setOptionValues(new HashSet<>(productOptionValues));
             variant.setDescription(product.getDescription());
             variant.setProductImageUrl(product.getImage());
-            variant.setProductVariantName(product.getName());
+            String optionsSuffix = productOptionValues.stream().map(ProductOptionValue::getOptionValueName).collect(Collectors.joining(" - "));
+            String variantName = optionsSuffix.isEmpty() ? product.getName() : product.getName() + " - " + optionsSuffix;
+            variant.setProductVariantName(variantName);         
             result.add(productVariantRepository.save(variant));
         }
         return result;

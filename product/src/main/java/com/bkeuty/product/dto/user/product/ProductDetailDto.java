@@ -23,4 +23,5 @@ public class ProductDetailDto {
     private List<ProductVariantDto> variants;
     private List<ProductOptionDto> options;
     private List<CategoryDto> categories;
+    private String status;
 }

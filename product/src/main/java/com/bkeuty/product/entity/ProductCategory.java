@@ -2,18 +2,16 @@ package com.bkeuty.product.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ProductCategory {
     @Id
@@ -26,6 +24,7 @@ public class ProductCategory {
     
     @JsonIgnore
     @ManyToMany(mappedBy = "categories")
+    @Builder.Default
     private Set<Product> products = new HashSet<>();
 }
 

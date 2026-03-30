@@ -2,26 +2,25 @@ package com.bkeuty.product.entity;
 
 import com.bkeuty.product.enums.ProductStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.Set;
 
 @Entity
-@Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true )
 public class ProductVariant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Integer id;
-
+    @Builder.Default
     private BigDecimal price = BigDecimal.valueOf(0);
+    @Builder.Default
     private Integer stockQuantity = 0;
     private String description;
     private String productImageUrl;
@@ -33,10 +32,9 @@ public class ProductVariant {
             inverseJoinColumns = @JoinColumn(name = "option_value_id")
     )
     private Set<ProductOptionValue> optionValues;
+    @Builder.Default
     private ProductStatus status = ProductStatus.ACTIVE;
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
-
-
 }
