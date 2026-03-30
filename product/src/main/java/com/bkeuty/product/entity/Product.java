@@ -26,9 +26,9 @@ public class Product {
             joinColumns = @JoinColumn(name="product_id"),
             inverseJoinColumns = @JoinColumn(name="category_id")
     )
+    @Builder.Default
     private Set<ProductCategory> categories =  new HashSet<>();
     private String image;
-    private ProductStatus status = ProductStatus.ACTIVE;
     @ManyToOne
     @JoinColumn(name = "product_brand")
     private ProductBrand brand;

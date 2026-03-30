@@ -21,4 +21,5 @@ public class DisplayProductDto {
     private Integer stock;
     private String brand;
     private List<CategoryDto> categories;
+    private String status;
 }

@@ -29,7 +29,8 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) String sort) {
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String status) {
 
         Sort sortObj = Sort.unsorted();
         if ("price_asc".equals(sort)) {
@@ -43,7 +44,7 @@ public class ProductController {
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
-        return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId));
+        return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
     }
 
     @GetMapping("/categories")

@@ -2,6 +2,7 @@ package com.bkeuty.product.repository;
 
 import com.bkeuty.product.dto.user.cart.CartProductVariantDto;
 import com.bkeuty.product.entity.ProductVariant;
+import com.bkeuty.product.enums.ProductStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,12 +20,13 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant,I
                         "LEFT JOIN pv.product p " +
                         "LEFT JOIN p.categories c " +
                         "WHERE (:pattern IS NULL OR LOWER(pv.productVariantName) LIKE :pattern) AND " +
-                        "(:categoryId IS NULL OR c.id = :categoryId)" +
-                        "AND pv.status = com.bkeuty.product.enums.ProductStatus.ACTIVE"
+                        "(:categoryId IS NULL OR c.id = :categoryId) AND " +
+                        "(:status IS NULL OR pv.status = :status)"
         )
         Page<ProductVariant> findWithFilters(
                         @Param("pattern") String pattern,
                         @Param("categoryId") Integer categoryId,
+                        @Param("status") ProductStatus status,
                         Pageable pageable);
 
         @Query("SELECT v FROM ProductVariant v where v.id IN :productVariantIds")
