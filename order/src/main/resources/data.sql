@@ -19,3 +19,6 @@ INSERT INTO order_item (id, quantity, product_variant_id, order_id) VALUES
  
 SELECT setval(pg_get_serial_sequence('orders',     'id'), coalesce((SELECT MAX(id) FROM orders),     0) + 1, false);
 SELECT setval(pg_get_serial_sequence('order_item', 'id'), coalesce((SELECT MAX(id) FROM order_item), 0) + 1, false);
+
+SELECT setval('payment_transaction_seq', coalesce((SELECT MAX(id) FROM payment_transaction), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('cart_item',  'id'), coalesce((SELECT MAX(id) FROM cart_item),  0) + 1, false);

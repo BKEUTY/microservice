@@ -65,6 +65,7 @@ public class ProductService {
                 .brand(productVariant.getProduct().getBrand().getBrandName())
                 .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .status(productVariant.getStatus().name())
+                .description(productVariant.getDescription())
                 .build();
     }
 

@@ -32,7 +32,7 @@ public class PromotionService {
         return promotionRepository.findAll(pageable).map(this::toDto);
     }
     private PromotionResponseDto toDto(Promotion promotion) {
-        return PromotionResponseDto.builder()
+        PromotionResponseDto.PromotionResponseDtoBuilder builder = PromotionResponseDto.builder()
                 .id(promotion.getId())
                 .title(promotion.getTitle())
                 .description(promotion.getDescription())
@@ -44,8 +44,15 @@ public class PromotionService {
                 .discountType(promotion.getDiscountType())
                 .discountValue(promotion.getDiscountValue())
                 .maxDiscount(promotion.getMaxDiscount())
-                .promotionType(promotion.getPromotionType())
-                .build();
+                .promotionType(promotion.getPromotionType());
+
+        if (promotion instanceof ProductPromotion productPromotion) {
+            builder.categoryIds(productPromotion.getCategoryIds())
+                .brandIds(productPromotion.getBrandIds())
+                .productIds(productPromotion.getProductIds());
+        }
+
+        return builder.build();
 
     }
     public Map<Integer,ProductPromotionCheckResponseDTO> checkProductPromotion (List<ProductPromotionCheckRequestDTO> productPromotionCheckRequestDTOList){

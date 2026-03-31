@@ -30,18 +30,18 @@ INSERT INTO promotion (id, title, description, create_at, update_at, start_at, e
     NOW(), NOW(),
     '2026-03-01 00:00:00', '2026-03-31 23:59:59',
     0, 0, 15, 300000, 'ProductPromotion'),
- 
+
 (5, 'Quà Tặng Sinh Nhật',
     'Giảm 50k cho khách sinh nhật tháng 3 và tháng 10',
     NOW(), NOW(),
     '2026-01-01 00:00:00', '2026-12-31 23:59:59',
-    0, 1, 50000, 50000, 'UserPromotion'),
- 
+    0, 1, 50000, 50000, 'ProductPromotion'),
+
 (6, 'Tri Ân Hạng Đồng',
     'Giảm thêm 5%, tối đa 20k cho khách hàng hạng Đồng',
     NOW(), NOW(),
     '2026-01-01 00:00:00', '2026-12-31 23:59:59',
-    0, 0, 5, 20000, 'UserPromotion'),
+    0, 0, 5, 20000, 'ProductPromotion'),
  
 (7, 'Promotion Sắp Tới',
     'Chưa bắt đầu - dùng để test trạng thái INCOMING trên UI',

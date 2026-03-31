@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.Set;
 
 import java.time.LocalDateTime;
 
@@ -26,4 +27,7 @@ public class PromotionResponseDto {
     private Integer discountValue;
     private Integer maxDiscount;
     private String promotionType;
+    private Set<Integer> categoryIds;
+    private Set<Integer> brandIds;
+    private Set<Integer> productIds;
 }

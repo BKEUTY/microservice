@@ -72,11 +72,17 @@ public class ProductPromotionStrategy implements PromotionStrategy {
         if (productReq.getTitle() != null) {
             existingPromotion.setTitle(productReq.getTitle());
         }
+        if (productReq.getDescription() != null) {
+            existingPromotion.setDescription(productReq.getDescription());
+        }
         if (productReq.getStartAt() != null) {
             existingPromotion.setStartAt(productReq.getStartAt());
         }
         if (productReq.getEndAt() != null) {
             existingPromotion.setEndAt(productReq.getEndAt());
+        }
+        if (productReq.getStatus() != null) {
+            existingPromotion.setStatus(productReq.getStatus());
         }
 
         // Always update the modified timestamp
@@ -89,15 +95,17 @@ public class ProductPromotionStrategy implements PromotionStrategy {
         if (productReq.getDiscountValue() != null) {
             existingPromotion.setDiscountValue(productReq.getDiscountValue());
         }
+        if (productReq.getMaxDiscount() != null) {
+            existingPromotion.setMaxDiscount(productReq.getMaxDiscount());
+        }
 
         // 3. Update Collections Safely (See updated helper method below)
         updateCollectionSafely(existingPromotion.getCategoryIds(), productReq.getCategoryIds());
         updateCollectionSafely(existingPromotion.getProductIds(), productReq.getProductIds());
         updateCollectionSafely(existingPromotion.getBrandIds(), productReq.getBrandIds());
 
-        // 5. Save and Map to Response
-        ProductPromotion updatedPromotion = productPromotionRepository.save(existingPromotion);
-        return toCreateProductResponseDTO(updatedPromotion);
+        // 4. Save and Map to Response
+        return toCreateProductResponseDTO(productPromotionRepository.save(existingPromotion));
     }
     private void updateCollectionSafely(Set<Integer> existingCollection, Set<Integer> incomingCollection) {
         if (incomingCollection == null) {

@@ -22,4 +22,5 @@ public class DisplayProductDto {
     private String brand;
     private List<CategoryDto> categories;
     private String status;
+    private String description;
 }

@@ -94,26 +94,49 @@ INSERT INTO product_option_value (id, option_value_name, option_id, status) VALU
 (19, 'Tone 21N', 10, 0), (20, 'Tone 23N', 10, 0);
 
 INSERT INTO product_variant (id, product_id, product_variant_name, price, stock_quantity, description, status, product_image_url) VALUES
-(1, 1, 'CeraVe Foaming 236ml', 350000, 100, 'Chai nhỏ tiện lợi', 0, NULL),
-(2, 1, 'CeraVe Foaming 473ml', 550000, 50, 'Tiết kiệm hơn', 0, NULL),
-(3, 2, 'Cetaphil 125ml', 150000, 200, NULL, 0, NULL),
-(4, 2, 'Cetaphil 500ml', 380000, 150, NULL, 0, NULL),
-(5, 31, 'Son 3CE - 126', 380000, 80, 'Màu đỏ gạch', 0, NULL),
-(6, 31, 'Son 3CE - 114', 380000, 60, 'Màu cam đào', 0, NULL),
-(7, 33, 'Dior Lipglow Pink', 850000, 40, 'Hồng tự nhiên', 0, NULL),
-(8, 33, 'Dior Lipglow Coral', 850000, 30, 'Cam san hô', 0, NULL),
-(9, 16, 'Estee Lauder 30ml', 2100000, 20, NULL, 0, NULL),
-(10, 16, 'Estee Lauder 50ml', 3400000, 15, NULL, 0, NULL),
-(11, 21, 'Neutrogena Gel - Da dầu', 450000, 120, 'Cực kỳ mỏng nhẹ', 0, NULL),
-(12, 6, 'Anessa 20ml', 250000, 300, 'Bản mini', 0, NULL),
-(13, 3, 'LRP Effaclar Default', 420000, 100, NULL, 0, NULL),
-(14, 4, 'Cosrx Default', 280000, 150, NULL, 0, NULL),
-(15, 7, 'LRP Anthelios Default', 490000, 80, NULL, 0, NULL),
-(16, 8, 'Skin1004 Sun Default', 320000, 90, NULL, 0, NULL),
-(17, 36, 'Dior Sauvage 100ml', 3200000, 25, NULL, 0, NULL),
-(18, 40, 'Foreo Luna 4 Default', 5500000, 10, NULL, 0, NULL),
-(19, 12, 'Kiehls Calendula 250ml', 1100000, 40, NULL, 0, NULL),
-(20, 22, 'Kiehls Ultra Facial 50ml', 950000, 50, NULL, 0, NULL);
+(1, 1, 'Sữa Rửa Mặt CeraVe Foaming Cleanser - 236ml', 350000, 100, 'Chai nhỏ tiện lợi', 0, NULL),
+(2, 1, 'Sữa Rửa Mặt CeraVe Foaming Cleanser - 473ml', 550000, 50, 'Tiết kiệm hơn', 0, NULL),
+(3, 2, 'Sữa Rửa Mặt Cetaphil Gentle Skin Cleanser - 125ml', 150000, 200, NULL, 0, NULL),
+(4, 2, 'Sữa Rửa Mặt Cetaphil Gentle Skin Cleanser - 500ml', 380000, 150, NULL, 0, NULL),
+(5, 31, 'Son Thỏi 3CE Velvet Lip Tint - Màu 126', 380000, 80, 'Màu đỏ gạch', 0, NULL),
+(6, 31, 'Son Thỏi 3CE Velvet Lip Tint - Màu 114', 380000, 60, 'Màu cam đào', 0, NULL),
+(7, 33, 'Son Dưỡng Dior Addict Lip Glow - Pink 001', 850000, 40, 'Hồng tự nhiên', 0, NULL),
+(8, 33, 'Son Dưỡng Dior Addict Lip Glow - Coral 004', 850000, 30, 'Cam san hô', 0, NULL),
+(9, 16, 'Serum Estee Lauder Advanced Night Repair - 30ml', 2100000, 20, NULL, 0, NULL),
+(10, 16, 'Serum Estee Lauder Advanced Night Repair - 50ml', 3400000, 15, NULL, 0, NULL),
+(11, 21, 'Kem Dưỡng Neutrogena Hydro Boost Water Gel - Da dầu', 450000, 120, 'Cực kỳ mỏng nhẹ', 0, NULL),
+(12, 6, 'Kem Chống Nắng Anessa Perfect UV - 20ml', 250000, 300, 'Bản mini', 0, NULL),
+(13, 3, 'Sữa Rửa Mặt La Roche-Posay Effaclar - 200ml', 420000, 100, NULL, 0, NULL),
+(14, 4, 'Sữa Rửa Mặt Cosrx Low pH Good Morning', 280000, 150, NULL, 0, NULL),
+(15, 7, 'Kem Chống Nắng La Roche-Posay Anthelios', 490000, 80, NULL, 0, NULL),
+(16, 8, 'Kem Chống Nắng Skin1004 Madagascar', 320000, 90, NULL, 0, NULL),
+(17, 36, 'Nước Hoa Dior Sauvage Eau De Parfum', 3200000, 25, NULL, 0, NULL),
+(18, 40, 'Máy Rửa Mặt Foreo Luna 4', 5500000, 10, NULL, 0, NULL),
+(19, 12, 'Toner Kiehl''s Calendula Herbal', 1100000, 40, NULL, 0, NULL),
+(20, 22, 'Kem Dưỡng Kiehl''s Ultra Facial Cream', 950000, 50, NULL, 0, NULL),
+(21, 3, 'Sữa Rửa Mặt La Roche-Posay Effaclar - 400ml', 550000, 80, NULL, 0, NULL),
+(22, 6, 'Kem Chống Nắng Anessa Perfect UV - 60ml', 650000, 150, 'Bản fullsize', 0, NULL),
+(23, 32, 'Son Kem Romand Juicy Lasting Tint - Juicy 01', 180000, 100, NULL, 0, NULL),
+(24, 32, 'Son Kem Romand Juicy Lasting Tint - Juicy 06', 180000, 120, NULL, 0, NULL),
+(25, 21, 'Kem Dưỡng Neutrogena Hydro Boost Water Gel - Da khô', 450000, 90, 'Chất kem cream ẩm hơn', 0, NULL),
+(26, 26, 'Phấn Nước Laneige Neo Cushion Matte - Tone 21N', 650000, 60, 'Tone sáng', 0, NULL),
+(27, 26, 'Phấn Nước Laneige Neo Cushion Matte - Tone 23N', 650000, 50, 'Tone tự nhiên', 0, NULL);
 
 INSERT INTO variant_option_values (variant_id, option_value_id) VALUES
-(1, 1), (2, 2), (3, 3), (4, 4), (5, 9), (6, 10), (7, 13), (8, 14), (9, 17), (10, 18), (11, 15);
+(1, 1), (2, 2),
+(3, 3), (4, 4),
+(13, 5), (21, 6),
+(12, 7), (22, 8),
+(5, 9), (6, 10),
+(23, 11), (24, 12),
+(7, 13), (8, 14),
+(11, 15), (25, 16),
+(9, 17), (10, 18),
+(26, 19), (27, 20);
+
+SELECT setval('product_brand_seq', coalesce((SELECT MAX(id) FROM product_brand), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('product_category',     'id'), coalesce((SELECT MAX(id) FROM product_category),     0) + 1, false);
+SELECT setval(pg_get_serial_sequence('product',              'id'), coalesce((SELECT MAX(id) FROM product),              0) + 1, false);
+SELECT setval(pg_get_serial_sequence('product_option',       'id'), coalesce((SELECT MAX(id) FROM product_option),       0) + 1, false);
+SELECT setval(pg_get_serial_sequence('product_option_value', 'id'), coalesce((SELECT MAX(id) FROM product_option_value), 0) + 1, false);
+SELECT setval(pg_get_serial_sequence('product_variant',      'id'), coalesce((SELECT MAX(id) FROM product_variant),      0) + 1, false);
