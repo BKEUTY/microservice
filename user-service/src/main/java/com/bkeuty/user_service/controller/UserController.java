@@ -1,22 +1,40 @@
 package com.bkeuty.user_service.controller;
 
+import com.bkeuty.user_service.dto.UpdateUserDto;
+import com.bkeuty.user_service.dto.UserDetailResponseDto;
+import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
+import com.bkeuty.user_service.service.AuthService;
 import com.bkeuty.user_service.service.UserService;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
     private final UserService userService;
-    public UserController(UserService userService) {
+    private final AuthService authService;
+    public UserController(UserService userService, AuthService authService) {
         this.userService = userService;
+        this.authService = authService;
     }
     @GetMapping
-    public ResponseEntity<UserRepresentation> getUser(){
-        return ResponseEntity.ok(userService.getUserProfile());
+    public ResponseEntity<UserDetailResponseDto> getUser(@RequestHeader(value = "Authorization", required = false) String bearerToken){
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
+                || !"user".equals(tokenValidationResponseDto.getUserRole())){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.ok(userService.getUserProfile(tokenValidationResponseDto));
+    }
+    @PutMapping
+    public ResponseEntity<UpdateUserDto> updateUser(@RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody UpdateUserDto updateUserDto){
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
+                || !"user".equals(tokenValidationResponseDto.getUserRole())){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.ok(userService.updateUserProfile(updateUserDto,tokenValidationResponseDto));
     }
 }
