@@ -18,6 +18,7 @@ public class OrderResponseDto {
     private String paymentMethod;
     private LocalDate orderDate;
     private String address;
+    private String status;
     private String qrCodeLink;
     private List<AddToCartResponseDto> items;
 }
