@@ -46,7 +46,7 @@ spring:
             - id: review-service
               uri: lb://review-service
               predicates:
-                - Path= /api/user/reviews/**, /api/admin/reviews/**, /api/public/reviews/**, /api/review/**
+                - Path= /api/review/**, /api/user/reviews/**, /api/admin/reviews/**, /api/reviews/**
               filters:
                 - RemoveResponseHeader=Access-Control-Allow-Origin
                 - RemoveResponseHeader=Access-Control-Allow-Methods

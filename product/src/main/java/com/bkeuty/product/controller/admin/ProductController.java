@@ -118,4 +118,15 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(adminProductService.createOptionValue(createProductOptionDTO));
     }
+
+    @GetMapping("/options")
+    public ResponseEntity<?> getAllOptions(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.ok(adminProductService.getAllUniqueOptions());
+    }
 }

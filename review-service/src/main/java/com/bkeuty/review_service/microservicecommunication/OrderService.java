@@ -25,4 +25,18 @@ public class OrderService {
                 .bodyToMono(Boolean.class)
                 .block();
     }
+
+    public void markReviewed(String userId, Integer variantId) {
+        CheckOrderDeliveredRequestDto requestDto = CheckOrderDeliveredRequestDto.builder()
+                .userId(userId)
+                .variantId(variantId)
+                .build();
+
+        orderWebClient.post()
+                .uri("/api/order/internal/mark-reviewed")
+                .bodyValue(requestDto)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .block();
+    }
 }

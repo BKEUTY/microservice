@@ -21,6 +21,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.bkeuty.review_service.microservicecommunication.OrderService;
 import com.bkeuty.review_service.microservicecommunication.ProductService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -53,6 +56,7 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
         updateProductRating(request.getVariantId());
+        orderService.markReviewed(userId, request.getVariantId().intValue());
 
         return mapToReviewResponse(review);
     }
@@ -85,6 +89,17 @@ public class ReviewService {
         updateProductRating(review.getVariantId());
     }
 
+    @Transactional
+    public void deleteReviewByAdmin(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
+
+        review.setHidden(true);
+        reviewRepository.save(review);
+
+        updateProductRating(review.getVariantId());
+    }
+
     public String uploadImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
@@ -109,6 +124,9 @@ public class ReviewService {
                 .build();
 
         reply = adminReplyRepository.save(reply);
+        review.setReplied(true);
+        reviewRepository.save(review);
+        
         return mapToReplyResponse(reply);
     }
 
@@ -126,26 +144,38 @@ public class ReviewService {
 
     @Transactional
     public void deleteReply(String adminId, Long replyId) {
-        if (!adminReplyRepository.existsById(replyId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reply not found");
-        }
-        adminReplyRepository.deleteById(replyId);
+        AdminReply reply = adminReplyRepository.findById(replyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reply not found"));
+        
+        Review review = reply.getReview();
+        review.setReplied(false);
+        reviewRepository.save(review);
+        adminReplyRepository.delete(reply);
     }
 
-    public Page<ReviewResponse> getReviewsByVariantId(Long variantId, int page, int size, Integer rating,
+    public Map<String, Long> getReviewStats(Long variantId) {
+        Map<String, Long> ratingCounts = new HashMap<>();
+        for (int i = 1; i <= 5; i++) {
+            ratingCounts.put(String.valueOf(i), 0L);
+        }
+
+        List<Object[]> counts = reviewRepository.countRatingByVariantId(variantId);
+        for (Object[] obj : counts) {
+            ratingCounts.put(String.valueOf(obj[0]), (Long) obj[1]);
+        }
+        return ratingCounts;
+    }
+
+    public ReviewPageResponse getReviewsByVariantId(Long variantId, int page, int size, Integer rating,
             Boolean hasImage) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Review> reviewPage;
-        if (rating != null) {
-            reviewPage = reviewRepository.findByVariantIdAndRatingAndIsHiddenFalse(variantId, rating, pageable);
-        } else if (Boolean.TRUE.equals(hasImage)) {
-            reviewPage = reviewRepository.findByVariantIdWithImagesAndIsHiddenFalse(variantId, pageable);
-        } else {
-            reviewPage = reviewRepository.findByVariantIdAndIsHiddenFalse(variantId, pageable);
-        }
+        Page<Review> reviewPage = reviewRepository.findByFilters(variantId, rating, hasImage, pageable);
 
-        return reviewPage.map(this::mapToReviewResponse);
+        return ReviewPageResponse.builder()
+                .reviews(reviewPage.map(this::mapToReviewResponse))
+                .ratingCounts(getReviewStats(variantId))
+                .build();
     }
 
     private Boolean checkOrderIsDelivered(String userId, Long variantId, String token) {
@@ -183,6 +213,7 @@ public class ReviewService {
                 .comment(review.getComment())
                 .images(review.getImages())
                 .isHidden(review.isHidden())
+                .isReplied(review.isReplied())
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
                 .reply(replyRes)

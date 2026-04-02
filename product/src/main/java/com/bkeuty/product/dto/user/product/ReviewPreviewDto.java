@@ -1,4 +1,4 @@
-package com.bkeuty.review_service.dto;
+package com.bkeuty.product.dto.user.product;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,18 +12,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReviewResponse {
+public class ReviewPreviewDto {
     private Long id;
-    private String userId;
     private String userName;
-    private Long variantId;
     private Integer rating;
     private String comment;
     private List<String> images;
-    private boolean isHidden;
-    private boolean isReplied;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    
-    private ReplyResponse reply;
 }

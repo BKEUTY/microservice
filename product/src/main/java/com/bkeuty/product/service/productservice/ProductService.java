@@ -8,6 +8,7 @@ import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.enums.ProductStatus;
 import com.bkeuty.product.exception.ProductVariantNotFoundException;
 import com.bkeuty.product.microservicecommunication.PromotionService;
+import com.bkeuty.product.microservicecommunication.ReviewCommunicationService;
 import com.bkeuty.product.repository.ProductCategoryRepository;
 import com.bkeuty.product.repository.ProductOptionValueRepository;
 import com.bkeuty.product.repository.ProductRepository;
@@ -29,17 +30,20 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductOptionValueRepository productOptionValueRepository;
     private final PromotionService promotionService;
+    private final ReviewCommunicationService reviewCommunicationService;
 
     public ProductService(ProductVariantRepository productVariantRepository,
                           ProductCategoryRepository categoryRepository,
                           ProductRepository productRepository,
                           ProductOptionValueRepository productOptionValueRepository,
-                          PromotionService promotionService) {
+                          PromotionService promotionService,
+                          ReviewCommunicationService reviewCommunicationService) {
         this.productVariantRepository = productVariantRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.productOptionValueRepository = productOptionValueRepository;
         this.promotionService = promotionService;
+        this.reviewCommunicationService = reviewCommunicationService;
     }
 
     public Page<ProductDto> getListProducts(Pageable pageable, String name, Integer categoryId) {
@@ -66,6 +70,8 @@ public class ProductService {
                 .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .status(productVariant.getStatus().name())
                 .description(productVariant.getDescription())
+                .averageRating(productVariant.getAverageRating())
+                .reviewCount(productVariant.getReviewCount())
                 .build();
     }
 
@@ -133,6 +139,9 @@ public class ProductService {
                         .collect(Collectors.toList()))
                 .options(options)
                 .status(productVariant.getStatus().name())
+                .averageRating(productVariant.getAverageRating())
+                .reviewCount(productVariant.getReviewCount())
+                .latestReviews(reviewCommunicationService.getLatestReviews(productVariant.getId()))
                 .build();
     }
 

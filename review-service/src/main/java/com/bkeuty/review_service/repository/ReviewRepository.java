@@ -7,11 +7,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findByVariantIdAndIsHiddenFalse(Long variantId, Pageable pageable);
+
+    @Query("SELECT r FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false " +
+           "AND (:rating IS NULL OR r.rating = :rating) " +
+           "AND (:hasImage IS NULL OR (:hasImage = true AND r.images IS NOT EMPTY) OR (:hasImage = false AND r.images IS EMPTY))")
+    Page<Review> findByFilters(Long variantId, Integer rating, Boolean hasImage, Pageable pageable);
 
     @Query("SELECT r FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false AND r.rating = :rating")
     Page<Review> findByVariantIdAndRatingAndIsHiddenFalse(Long variantId, Integer rating, Pageable pageable);
@@ -26,4 +32,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false")
     Long getReviewCount(Long variantId);
+
+    @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false GROUP BY r.rating")
+    List<Object[]> countRatingByVariantId(Long variantId);
 }

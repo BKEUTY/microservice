@@ -57,4 +57,17 @@ public class AdminReviewController {
         reviewService.deleteReply(tokenValidationResponseDto.getUserId(), replyId);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<Void> deleteReview(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @PathVariable Long reviewId) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+                || !"ADMIN".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        reviewService.deleteReviewByAdmin(reviewId);
+        return ResponseEntity.noContent().build();
+    }
 }

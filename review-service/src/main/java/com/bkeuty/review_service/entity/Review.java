@@ -38,6 +38,7 @@ public class Review {
     private AdminReply adminReply;
 
     private boolean isHidden;
+    private boolean isReplied;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
