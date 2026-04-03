@@ -19,6 +19,7 @@ Hệ thống sử dụng PostgreSQL với các database riêng biệt cho từng
 CREATE DATABASE "bkeuty-product";
 CREATE DATABASE "bkeuty-order";
 CREATE DATABASE "bkeuty-promotion";
+CREATE DATABASE "bkeuty-review";
 CREATE DATABASE "bkeuty-keycloak";
 ```
 
@@ -69,6 +70,7 @@ Một số service yêu cầu các thông tin cấu hình từ môi trường. B
 - **Product Service:** Port `8081` (Thư mục: `/microservice/product`)
 - **Order Service:** Port `8082` (Thư mục: `/microservice/order`)
 - **Promotion Service:** Port `8084` (Thư mục: `/microservice/promotion-service`)
+- **Review Service:** Port `8085` (Thư mục: `/microservice/review-service`)
 
 ## 5. Tổng kết danh sách Port
 
@@ -79,6 +81,7 @@ Một số service yêu cầu các thông tin cấu hình từ môi trường. B
 | Order Service | 8082 | bkeuty-order |
 | Auth / User Service | 8083 | - |
 | Promotion Service | 8084 | bkeuty-promotion |
+| Review Service | 8085 | bkeuty-review |
 | Keycloak | 8181 | bkeuty-keycloak |
 | Discovery Server | 8761 | - |
 

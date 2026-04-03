@@ -41,6 +41,14 @@ public class ProductController {
             sortObj = Sort.by(Sort.Direction.ASC, "stockQuantity");
         } else if ("stock_desc".equals(sort)) {
             sortObj = Sort.by(Sort.Direction.DESC, "stockQuantity");
+        } else if ("rating_asc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.ASC, "averageRating");
+        } else if ("rating_desc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.DESC, "averageRating");
+        } else if ("reviews_asc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.ASC, "reviewCount");
+        } else if ("reviews_desc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.DESC, "reviewCount");
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
