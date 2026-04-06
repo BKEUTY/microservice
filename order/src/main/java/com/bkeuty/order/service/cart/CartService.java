@@ -12,6 +12,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
@@ -115,6 +116,23 @@ public class CartService {
 
         throw new CartItemNotFound("Cart Item not found", cartItemId);
 
+    }
+
+    public ResponseEntity<?> deleteCartItem(TokenValidationResponseDto tokenValidationResponseDto, Integer cartItemId) {
+        CartItem itemInCartItem = cartItemRepository.findByIdAndUserId(cartItemId, tokenValidationResponseDto.getUserId());
+
+        if (itemInCartItem != null) {
+            cartItemRepository.deleteById(cartItemId);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        }
+
+        throw new CartItemNotFound("Cart Item not found", cartItemId);
+    }
+
+    @Transactional
+    public ResponseEntity<?> deleteAllCartItems(TokenValidationResponseDto tokenValidationResponseDto) {
+        cartItemRepository.deleteByUserId(tokenValidationResponseDto.getUserId());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     public AddToCartResponseDto toAddToCartResponseDTO(CartItem cartItems) {

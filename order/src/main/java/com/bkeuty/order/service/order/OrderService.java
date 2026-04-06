@@ -129,6 +129,7 @@ public class OrderService {
         placeOrderResponseDTO.setPaymentMethod(request.getPaymentMethod());
         placeOrderResponseDTO.setTotal(totalAmount);
         placeOrderResponseDTO.setItems(items);
+        placeOrderResponseDTO.setStatus(PaymentStatus.UNPAID.name());
         placeOrderResponseDTO.setQrCodeLink(generateQrCode(totalAmount, orderSave.getId()));
         
         return ResponseEntity.ok(placeOrderResponseDTO);
@@ -155,6 +156,7 @@ public class OrderService {
         orderResponseDTO.setAddress(order.getAddress());
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
+        orderResponseDTO.setStatus(order.getStatus().name());
         orderResponseDTO.setItems(getAddToCartResponseDTOS(items));
         return orderResponseDTO;
     }

@@ -21,4 +21,6 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
+    @Builder.Default
+    private boolean isReviewed = false;
 }

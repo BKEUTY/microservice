@@ -34,6 +34,11 @@ public class ProductVariant {
     private Set<ProductOptionValue> optionValues;
     @Builder.Default
     private ProductStatus status = ProductStatus.ACTIVE;
+    @Builder.Default
+    private Double averageRating = 0.0;
+    @Builder.Default
+    private Integer reviewCount = 0;
+
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;

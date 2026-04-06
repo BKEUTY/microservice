@@ -66,6 +66,8 @@ public class ProductService {
                 .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .status(productVariant.getStatus().name())
                 .description(productVariant.getDescription())
+                .averageRating(productVariant.getAverageRating())
+                .reviewCount(productVariant.getReviewCount())
                 .build();
     }
 
@@ -133,6 +135,8 @@ public class ProductService {
                         .collect(Collectors.toList()))
                 .options(options)
                 .status(productVariant.getStatus().name())
+                .averageRating(productVariant.getAverageRating())
+                .reviewCount(productVariant.getReviewCount())
                 .build();
     }
 

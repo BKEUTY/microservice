@@ -44,12 +44,37 @@ public class CartController {
     }
 
     @PutMapping("/{cartId}/minus")
-    public ResponseEntity<?> minusToCart(@RequestHeader("Authorization") String bearerToken, @PathVariable("cartId") Integer cartId) {
+    public ResponseEntity<?> minusToCart(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken, 
+            @PathVariable("cartId") Integer cartId) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null 
                 || !"user".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return cartService.minusToCart(tokenValidationResponseDto, cartId);
+    }
+
+    @DeleteMapping("/{cartId}")
+    public ResponseEntity<?> deleteCartItem(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken, 
+            @PathVariable("cartId") Integer cartId) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null 
+                || !"user".equals(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return cartService.deleteCartItem(tokenValidationResponseDto, cartId);
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<?> deleteAllCartItem(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null 
+                || !"user".equals(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return cartService.deleteAllCartItems(tokenValidationResponseDto);
     }
 }

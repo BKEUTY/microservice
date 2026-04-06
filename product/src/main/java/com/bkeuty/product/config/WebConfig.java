@@ -38,6 +38,10 @@ public class WebConfig implements WebMvcConfigurer {
         return builder.baseUrl("http://promotion-service").build();
     }
     @Bean
+    public WebClient reviewWebClient(WebClient.Builder builder) {
+        return builder.baseUrl("http://review-service").build();
+    }
+    @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()

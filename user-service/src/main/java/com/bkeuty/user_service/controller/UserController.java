@@ -5,7 +5,7 @@ import com.bkeuty.user_service.dto.UserDetailResponseDto;
 import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.user_service.service.AuthService;
 import com.bkeuty.user_service.service.UserService;
-import org.keycloak.representations.idm.UserRepresentation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +20,7 @@ public class UserController {
         this.authService = authService;
     }
     @GetMapping
-    public ResponseEntity<UserDetailResponseDto> getUser(@RequestHeader(value = "Authorization", required = false) String bearerToken){
+    public ResponseEntity<UserDetailResponseDto> getUser(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
                 || !"user".equals(tokenValidationResponseDto.getUserRole())){
@@ -29,7 +29,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserProfile(tokenValidationResponseDto));
     }
     @PutMapping
-    public ResponseEntity<UpdateUserDto> updateUser(@RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody UpdateUserDto updateUserDto){
+    public ResponseEntity<UpdateUserDto> updateUser(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody UpdateUserDto updateUserDto) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
                 || !"user".equals(tokenValidationResponseDto.getUserRole())){

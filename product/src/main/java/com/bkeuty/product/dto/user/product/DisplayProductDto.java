@@ -23,4 +23,6 @@ public class DisplayProductDto {
     private List<CategoryDto> categories;
     private String status;
     private String description;
+    private Double averageRating;
+    private Integer reviewCount;
 }

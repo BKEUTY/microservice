@@ -43,6 +43,15 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Methods
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
+            - id: review-service
+              uri: lb://review-service
+              predicates:
+                - Path= /api/review/**, /api/user/reviews/**, /api/admin/reviews/**, /api/reviews/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: user-service
               uri: lb://user-service
               predicates:
@@ -71,7 +80,8 @@ springdoc:
         url: /api/user/v3/api-docs
       - name: Promotion Service
         url: /api/promotion/v3/api-docs
-
+      - name: Review Service
+        url: /api/review/v3/api-docs
 logging:
   level:
     root: INFO

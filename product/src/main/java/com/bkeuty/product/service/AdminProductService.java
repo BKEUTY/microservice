@@ -50,6 +50,19 @@ public class AdminProductService {
 
     }
 
+    public Map<String, Set<String>> getAllUniqueOptions() {
+        List<ProductOption> allOptions = productOptionRepository.findAll();
+        List<ProductOptionValue> allOptionValues = productOptionValueRepository.findAll();
+        Map<String, Set<String>> result = new HashMap<>();
+        for (ProductOption po : allOptions) {
+            result.computeIfAbsent(po.getOptionName(), k -> new TreeSet<>());
+        }
+        for (ProductOptionValue pov : allOptionValues) {
+            result.computeIfAbsent(pov.getOption().getOptionName(), k -> new TreeSet<>()).add(pov.getOptionValueName());
+        }
+        return result;
+    }
+
     public Page<AdminProductDto> getAllProducts(Pageable pageable) {
         return productRepository.findAll(pageable).map(this::toAdminProductDto);
     }
