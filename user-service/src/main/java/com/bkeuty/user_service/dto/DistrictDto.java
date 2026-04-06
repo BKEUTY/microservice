@@ -1,4 +1,4 @@
-package com.bkeuty.order.dto.shipping;
+package com.bkeuty.user_service.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

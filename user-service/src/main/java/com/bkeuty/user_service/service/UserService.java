@@ -1,9 +1,7 @@
 package com.bkeuty.user_service.service;
 
-import com.bkeuty.user_service.dto.UpdateUserDto;
-import com.bkeuty.user_service.dto.UserDetailResponseDto;
+import com.bkeuty.user_service.dto.*;
 import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
-import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
@@ -14,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,17 +41,26 @@ public class UserService {
     }
     public UpdateUserDto updateUserProfile(UpdateUserDto updateUserDto, TokenValidationResponseDto userInfo) {
         UsersResource usersResource = keycloak.realm(realmName).users();
-        UserRepresentation user = new UserRepresentation();
 
-        user.setFirstName(updateUserDto.getFirstname());
-        user.setLastName(updateUserDto.getLastname());
-        user.setEmail(updateUserDto.getEmail());
-        Map<String, List<String>> map = new HashMap<>();
-        map.put("phoneNumber", List.of(updateUserDto.getPhoneNumber()));
-        map.put("mainAddress", List.of(updateUserDto.getMainAddress()));
-        map.put("otherAddress", updateUserDto.getOtherAddresses());
-        user.setAttributes(map);
         try {
+            UserResource userResource = usersResource.get(userInfo.getUserId());
+            UserRepresentation user = userResource.toRepresentation();
+            if(updateUserDto.getFirstname()!=null){
+                user.setFirstName(updateUserDto.getFirstname());
+            }
+            if(updateUserDto.getLastname()!=null){
+                user.setLastName(updateUserDto.getLastname());
+            }
+            if(updateUserDto.getEmail()!=null){
+                user.setEmail(updateUserDto.getEmail());
+            }
+
+            Map<String, List<String>> map = user.getAttributes();
+            if(updateUserDto.getPhoneNumber()!=null){
+                map.put("phoneNumber", List.of(updateUserDto.getPhoneNumber()));
+            }
+
+            user.setAttributes(map);
             usersResource.get(userInfo.getUserId()).update(user);
             return updateUserDto;
         } catch (Exception e){
@@ -69,8 +77,104 @@ public class UserService {
                 .firstname(userRepresentation.getFirstName())
                 .lastname(userRepresentation.getLastName())
                 .phoneNumber(userRepresentation.firstAttribute("phoneNumber"))
-                .mainAddress(userRepresentation.firstAttribute("mainAddress"))
-                .otherAddresses(userRepresentation.getAttributes().get("otherAddress"))
+                .addresses(userRepresentation.getAttributes().get("addresses").stream().map(this::addressToAddressDto).toList())
+                .dob(userRepresentation.firstAttribute("dob"))
+                .build();
+    }
+
+    public Boolean addNewAddress(TokenValidationResponseDto tokenValidationResponseDto, AddressDto addNewAddressDto) {
+        String address = addNewAddressDto.getAddress()+", "+addNewAddressDto.getWard().getWardName() + ", "+ addNewAddressDto.getDistrict().getDistrictName()+  ", "+ addNewAddressDto.getProvince().getProvinceName()
+                + "|" + addNewAddressDto.getWard().getWardCode().toString()
+                + ":" + addNewAddressDto.getDistrict().getDistrictID().toString()
+                + ":" + addNewAddressDto.getProvince().getProvinceID().toString();
+        UsersResource usersResource = keycloak.realm(realmName).users();
+
+        try {
+
+
+
+            UserResource updateUser = usersResource.get(tokenValidationResponseDto.getUserId());
+            List<String> listAddress = updateUser.toRepresentation().getAttributes().get("addresses");
+            UserRepresentation user = updateUser.toRepresentation();
+            Map<String, List<String>> map = new HashMap<>();
+            if(listAddress==null){
+                listAddress = new ArrayList<>();
+            }
+            listAddress.add(address);
+            map.put("addresses", listAddress);
+            user.setAttributes(map);
+            updateUser.update(user);
+            return true;
+        } catch (Exception e){
+            logger.error("Exception in updateUserProfile " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in add new address " + e.getMessage());
+        }
+    }
+    public Boolean deleteAddress(AddressDto address,  TokenValidationResponseDto tokenValidationResponseDto) {
+        try {
+
+
+
+            UsersResource usersResource = keycloak.realm(realmName).users();
+            UserResource updateUser = usersResource.get(tokenValidationResponseDto.getUserId());
+            UserRepresentation user = updateUser.toRepresentation();
+            Map<String, List<String>> map = user.getAttributes();
+            List<String> listAddress = updateUser.toRepresentation().getAttributes().get("addresses");
+           boolean deleted  = false;
+           if(listAddress.size()==1){
+               throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Should have at least one address");
+           }
+            for(String key : listAddress) {
+                AddressDto addressDto = addressToAddressDto(key);
+               if(addressDto.equals(address)) {
+                   System.out.println("Found address");
+                   listAddress.remove(key);
+                   deleted = true;
+               }
+           }
+            map.put("addresses", listAddress);
+            user.setAttributes(map);
+            updateUser.update(user);
+            return deleted;
+        } catch (Exception e){
+            logger.error("Exception in AddNewAddress " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in add new address " + e.getMessage());
+        }
+    }
+    private AddressDto addressToAddressDto(String address) {
+        AddressDto addressDto = new AddressDto();
+        String[] addressArray = address.split("\\|");
+        if(addressArray.length!=2){
+            return null;
+        }
+        String nameField = addressArray[0];
+        String codeField = addressArray[1];
+        String[] nameArray = nameField.split(",\\s*");
+        if(nameArray.length< 4){
+            return null;
+        }
+        int nameLength = nameArray.length;
+
+        StringBuilder addressName  = new StringBuilder();
+        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
+            addressName.append(", ").append(nameArray[nameIndex]);
+        }
+
+        String wardName  = nameArray[nameLength-3];
+        String districtName = nameArray[nameLength-2];
+        String provinceName = nameArray[nameLength-1];
+        String[] codeArray = codeField.split(":");
+        if(codeArray.length!=3){
+            return null;
+        }
+        String wardCode = codeArray[0];
+        String districtCode = codeArray[1];
+        String provinceCode = codeArray[2];
+        return AddressDto.builder()
+                .address(addressName.toString())
+                .ward(new WardDto(Integer.valueOf(wardCode), wardName))
+                .district(new DistrictDto(Integer.valueOf(districtCode), districtName))
+                .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
                 .build();
     }
 }

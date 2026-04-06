@@ -5,12 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DistrictDto {
-    private Integer districtID;
-    private String districtName;
-
+public class CalShippingFeeResponseDto {
+    private Integer code;
+    private String message;
+    private ShippingFeeDto data;
 }

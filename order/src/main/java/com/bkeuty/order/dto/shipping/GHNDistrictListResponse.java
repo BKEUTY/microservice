@@ -14,5 +14,5 @@ import java.util.List;
 public class GHNDistrictListResponse {
     private Integer code;
     private String message;
-    private List<DistrictDto> data;
+    private List<DistrictDtoGhn> data;
 }

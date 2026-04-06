@@ -1,5 +1,6 @@
 package com.bkeuty.user_service.controller;
 
+import com.bkeuty.user_service.dto.AddressDto;
 import com.bkeuty.user_service.dto.UpdateUserDto;
 import com.bkeuty.user_service.dto.UserDetailResponseDto;
 import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
@@ -36,5 +37,23 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.ok(userService.updateUserProfile(updateUserDto,tokenValidationResponseDto));
+    }
+    @PostMapping("/address")
+    public ResponseEntity<Boolean> addAddress(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody AddressDto addNewAddressDto) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
+                || !"user".equals(tokenValidationResponseDto.getUserRole())){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.ok(userService.addNewAddress(tokenValidationResponseDto,addNewAddressDto));
+    }
+    @DeleteMapping("/address")
+    public ResponseEntity<Boolean> deleteAddress(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody AddressDto deleteAddressDto) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
+                || !"user".equals(tokenValidationResponseDto.getUserRole())){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.ok(userService.deleteAddress(deleteAddressDto,tokenValidationResponseDto));
     }
 }

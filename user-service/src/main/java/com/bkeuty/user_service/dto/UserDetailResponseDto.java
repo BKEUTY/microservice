@@ -15,8 +15,8 @@ public class UserDetailResponseDto {
     private String lastname;
     private String firstname;
     private String email;
-    private String mainAddress;
-    private List<String> otherAddresses;
+    private List<AddressDto> addresses;
     private String phoneNumber;
+    private String dob;
 
 }

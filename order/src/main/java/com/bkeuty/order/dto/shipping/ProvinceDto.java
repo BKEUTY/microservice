@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProvinceDto {
-    private Integer ProvinceID;
-    private String ProvinceName;
+    private Integer provinceID;
+    private String provinceName;
 }

@@ -14,5 +14,5 @@ import java.util.List;
 public class GHNWardListResponse {
     private Integer code;
     private String message;
-    private List<WardDto> data;
+    private List<WardDtoGhn> data;
 }

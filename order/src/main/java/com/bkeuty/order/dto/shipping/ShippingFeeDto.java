@@ -1,6 +1,7 @@
 package com.bkeuty.order.dto.shipping;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,8 +10,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DistrictDto {
-    private Integer districtID;
-    private String districtName;
+public class ShippingFeeDto {
+    private Integer total;
 
+    @JsonProperty("service_fee")
+    private Integer serviceFee;
 }

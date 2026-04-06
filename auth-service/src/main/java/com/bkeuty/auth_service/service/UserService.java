@@ -26,6 +26,11 @@ public class UserService {
 
     public RegisterResponseDto registerUser(RegisterRequestDto dto) {
         // Prepare Password
+        String address = dto.getAddress().getAddress()+", "+dto.getAddress().getWard().getWardName() + ", "+ dto.getAddress().getDistrict().getDistrictName()+  ", "+ dto.getAddress().getProvince().getProvinceName()
+                + "|" + dto.getAddress().getWard().getWardCode().toString()
+                + ":" + dto.getAddress().getDistrict().getDistrictID().toString()
+                + ":" + dto.getAddress().getProvince().getProvinceID().toString();
+
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);
         credential.setValue(dto.getPassword());
@@ -44,8 +49,9 @@ public class UserService {
         // Keycloak expects a Map<String, List<String>>
         user.setAttributes(Map.of(
                 "phoneNumber", List.of(dto.getPhoneNumber()),
-                "mainAddress", List.of(dto.getMainAddress()),
-                "userRole", List.of("user")
+                "addresses", List.of(address),
+                "userRole", List.of("user"),
+                "dob", List.of(dto.getDateOfBirth())
         ));
 
         // Call the API
@@ -65,7 +71,7 @@ public class UserService {
                 .email(dto.getEmail())
                 .firstName(dto.getFirstName())
                 .lastName(dto.getLastName())
-                .mainAddress(dto.getMainAddress())
+                .address(dto.getAddress())
                 .phoneNumber(dto.getPhoneNumber())
                 .build();
     }

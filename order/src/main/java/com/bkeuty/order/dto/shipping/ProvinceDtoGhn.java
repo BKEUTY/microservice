@@ -5,12 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DistrictDto {
-    private Integer districtID;
-    private String districtName;
-
+@AllArgsConstructor
+@NoArgsConstructor
+public class ProvinceDtoGhn {
+    private Integer ProvinceID;
+    private String ProvinceName;
 }

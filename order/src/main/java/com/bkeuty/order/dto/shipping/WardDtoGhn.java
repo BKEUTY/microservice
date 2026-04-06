@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DistrictDto {
-    private Integer districtID;
-    private String districtName;
+public class WardDtoGhn {
+    private Integer WardCode;
+    private String WardName;
 
 }

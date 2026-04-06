@@ -1,8 +1,6 @@
 package com.bkeuty.order.microservicecommunication;
 
-import com.bkeuty.order.dto.shipping.GHNDistrictListResponse;
-import com.bkeuty.order.dto.shipping.GHNProvinceListResponse;
-import com.bkeuty.order.dto.shipping.GHNWardListResponse;
+import com.bkeuty.order.dto.shipping.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,6 +16,9 @@ public class GHNCommunication {
     }
     @Value("${ghn.api-token}")
     private String apiToken;
+    @Value("${ghn.shop-id}")
+    private String shopId;
+
     public Mono<GHNProvinceListResponse> getGHNProvinceList() {
         return GHNWebClient.get().uri("/shiip/public-api/master-data/province").header("Token",apiToken).retrieve().bodyToMono(GHNProvinceListResponse.class);
     }
@@ -29,4 +30,12 @@ public class GHNCommunication {
         return GHNWebClient.get().uri(uriBuilder -> uriBuilder.path("/shiip/public-api/master-data/ward").queryParam("district_id",districtId).build()).header("Token",apiToken)
                 .retrieve().bodyToMono(GHNWardListResponse.class);
     }
+
+    public Mono<CalShippingFeeResponseDto>  getCalShippingFee(CalShippingFeeDto  calShippingFeeDto) {
+        return GHNWebClient.post().uri(uriBuilder -> uriBuilder.path("/shiip/public-api/v2/shipping-order/fee").build()).bodyValue(calShippingFeeDto)
+                .header("Token",apiToken)
+                .header("ShopId",shopId)
+                .retrieve().bodyToMono(CalShippingFeeResponseDto.class);
+    }
+
 }

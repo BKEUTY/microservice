@@ -14,5 +14,5 @@ import java.util.List;
 public class GHNProvinceListResponse {
     private Integer code;
     private String message;
-    private List<ProvinceDto> data;
+    private List<ProvinceDtoGhn> data;
 }

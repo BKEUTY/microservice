@@ -1,4 +1,4 @@
-package com.bkeuty.order.dto.shipping;
+package com.bkeuty.auth_service.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DistrictDto {
-    private Integer districtID;
-    private String districtName;
+public class WardDto {
+    private Integer wardCode;
+    private String wardName;
 
 }

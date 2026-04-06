@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WardDto {
-    private Integer WardCode;
-    private String WardName;
+    private Integer wardCode;
+    private String wardName;
 
 }
