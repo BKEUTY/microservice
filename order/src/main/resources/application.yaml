@@ -46,3 +46,11 @@ sepay:
   account-number: SEPQUANG210804
   bank: OCB
   template: compact
+
+ghn:
+  api-token: "7e4ff493-2f3f-11f1-a973-aee5264794df"
+  return-phone: "0898680945"
+  return-address: "4/21, đường 15, khu phố 3"
+  from-district-id: 3695
+  from-ward-code: "90740"
+
