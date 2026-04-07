@@ -25,7 +25,9 @@ public class Order {
     private String paymentMethod;
     private LocalDate orderDate;
     private String address;
-    
+    private BigDecimal shippingFee;
+    private String estimatedShippingDate;
+    private PaymentStatus paymentStatus;
     @Column(name = "user_id", nullable = false)
     private String userId;
 

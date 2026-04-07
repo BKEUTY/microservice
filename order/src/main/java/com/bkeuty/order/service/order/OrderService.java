@@ -4,14 +4,17 @@ import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.cart.ProductVariantDto;
 import com.bkeuty.order.dto.order.*;
+import com.bkeuty.order.dto.shipping.*;
 import com.bkeuty.order.entity.CartItem;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.exception.CartItemNotFound;
+import com.bkeuty.order.microservicecommunication.GHNCommunication;
 import com.bkeuty.order.repository.CartItemRepository;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
+import com.bkeuty.order.service.shipping.ShippingService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,7 +38,7 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
     private final WebClient productWebClient;
-    
+    private final ShippingService  shippingService;
     @Value("${sepay.account-number:}")
     private String accountNumber;
     @Value("${sepay.bank:}")
@@ -42,11 +46,12 @@ public class OrderService {
     @Value("${sepay.template:}")
     private String template;
 
-    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient) {
+    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient, GHNCommunication ghnCommunication, ShippingService shippingService) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
         this.orderItemRepository = orderItemRepository;
         this.productWebClient = productWebClient;
+        this.shippingService = shippingService;
     }
 
     public ResponseEntity<?> placeOrder(TokenValidationResponseDto userInfo, PlaceOrderRequestDto request) {
@@ -54,12 +59,20 @@ public class OrderService {
         if (orderItemList == null || orderItemList.isEmpty()) {
             return ResponseEntity.badRequest().body("Order items cannot be empty");
         }
+        Integer shippingFee = shippingService.calShippingFee(CalShippingFeeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
+                                                                                                                               .toDistrictId(request.getAddress().getDistrict().getDistrictID())
+                .serviceTypeId(2).weight(100).build())
+                .block().getData().getServiceFee();
 
+        String shippingDate = shippingService.calShippingTime(CalShippingTimeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
+                .toDistrictId(request.getAddress().getDistrict().getDistrictID()).serviceTypeId(2).build()).block().getData().getLeaderTimeOrder().getToEstimateTime();
         Order order = Order.builder()
                 .orderDate(LocalDate.now())
-                .address(request.getAddress())
+                .address(addressDtoToAddress(request.getAddress()))
                 .paymentMethod(request.getPaymentMethod())
                 .userId(userInfo.getUserId())
+                .shippingFee(BigDecimal.valueOf(shippingFee))
+                .estimatedShippingDate(shippingDate)
                 .status(PaymentStatus.UNPAID)
                 .build();
 
@@ -125,18 +138,21 @@ public class OrderService {
         OrderResponseDto placeOrderResponseDTO = new OrderResponseDto();
         placeOrderResponseDTO.setOrderId(orderSave.getId().toString());
         placeOrderResponseDTO.setOrderDate(LocalDate.now());
+        placeOrderResponseDTO.setShippingFee(BigDecimal.valueOf(shippingFee));
+        placeOrderResponseDTO.setEstShippingDate(shippingDate);
         placeOrderResponseDTO.setAddress(request.getAddress());
         placeOrderResponseDTO.setPaymentMethod(request.getPaymentMethod());
         placeOrderResponseDTO.setTotal(totalAmount);
         placeOrderResponseDTO.setItems(items);
         placeOrderResponseDTO.setStatus(PaymentStatus.UNPAID.name());
-        placeOrderResponseDTO.setQrCodeLink(generateQrCode(totalAmount, orderSave.getId()));
+        placeOrderResponseDTO.setQrCodeLink(generateQrCode(totalAmount.add(BigDecimal.valueOf(shippingFee)), orderSave.getId()));
         
         return ResponseEntity.ok(placeOrderResponseDTO);
     }
 
     private String generateQrCode(BigDecimal total, Integer orderId) {
-        return "https://qr.sepay.vn/img?acc=" + accountNumber + "&bank=" + bank + "&amount=" + total + "&des=DH" + orderId + "&template=" + template + "&download=false";
+        int intTotal = total.intValue();
+        return "https://qr.sepay.vn/img?acc=" + accountNumber + "&bank=" + bank + "&amount=" + intTotal + "&des=DH" + orderId + "&template=" + template + "&download=false";
     }
 
     public ResponseEntity<List<OrderResponseDto>> getListOrders(String userId) {
@@ -153,7 +169,7 @@ public class OrderService {
         OrderResponseDto orderResponseDTO = new OrderResponseDto();
         orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
         orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
-        orderResponseDTO.setAddress(order.getAddress());
+        orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
         orderResponseDTO.setStatus(order.getStatus().name());
@@ -195,4 +211,47 @@ public class OrderService {
         
         return itemList;
     }
+    private String addressDtoToAddress(AddressDto dto) {
+        return dto.getAddress()+", "+dto.getWard().getWardName() + ", "+ dto.getDistrict().getDistrictName()+  ", "+ dto.getProvince().getProvinceName()
+                + "|" + dto.getWard().getWardCode().toString()
+                + ":" + dto.getDistrict().getDistrictID().toString()
+                + ":" + dto.getProvince().getProvinceID().toString();
+    }
+    private AddressDto toAddressDto(String address) {
+        AddressDto addressDto = new AddressDto();
+        String[] addressArray = address.split("\\|");
+        if(addressArray.length!=2){
+            return null;
+        }
+        String nameField = addressArray[0];
+        String codeField = addressArray[1];
+        String[] nameArray = nameField.split(",\\s*");
+        if(nameArray.length< 4){
+            return null;
+        }
+        int nameLength = nameArray.length;
+
+        StringBuilder addressName  = new StringBuilder();
+        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
+            addressName.append(", ").append(nameArray[nameIndex]);
+        }
+
+        String wardName  = nameArray[nameLength-3];
+        String districtName = nameArray[nameLength-2];
+        String provinceName = nameArray[nameLength-1];
+        String[] codeArray = codeField.split(":");
+        if(codeArray.length!=3){
+            return null;
+        }
+        String wardCode = codeArray[0];
+        String districtCode = codeArray[1];
+        String provinceCode = codeArray[2];
+        return AddressDto.builder()
+                .address(addressName.toString())
+                .ward(new WardDto(Integer.valueOf(wardCode), wardName))
+                .district(new DistrictDto(Integer.valueOf(districtCode), districtName))
+                .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
+                .build();
+    }
+
 }

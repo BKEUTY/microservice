@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @Data
 public class LeaderTimeOrderDto {
 
-    @JsonProperty("from_estimate_time")
-    private LocalDateTime fromEstimateTime;
-    @JsonProperty("to_estimate_time")
-    private LocalDateTime toEstimateTime;
+    @JsonProperty("from_estimate_date")
+    private String fromEstimateTime;
+    @JsonProperty("to_estimate_date")
+    private String toEstimateTime;
 }

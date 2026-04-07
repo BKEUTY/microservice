@@ -1,6 +1,7 @@
 package com.bkeuty.order.dto.order;
 
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
+import com.bkeuty.order.dto.shipping.AddressDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,9 +16,11 @@ import java.util.List;
 public class OrderResponseDto {
     private String orderId;
     private BigDecimal total;
+    private BigDecimal shippingFee;
+    private String estShippingDate;
     private String paymentMethod;
     private LocalDate orderDate;
-    private String address;
+    private AddressDto address;
     private String status;
     private String qrCodeLink;
     private List<AddToCartResponseDto> items;

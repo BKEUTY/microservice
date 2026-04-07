@@ -62,7 +62,7 @@ public class ProductService {
                 .imageUrl(productVariant.getProductImageUrl())
                 .originPrice(productVariant.getPrice())
                 .discountPrice(promotionPrice.get(productVariant.getId()).getNewPrice())
-                .brand(productVariant.getProduct().getBrand().getBrandName())
+                .brand(productVariant.getProduct().getBrand()!=null?productVariant.getProduct().getBrand().getBrandName():null)
                 .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .status(productVariant.getStatus().name())
                 .description(productVariant.getDescription())

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@Builder
 public class CalShippingTimeDto {
     @JsonProperty("to_ward_code")
     private String toWardCode;

@@ -42,7 +42,7 @@ public class GHNCommunication {
         return GHNWebClient.post().uri(uriBuilder -> uriBuilder.path("/shiip/public-api/v2/shipping-order/leadtime").build()).bodyValue(calShippingTimeDto)
                 .header("Token",apiToken)
                 .header("ShopId",shopId)
-                .retrieve().bodyToMono(CalShippingFeeResponseDto.class);
+                .retrieve().bodyToMono(CalShippingTimeResponseDto.class);
     }
 
 }
