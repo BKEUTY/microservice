@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -35,6 +37,14 @@ public class UserController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.ok(userService.updateUserProfile(updateUserDto,tokenValidationResponseDto));
+    }
+    @GetMapping("/address")
+    public ResponseEntity<List<AddressDto>> getAddress(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        return ResponseEntity.ok(userService.getAddresses(tokenValidationResponseDto));
     }
     @PostMapping("/address")
     public ResponseEntity<Boolean> addAddress(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody AddressDto addNewAddressDto) {

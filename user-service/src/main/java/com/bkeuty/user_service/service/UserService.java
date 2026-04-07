@@ -139,8 +139,21 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in add new address " + e.getMessage());
         }
     }
+    public List<AddressDto> getAddresses(TokenValidationResponseDto tokenValidationResponseDto) {
+        try{
+
+            List<String> listAddress = keycloak.realm(realmName).users().get(tokenValidationResponseDto.getUserId()).toRepresentation().getAttributes().get("addresses");
+            if(listAddress==null){
+                return new ArrayList<>();
+            }
+            return listAddress.stream().map(this::addressToAddressDto).toList();
+        }catch (Exception e){
+            logger.error("Exception in GetAddresses " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in GetAddresses " + e.getMessage());
+        }
+    }
     private AddressDto addressToAddressDto(String address) {
-        AddressDto addressDto = new AddressDto();
+
         String[] addressArray = address.split("\\|");
         if(addressArray.length!=2){
             return null;
