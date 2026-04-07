@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class CreateOrderDto {
+public class CreateShippingOrderDto {
     @JsonProperty("payment_type_id")
     private Integer paymentTypeId;
     @JsonProperty("note")
@@ -24,11 +24,6 @@ public class CreateOrderDto {
     @Value("${ghn.return-address}")
     @JsonProperty("return_address")
     private String returnAddress;
-
-    @JsonProperty("from_name")
-    private String fromName;
-    @JsonProperty("from_address")
-    private String fromAddress;
 
     @JsonProperty("to_name")
     private String toName;
@@ -46,15 +41,13 @@ public class CreateOrderDto {
     @JsonProperty("cod_amount")
     private Integer codAmount = 0;
     @JsonProperty("weight")
-    private Integer weight = 0;
+    private Integer weight = 100;
     @JsonProperty("length")
-    private Integer length = 0;
+    private Integer length = 10;
     @JsonProperty("width")
-    private Integer width = 0;
+    private Integer width = 10;
     @JsonProperty("height")
-    private Integer height = 0;
-    @JsonProperty("paymemt_type_id")
-    private Integer paymemtTypeId;
+    private Integer height = 10;
 
 
 }
