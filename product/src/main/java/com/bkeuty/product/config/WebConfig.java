@@ -4,6 +4,7 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,18 +34,22 @@ public class WebConfig implements WebMvcConfigurer {
     public WebClient authWebClient(WebClient.Builder builder) {
         return builder.baseUrl("http://auth-service").build();
     }
+
     @Bean
     public WebClient promotionWebClient(WebClient.Builder builder) {
         return builder.baseUrl("http://promotion-service").build();
     }
+
     @Bean
     public WebClient reviewWebClient(WebClient.Builder builder) {
         return builder.baseUrl("http://review-service").build();
     }
+
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()
+                .addServersItem(new Server().url("http://localhost:8080").description("API Gateway"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,

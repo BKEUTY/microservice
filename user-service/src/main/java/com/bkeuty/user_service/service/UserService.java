@@ -128,6 +128,7 @@ public class UserService {
                    System.out.println("Found address");
                    listAddress.remove(key);
                    deleted = true;
+                   break;
                }
            }
             map.put("addresses", listAddress);
@@ -166,9 +167,12 @@ public class UserService {
         }
         int nameLength = nameArray.length;
 
-        StringBuilder addressName  = new StringBuilder();
-        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
-            addressName.append(", ").append(nameArray[nameIndex]);
+        StringBuilder addressName = new StringBuilder();
+        for (int nameIndex = 0; nameIndex < nameLength - 3; nameIndex++) {
+            if (nameIndex > 0) {
+                addressName.append(", ");
+            }
+            addressName.append(nameArray[nameIndex]);
         }
 
         String wardName  = nameArray[nameLength-3];

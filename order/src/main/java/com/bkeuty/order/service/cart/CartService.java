@@ -32,7 +32,7 @@ public class CartService {
     }
 
     public List<CartItemResponseDto> getListCartItem(TokenValidationResponseDto tokenValidationResponseDto) {
-        List<CartItem> userCartItems = cartItemRepository.findByUserId(tokenValidationResponseDto.getUserId());
+        List<CartItem> userCartItems = cartItemRepository.findByUserIdAndIsBuyNowFalse(tokenValidationResponseDto.getUserId());
 
         if (userCartItems == null || userCartItems.isEmpty()) {
             return new ArrayList<>();
@@ -84,21 +84,23 @@ public class CartService {
     }
 
     public ResponseEntity<AddToCartResponseDto> addToCart(TokenValidationResponseDto tokenValidationResponseDto, AddToCartRequestDto addToCartRequest) {
-        CartItem itemInCartItem = cartItemRepository.findByUserIdAndProductVariant(tokenValidationResponseDto.getUserId(), addToCartRequest.getProductVariantId());
+        if (Boolean.FALSE.equals(addToCartRequest.getBuyNow())) {
+            CartItem itemInCartItem = cartItemRepository.findByUserIdAndProductVariantAndIsBuyNowFalse(tokenValidationResponseDto.getUserId(), addToCartRequest.getProductVariantId());
 
-        if (itemInCartItem != null) {
-            itemInCartItem.setQuantity(itemInCartItem.getQuantity() + addToCartRequest.getQuantity());
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
+            if (itemInCartItem != null) {
+                itemInCartItem.setQuantity(itemInCartItem.getQuantity() + addToCartRequest.getQuantity());
+                return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
+            }
         }
 
-        CartItem cartItems  = CartItem.builder()
+        CartItem cartItems = CartItem.builder()
                 .productVariant(addToCartRequest.getProductVariantId())
                 .quantity(addToCartRequest.getQuantity())
-                .userId(tokenValidationResponseDto.getUserId()).build();
+                .userId(tokenValidationResponseDto.getUserId())
+                .isBuyNow(Boolean.TRUE.equals(addToCartRequest.getBuyNow()))
+                .build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(cartItems)));
-
     }
 
     public ResponseEntity<AddToCartResponseDto> minusToCart(TokenValidationResponseDto tokenValidationResponseDto, Integer cartItemId) {
@@ -148,6 +150,7 @@ public class CartService {
         }        
                 
         return  AddToCartResponseDto.builder()
+                .cartId(cartItems.getId())
                 .quantity(cartItems.getQuantity())
                 .price(productVariant.getPrice())
                 .productVariantId(productVariant.getId())

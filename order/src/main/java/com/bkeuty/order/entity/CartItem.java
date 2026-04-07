@@ -23,4 +23,7 @@ public class CartItem {
     @JoinColumn(name = "user_id")
     private String userId;
 
+    @Column(name = "is_buy_now")
+    @Builder.Default
+    private Boolean isBuyNow = false;
 }

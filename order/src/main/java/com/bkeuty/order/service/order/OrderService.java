@@ -70,6 +70,7 @@ public class OrderService {
                 .orderDate(LocalDate.now())
                 .address(addressDtoToAddress(request.getAddress()))
                 .paymentMethod(request.getPaymentMethod())
+                .shippingFee(request.getShippingFee())
                 .userId(userInfo.getUserId())
                 .shippingFee(BigDecimal.valueOf(shippingFee))
                 .estimatedShippingDate(shippingDate)
@@ -132,6 +133,9 @@ public class OrderService {
             throw new RuntimeException("Internal error processing stock: " + e.getMessage());
         }
 
+        if (request.getShippingFee() != null) {
+            totalAmount = totalAmount.add(request.getShippingFee());
+        }
         orderSave.setTotal(totalAmount);
         orderRepository.save(orderSave);
         
@@ -173,6 +177,7 @@ public class OrderService {
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
         orderResponseDTO.setStatus(order.getStatus().name());
+        orderResponseDTO.setShippingFee(order.getShippingFee());
         orderResponseDTO.setItems(getAddToCartResponseDTOS(items));
         return orderResponseDTO;
     }
@@ -195,7 +200,6 @@ public class OrderService {
                 AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
                 addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
                 addToCartResponseDTO.setQuantity(orderItems.getQuantity());
-
 
                 if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
                     ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
@@ -231,9 +235,12 @@ public class OrderService {
         }
         int nameLength = nameArray.length;
 
-        StringBuilder addressName  = new StringBuilder();
-        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
-            addressName.append(", ").append(nameArray[nameIndex]);
+        StringBuilder addressName = new StringBuilder();
+        for (int nameIndex = 0; nameIndex < nameLength - 3; nameIndex++) {
+            if (nameIndex > 0) {
+                addressName.append(", ");
+            }
+            addressName.append(nameArray[nameIndex]);
         }
 
         String wardName  = nameArray[nameLength-3];

@@ -62,15 +62,17 @@ Một số service yêu cầu các thông tin cấu hình từ môi trường. B
 - **Vai trò:** Điểm đầu nhận mọi request từ Client và điều hướng (routing).
 
 ### Bước 4: Auth Service
-- **Thư mục:** `/microservice/auth-service
+- **Thư mục:** `/microservice/auth-service`
 - **Port:** `8083`
 - **Lệnh chạy:** `./mvnw spring-boot:run`
+- **Vai trò:** Xử lý Đăng ký/Đăng nhập và cấp phát JWT.
 
 ### Bước 5: Các Business Services (Chạy đồng thời)
 - **Product Service:** Port `8081` (Thư mục: `/microservice/product`)
 - **Order Service:** Port `8082` (Thư mục: `/microservice/order`)
 - **Promotion Service:** Port `8084` (Thư mục: `/microservice/promotion-service`)
 - **Review Service:** Port `8085` (Thư mục: `/microservice/review-service`)
+- **User Service:** Port `8086` (Thư mục: `/microservice/user-service`)
 
 ## 5. Tổng kết danh sách Port
 
@@ -79,9 +81,10 @@ Một số service yêu cầu các thông tin cấu hình từ môi trường. B
 | API Gateway | 8080 | - |
 | Product Service | 8081 | bkeuty-product |
 | Order Service | 8082 | bkeuty-order |
-| Auth / User Service | 8083 | - |
+| Auth Service | 8083 | - |
 | Promotion Service | 8084 | bkeuty-promotion |
 | Review Service | 8085 | bkeuty-review |
+| User Service | 8086 | - |
 | Keycloak | 8181 | bkeuty-keycloak |
 | Discovery Server | 8761 | - |
 

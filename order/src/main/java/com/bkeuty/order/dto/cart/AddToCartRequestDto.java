@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 public class AddToCartRequestDto {
     private Integer productVariantId;
     private Integer quantity;
+    private Boolean buyNow = false;
 }
