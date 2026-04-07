@@ -91,13 +91,10 @@ public class UserService {
         UsersResource usersResource = keycloak.realm(realmName).users();
 
         try {
-
-
-
             UserResource updateUser = usersResource.get(tokenValidationResponseDto.getUserId());
             List<String> listAddress = updateUser.toRepresentation().getAttributes().get("addresses");
             UserRepresentation user = updateUser.toRepresentation();
-            Map<String, List<String>> map = new HashMap<>();
+            Map<String, List<String>> map = user.getAttributes();
             if(listAddress==null){
                 listAddress = new ArrayList<>();
             }
