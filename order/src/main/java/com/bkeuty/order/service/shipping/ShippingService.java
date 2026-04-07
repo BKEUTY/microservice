@@ -1,8 +1,6 @@
 package com.bkeuty.order.service.shipping;
 
-import com.bkeuty.order.dto.shipping.CalShippingFeeDto;
-import com.bkeuty.order.dto.shipping.CalShippingFeeResponseDto;
-import com.bkeuty.order.dto.shipping.GHNProvinceListResponse;
+import com.bkeuty.order.dto.shipping.*;
 import com.bkeuty.order.microservicecommunication.GHNCommunication;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -15,5 +13,9 @@ public class ShippingService {
     }
     public Mono<CalShippingFeeResponseDto> calShippingFee(CalShippingFeeDto  calShippingFeeDto) {
         return ghnCommunication.getCalShippingFee(calShippingFeeDto);
+    }
+
+    public Mono<CalShippingTimeResponseDto> calShippingTime(CalShippingTimeDto calShippingTimeDto) {
+        return ghnCommunication.getCalShippingTime(calShippingTimeDto);
     }
 }

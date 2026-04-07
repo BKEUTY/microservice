@@ -38,4 +38,11 @@ public class GHNCommunication {
                 .retrieve().bodyToMono(CalShippingFeeResponseDto.class);
     }
 
+    public Mono<CalShippingTimeResponseDto>  getCalShippingTime(CalShippingTimeDto calShippingTimeDto) {
+        return GHNWebClient.post().uri(uriBuilder -> uriBuilder.path("/shiip/public-api/v2/shipping-order/leadtime").build()).bodyValue(calShippingTimeDto)
+                .header("Token",apiToken)
+                .header("ShopId",shopId)
+                .retrieve().bodyToMono(CalShippingFeeResponseDto.class);
+    }
+
 }

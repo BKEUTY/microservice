@@ -55,7 +55,7 @@ spring:
             - id: user-service
               uri: lb://user-service
               predicates:
-                - Path= /api/user/**
+                - Path= /api/user/** , /api/admin/user/**
               filters:
                 - RemoveResponseHeader=Access-Control-Allow-Origin
                 - RemoveResponseHeader=Access-Control-Allow-Methods
