@@ -19,7 +19,7 @@ spring:
             - id: order-service
               uri: lb://order
               predicates:
-                - Path= /api/order/**,/api/cart/**, /api/payment/**, /api/admin/order/**,/api/admin/cart/**
+                - Path= /api/order/**,/api/cart/**, /api/payment/**, /api/admin/order/**,/api/admin/cart/**, /api/shipping/**, /api/address/**
               filters:
                 - RemoveResponseHeader=Access-Control-Allow-Origin
                 - RemoveResponseHeader=Access-Control-Allow-Methods

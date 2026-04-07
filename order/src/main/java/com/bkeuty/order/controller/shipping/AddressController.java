@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("api/address")
+@RequestMapping("/api/address")
 public class AddressController {
     private final AddressService addressService;
     AddressController(AddressService addressService) {
