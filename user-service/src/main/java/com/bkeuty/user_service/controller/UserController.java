@@ -23,8 +23,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<UserDetailResponseDto> getUser(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
-                || !"user".equals(tokenValidationResponseDto.getUserRole())){
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.ok(userService.getUserProfile(tokenValidationResponseDto));
@@ -32,8 +31,7 @@ public class UserController {
     @PutMapping
     public ResponseEntity<UpdateUserDto> updateUser(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody UpdateUserDto updateUserDto) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
-                || !"user".equals(tokenValidationResponseDto.getUserRole())){
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.ok(userService.updateUserProfile(updateUserDto,tokenValidationResponseDto));
@@ -41,8 +39,7 @@ public class UserController {
     @PostMapping("/address")
     public ResponseEntity<Boolean> addAddress(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody AddressDto addNewAddressDto) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
-                || !"user".equals(tokenValidationResponseDto.getUserRole())){
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.ok(userService.addNewAddress(tokenValidationResponseDto,addNewAddressDto));

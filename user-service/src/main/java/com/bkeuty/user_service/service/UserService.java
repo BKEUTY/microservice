@@ -32,7 +32,6 @@ public class UserService {
         UserResource response = keycloak.realm(realmName).users().get(tokenValidationResponseDto.getUserId());
         if (response != null) {
             UserRepresentation userRepresentation =response.toRepresentation();
-            userRepresentation.setEmail("quangviewirweir@gmail.com");
             System.out.println("User username"+userRepresentation.getUsername());
 
             return toUserDetailResponseDto(userRepresentation);
@@ -73,12 +72,14 @@ public class UserService {
     }
     private UserDetailResponseDto toUserDetailResponseDto(UserRepresentation userRepresentation) {
         return  UserDetailResponseDto.builder()
+                .userId(userRepresentation.getId())
                 .email(userRepresentation.getEmail())
                 .firstname(userRepresentation.getFirstName())
                 .lastname(userRepresentation.getLastName())
                 .phoneNumber(userRepresentation.firstAttribute("phoneNumber"))
-                .addresses(userRepresentation.getAttributes().get("addresses").stream().map(this::addressToAddressDto).toList())
+                .addresses(userRepresentation.getAttributes().get("addresses")!=null?userRepresentation.getAttributes().get("addresses").stream().map(this::addressToAddressDto).toList():null)
                 .dob(userRepresentation.firstAttribute("dob"))
+                .userRole(userRepresentation.firstAttribute("userRole"))
                 .build();
     }
 
@@ -176,5 +177,8 @@ public class UserService {
                 .district(new DistrictDto(Integer.valueOf(districtCode), districtName))
                 .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
                 .build();
+    }
+    public List<UserDetailResponseDto>  getListUserDetail(TokenValidationResponseDto tokenValidationResponseDto) {
+        return keycloak.realm(realmName).users().list().stream().map(this::toUserDetailResponseDto).toList();
     }
 }
