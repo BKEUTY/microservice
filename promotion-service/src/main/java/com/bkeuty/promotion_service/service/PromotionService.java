@@ -86,7 +86,10 @@ public class PromotionService {
                 newPrice = newPrice.subtract(BigDecimal.valueOf(applicableProductPromotion.getDiscountValue()));
             }
         }
-        return  newPrice;
+        if (newPrice.compareTo(BigDecimal.ZERO) < 0) {
+            newPrice = BigDecimal.ZERO;
+        }
+        return newPrice;
 
     }
 

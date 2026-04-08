@@ -3,13 +3,13 @@ DELETE FROM orders;
 DELETE FROM cart_item;
 DELETE FROM payment_transaction;
  
-INSERT INTO orders (id, total, payment_method, order_date, address, user_id, status) VALUES
-(1, 900000,   'COD',     '2026-03-10', '123 Lý Thường Kiệt, Quận 10, HCM',    'user-1', 4),
-(2, 380000,   'Banking', '2026-03-12', '45 Hàng Bài, Hoàn Kiếm, Hà Nội',      'user-2', 4),
-(3, 5500000,  'VNPAY',   '2026-03-15', '789 Điện Biên Phủ, Bình Thạnh, HCM',  'user-3', 4),
-(4, 1200000,  'COD',     '2026-03-16', '12 Lê Lợi, Quận 1, HCM',              'user-4', 4),
-(5, 450000,   'COD',     '2026-03-18', '77 CMT8, Quận 3, HCM',                'user-5', 4),
-(6, 350000,   'COD',     '2026-03-20', '123 Lý Thường Kiệt, Quận 10, HCM',    'user-1', 4);
+INSERT INTO orders (id, total, payment_method, order_date, address, user_id, status, user_name, shipping_fee) VALUES
+(1, 900000,   'COD',     '2026-03-10', '123 Lý Thường Kiệt, Quận 10, HCM',    'user-1', 4, 'Nguyễn Văn A', 30000),
+(2, 380000,   'Banking', '2026-03-12', '45 Hàng Bài, Hoàn Kiếm, Hà Nội',      'user-2', 4, 'Trần Thị B', 25000),
+(3, 5500000,  'VNPAY',   '2026-03-15', '789 Điện Biên Phủ, Bình Thạnh, HCM',  'user-3', 4, 'Lê Hoàng C', 50000),
+(4, 1200000,  'COD',     '2026-03-16', '12 Lê Lợi, Quận 1, HCM',              'user-4', 4, 'Phạm Tuấn D', 20000),
+(5, 450000,   'COD',     '2026-03-18', '77 CMT8, Quận 3, HCM',                'user-5', 4, 'Võ Minh E', 15000),
+(6, 350000,   'COD',     '2026-03-20', '123 Lý Thường Kiệt, Quận 10, HCM',    'user-1', 4, 'Nguyễn Văn A', 30000);
 
 INSERT INTO order_item (id, quantity, product_variant_id, order_id, is_reviewed) VALUES
 (1, 1, 1,  1, true),

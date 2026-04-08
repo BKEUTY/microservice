@@ -77,7 +77,9 @@ public class AdminOrderService {
         AdminOrderDto dto = new AdminOrderDto();
         dto.setId(savedOrder.getId());
         dto.setUserId(savedOrder.getUserId());
+        dto.setUserName(savedOrder.getUserName());
         dto.setTotal(savedOrder.getTotal());
+        dto.setShippingFee(savedOrder.getShippingFee());
         dto.setOrderDate(savedOrder.getOrderDate());
         dto.setStatus(savedOrder.getStatus() != null ? savedOrder.getStatus().name() : PaymentStatus.UNPAID.name());
 
@@ -117,7 +119,9 @@ public class AdminOrderService {
         AdminOrderDto adminOrderDto = new AdminOrderDto();
         adminOrderDto.setId(order.getId());
         adminOrderDto.setUserId(order.getUserId());
+        adminOrderDto.setUserName(order.getUserName());
         adminOrderDto.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
+        adminOrderDto.setShippingFee(order.getShippingFee());
         adminOrderDto.setPaymentMethod(order.getPaymentMethod());
         adminOrderDto.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
         adminOrderDto.setAddress(order.getAddress());

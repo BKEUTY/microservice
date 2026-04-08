@@ -16,11 +16,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bkeuty.review_service.microservicecommunication.OrderService;
 import com.bkeuty.review_service.microservicecommunication.ProductService;
+import com.bkeuty.review_service.microservicecommunication.UserService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,18 +35,20 @@ public class ReviewService {
     private final AdminReplyRepository adminReplyRepository;
     private final OrderService orderService;
     private final ProductService productService;
+    private final UserService userService;
 
     @Transactional
     public ReviewResponse createReview(String userId, ReviewRequest request, String token) {
         Boolean isDelivered = checkOrderIsDelivered(userId, request.getVariantId(), token);
-        System.out.println("isDelivered: " + isDelivered);
         if (Boolean.FALSE.equals(isDelivered)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "User has not purchased this product or order is not delivered.");
         }
+        String userName = userService.getUserName(userId);
 
         Review review = Review.builder()
                 .userId(userId)
+                .userName(userName)
                 .variantId(request.getVariantId())
                 .rating(request.getRating())
                 .comment(request.getComment())
@@ -70,6 +72,7 @@ public class ReviewService {
         review.setRating(request.getRating());
         review.setComment(request.getComment());
         review.setImages(request.getImages());
+        review.setUserName(userService.getUserName(userId));
 
         review = reviewRepository.save(review);
         updateProductRating(review.getVariantId());
@@ -84,8 +87,12 @@ public class ReviewService {
                         "Review not found or not owned by user"));
 
         review.setHidden(true);
+        if (review.getAdminReply() != null) {
+            adminReplyRepository.delete(review.getAdminReply());
+            review.setAdminReply(null);
+            review.setReplied(false);
+        }
         reviewRepository.save(review);
-
         updateProductRating(review.getVariantId());
     }
 
@@ -95,8 +102,12 @@ public class ReviewService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
 
         review.setHidden(true);
+        if (review.getAdminReply() != null) {
+            adminReplyRepository.delete(review.getAdminReply());
+            review.setAdminReply(null);
+            review.setReplied(false);
+        }
         reviewRepository.save(review);
-
         updateProductRating(review.getVariantId());
     }
 
@@ -116,11 +127,13 @@ public class ReviewService {
         if (review.getAdminReply() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Review already has a reply");
         }
+        String adminName = userService.getUserName(adminId);
 
         AdminReply reply = AdminReply.builder()
                 .review(review)
                 .comment(request.getComment())
                 .adminId(adminId)
+                .adminName(adminName)
                 .build();
 
         reply = adminReplyRepository.save(reply);
@@ -137,6 +150,7 @@ public class ReviewService {
 
         reply.setComment(request.getComment());
         reply.setAdminId(adminId);
+        reply.setAdminName(userService.getUserName(adminId));
         reply = adminReplyRepository.save(reply);
 
         return mapToReplyResponse(reply);
@@ -149,6 +163,7 @@ public class ReviewService {
         
         Review review = reply.getReview();
         review.setReplied(false);
+        review.setAdminReply(null);
         reviewRepository.save(review);
         adminReplyRepository.delete(reply);
     }
@@ -173,7 +188,7 @@ public class ReviewService {
         Page<Review> reviewPage = reviewRepository.findByFilters(variantId, rating, hasImage, pageable);
 
         return ReviewPageResponse.builder()
-                .reviews(reviewPage.map(this::mapToReviewResponse))
+                .reviews(reviewPage.map(r -> mapToReviewResponse(r)))
                 .ratingCounts(getReviewStats(variantId))
                 .build();
     }
@@ -182,8 +197,7 @@ public class ReviewService {
         try {
             return orderService.checkOrderIsDelivered(userId, variantId.intValue());
         } catch (Exception e) {
-            System.out.println("Checking order status for user " + userId + " and variant " + variantId);
-            log.warn("Could not verify order status with OrderService. Fallback to mock success. Error: {}",
+            log.warn("Could not verify order status with OrderService. Fallback to false. Error: {}",
                     e.getMessage());
             return false;
         }
@@ -193,6 +207,13 @@ public class ReviewService {
         try {
             Double averageRating = reviewRepository.getAverageRating(variantId);
             Long reviewCount = reviewRepository.getReviewCount(variantId);
+            
+            if (averageRating == null) {
+                averageRating = 0.0;
+            }
+            if (reviewCount == null) {
+                reviewCount = 0L;
+            }
             
             productService.updateProductRating(variantId.intValue(), averageRating, reviewCount.intValue());
             log.info("Successfully updated product rating for variant {}", variantId);
@@ -207,7 +228,7 @@ public class ReviewService {
         return ReviewResponse.builder()
                 .id(review.getId())
                 .userId(review.getUserId())
-                .userName("User " + review.getUserId())
+                .userName(review.getUserName() != null ? review.getUserName() : "User " + review.getUserId())
                 .variantId(review.getVariantId())
                 .rating(review.getRating())
                 .comment(review.getComment())
@@ -221,9 +242,12 @@ public class ReviewService {
     }
 
     private ReplyResponse mapToReplyResponse(AdminReply reply) {
+        String displayName = reply.getAdminName() != null ? reply.getAdminName() : "BKEUTY Admin";
+
         return ReplyResponse.builder()
                 .id(reply.getId())
                 .adminId(reply.getAdminId())
+                .adminName(displayName)
                 .comment(reply.getComment())
                 .repliedAt(reply.getRepliedAt())
                 .updatedAt(reply.getUpdatedAt())

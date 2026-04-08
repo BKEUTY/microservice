@@ -21,6 +21,8 @@ public class ProductVariant {
     @Builder.Default
     private BigDecimal price = BigDecimal.valueOf(0);
     @Builder.Default
+    private BigDecimal promotionPrice = BigDecimal.valueOf(0);
+    @Builder.Default
     private Integer stockQuantity = 0;
     private String description;
     private String productImageUrl;
@@ -42,4 +44,18 @@ public class ProductVariant {
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.promotionPrice == null) {
+            this.promotionPrice = this.price;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        if (this.promotionPrice == null) {
+            this.promotionPrice = this.price;
+        }
+    }
 }

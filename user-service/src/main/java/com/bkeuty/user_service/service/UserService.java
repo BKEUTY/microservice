@@ -192,6 +192,32 @@ public class UserService {
                 .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
                 .build();
     }
+    public UserDetailResponseDto getUserDetailById(String userId) {
+
+        UserResource response = keycloak.realm(realmName).users().get(userId);
+        if (response != null) {
+            UserRepresentation userRepresentation = response.toRepresentation();
+            return toUserDetailResponseDto(userRepresentation);
+        }
+        return null;
+    }
+
+    public Map<String, String> getUserNames(List<String> userIds) {
+        Map<String, String> result = new HashMap<>();
+        for (String id : userIds) {
+            try {
+                UserRepresentation user = keycloak.realm(realmName).users().get(id).toRepresentation();
+                String firstName = user.getFirstName() != null ? user.getFirstName() : "";
+                String lastName = user.getLastName() != null ? user.getLastName() : "";
+                String fullName = (firstName + " " + lastName).trim();
+                result.put(id, fullName.isEmpty() ? "User " + id : fullName);
+            } catch (Exception e) {
+                result.put(id, "User " + id);
+            }
+        }
+        return result;
+    }
+
     public List<UserDetailResponseDto>  getListUserDetail(TokenValidationResponseDto tokenValidationResponseDto) {
         return keycloak.realm(realmName).users().list().stream().map(this::toUserDetailResponseDto).toList();
     }

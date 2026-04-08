@@ -64,6 +64,11 @@ public class OrderService {
                 .serviceTypeId(2).weight(100).build())
                 .block().getData().getServiceFee();
 
+        String lastName = userInfo.getLastName() != null ? userInfo.getLastName() : "";
+        String firstName = userInfo.getFirstName() != null ? userInfo.getFirstName() : "";
+        String userName = (lastName + " " + firstName).trim();
+        if (userName.isEmpty()) userName = "Guest";
+
         String shippingDate = shippingService.calShippingTime(CalShippingTimeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
                 .toDistrictId(request.getAddress().getDistrict().getDistrictID()).serviceTypeId(2).build()).block().getData().getLeaderTimeOrder().getToEstimateTime();
         Order order = Order.builder()
@@ -72,6 +77,7 @@ public class OrderService {
                 .paymentMethod(request.getPaymentMethod())
                 .shippingFee(request.getShippingFee())
                 .userId(userInfo.getUserId())
+                .userName(userName)
                 .shippingFee(BigDecimal.valueOf(shippingFee))
                 .estimatedShippingDate(shippingDate)
                 .status(PaymentStatus.UNPAID)

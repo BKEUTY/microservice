@@ -28,7 +28,7 @@ public class InventoryService {
             PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
             Integer remainQuantity = productVariant.getStockQuantity() - orderItem.getQuantity();
             productVariant.setStockQuantity(remainQuantity);
-            System.out.println("Decrease Stock Variant Promotion Price: " + promotionPriceDto.getNewPrice());
+            productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
             productVariantRepository.save(productVariant);
             decreaseStockResponseDtos.add(new DecreaseStockResponseDto(productVariant.getId(),productVariant.getProductVariantName(),productVariant.getProductImageUrl(),orderItem.getQuantity(),productVariant.getPrice(),promotionPriceDto.getNewPrice()));
         }

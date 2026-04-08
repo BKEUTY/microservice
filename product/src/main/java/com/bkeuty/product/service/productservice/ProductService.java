@@ -46,11 +46,25 @@ public class ProductService {
         return productRepository.findAll(pageable).map(this::toProductDto);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String name, Integer categoryId, String status) {
         String pattern = StringUtils.hasText(name) ? "%" + name.toLowerCase() + "%" : null;
         ProductStatus enumStatus = (status != null && !status.trim().isEmpty()) ? ProductStatus.valueOf(status) : null;
         Page<ProductVariant> productRes = productVariantRepository.findWithFilters(pattern, categoryId, enumStatus, pageable);
         Map<Integer, PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes);
+
+        productRes.forEach(pv -> {
+            if (promotionPrice.containsKey(pv.getId())) {
+                BigDecimal newPrice = promotionPrice.get(pv.getId()).getNewPrice();
+                if (pv.getPromotionPrice() == null || pv.getPromotionPrice().compareTo(newPrice) != 0) {
+                    pv.setPromotionPrice(newPrice);
+                }
+            } else {
+                if (pv.getPromotionPrice() == null || pv.getPromotionPrice().compareTo(pv.getPrice()) != 0) {
+                    pv.setPromotionPrice(pv.getPrice());
+                }
+            }
+        });
 
         return productRes.map(productVariant -> toDisplayProductDto(productVariant,promotionPrice));
     }
@@ -71,20 +85,39 @@ public class ProductService {
                 .build();
     }
 
-//    public ProductDetailDto getProductDetailById(Integer productVariantId, PromotionPriceDto promotionPrice, ProductVariantDto  productVariantDto) {
-//        return productRepository.findById(productId).map(this::toDetailDto).orElse(null);
-//    }
 
+    @org.springframework.transaction.annotation.Transactional
     public ProductDetailDto getProductVariantById(Integer id) {
         ProductVariant productVariant=  productVariantRepository.findById(id).orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with id: " + id));
         PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
+        if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
+            if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(promotionPriceDto.getNewPrice()) != 0) {
+                productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
+            }
+        } else {
+            if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(productVariant.getPrice()) != 0) {
+                productVariant.setPromotionPrice(productVariant.getPrice());
+                promotionPriceDto = new PromotionPriceDto(productVariant.getPrice());
+            }
+        }
         return toDetailDto(productVariant.getProduct(),promotionPriceDto,productVariant);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public ProductDetailDto getProductVariantByName(String variantName) {
         ProductVariant productVariant = productVariantRepository.findFirstByProductVariantName(variantName)
                 .orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with name: " + variantName));
         PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
+        if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
+            if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(promotionPriceDto.getNewPrice()) != 0) {
+                productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
+            }
+        } else {
+            if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(productVariant.getPrice()) != 0) {
+                productVariant.setPromotionPrice(productVariant.getPrice());
+                promotionPriceDto = new PromotionPriceDto(productVariant.getPrice());
+            }
+        }
         return toDetailDto(productVariant.getProduct(), promotionPriceDto, productVariant);
     }
 

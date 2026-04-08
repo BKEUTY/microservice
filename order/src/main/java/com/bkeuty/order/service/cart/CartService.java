@@ -84,7 +84,7 @@ public class CartService {
     }
 
     public ResponseEntity<AddToCartResponseDto> addToCart(TokenValidationResponseDto tokenValidationResponseDto, AddToCartRequestDto addToCartRequest) {
-        if (Boolean.FALSE.equals(addToCartRequest.getBuyNow())) {
+        if (!Boolean.TRUE.equals(addToCartRequest.getBuyNow())) {
             CartItem itemInCartItem = cartItemRepository.findByUserIdAndProductVariantAndIsBuyNowFalse(tokenValidationResponseDto.getUserId(), addToCartRequest.getProductVariantId());
 
             if (itemInCartItem != null) {

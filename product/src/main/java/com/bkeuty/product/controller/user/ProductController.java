@@ -34,9 +34,9 @@ public class ProductController {
 
         Sort sortObj = Sort.unsorted();
         if ("price_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "price");
+            sortObj = Sort.by(Sort.Direction.ASC, "promotionPrice");
         } else if ("price_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "price");
+            sortObj = Sort.by(Sort.Direction.DESC, "promotionPrice");
         } else if ("stock_asc".equals(sort)) {
             sortObj = Sort.by(Sort.Direction.ASC, "stockQuantity");
         } else if ("stock_desc".equals(sort)) {

@@ -31,6 +31,9 @@ public class Order {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
+    @Column(name = "user_name")
+    private String userName;
+
     @Builder.Default
     private PaymentStatus status = PaymentStatus.UNPAID;
 }

@@ -46,6 +46,11 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
+    public WebClient userWebClient(WebClient.Builder builder) {
+        return builder.baseUrl("http://user-service").build();
+    }
+
+    @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()

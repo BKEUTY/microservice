@@ -18,6 +18,7 @@ public class AdminProductVariantDto {
     private Integer id;
     private Integer productId;
     private BigDecimal price;
+    private BigDecimal promotionPrice;
     private String productVariantName;
     private Integer stockQuantity;
     private String description;

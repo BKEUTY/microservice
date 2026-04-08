@@ -27,9 +27,9 @@ public class UserService {
     public RegisterResponseDto registerUser(RegisterRequestDto dto) {
         // Prepare Password
         String address = dto.getAddress().getAddress()+", "+dto.getAddress().getWard().getWardName() + ", "+ dto.getAddress().getDistrict().getDistrictName()+  ", "+ dto.getAddress().getProvince().getProvinceName()
-                + "|" + dto.getAddress().getWard().getWardCode().toString()
-                + ":" + dto.getAddress().getDistrict().getDistrictID().toString()
-                + ":" + dto.getAddress().getProvince().getProvinceID().toString();
+                    + "|" + dto.getAddress().getWard().getWardCode().toString()
+                    + ":" + dto.getAddress().getDistrict().getDistrictID().toString()
+                    + ":" + dto.getAddress().getProvince().getProvinceID().toString();
 
         CredentialRepresentation credential = new CredentialRepresentation();
         credential.setType(CredentialRepresentation.PASSWORD);

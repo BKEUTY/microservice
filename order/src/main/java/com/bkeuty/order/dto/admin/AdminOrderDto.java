@@ -15,7 +15,9 @@ import java.util.List;
 public class AdminOrderDto {
     private Integer id;
     private String userId;
+    private String userName;
     private BigDecimal total;
+    private BigDecimal shippingFee;
     private String paymentMethod;
     private LocalDate orderDate;
     private String address;
