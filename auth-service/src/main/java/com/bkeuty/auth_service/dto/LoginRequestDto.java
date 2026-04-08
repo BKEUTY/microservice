@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class LoginRequestDto {
     private String password;
     private String username;
+    private String clientType;
 }

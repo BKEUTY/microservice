@@ -6,14 +6,18 @@ import com.bkeuty.promotion_service.dto.internal.ProductPromotionCheckResponseDT
 import com.bkeuty.promotion_service.entity.ProductPromotion;
 import com.bkeuty.promotion_service.entity.Promotion;
 import com.bkeuty.promotion_service.enums.DiscountType;
+import com.bkeuty.promotion_service.enums.PromotionStatus;
 import com.bkeuty.promotion_service.repository.ProductPromotionRepository;
 import com.bkeuty.promotion_service.repository.PromotionRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
@@ -28,8 +32,24 @@ public class PromotionService {
         this.productPromotionRepository = productPromotionRepository;
     }
 
-    public Page<PromotionResponseDto> findAll(Pageable pageable) {
-        return promotionRepository.findAll(pageable).map(this::toDto);
+    public Page<PromotionResponseDto> findAll(String title, PromotionStatus status, LocalDateTime startAt, LocalDateTime endAt, Pageable pageable) {
+        Specification<Promotion> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (title != null && !title.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase() + "%"));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (startAt != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startAt"), startAt));
+            }
+            if (endAt != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("endAt"), endAt));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return promotionRepository.findAll(spec, pageable).map(this::toDto);
     }
     private PromotionResponseDto toDto(Promotion promotion) {
         PromotionResponseDto.PromotionResponseDtoBuilder builder = PromotionResponseDto.builder()

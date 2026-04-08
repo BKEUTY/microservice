@@ -9,6 +9,7 @@ import com.bkeuty.product.service.AdminProductService;
 import com.bkeuty.product.service.authservice.AuthService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -39,7 +40,7 @@ public class ProductController {
            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
        }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllProducts(PageRequest.of(page, size)));
+                .body(adminProductService.getAllProducts(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
     }
 
     @GetMapping("/{productId}/variants")
@@ -67,7 +68,7 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page, size)));
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
     }
 
     @PostMapping()

@@ -7,10 +7,7 @@ import com.bkeuty.user_service.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,11 +22,13 @@ public class AdminController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDetailResponseDto>> getListUserDetail(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+    public ResponseEntity<List<UserDetailResponseDto>> getListUserDetail(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestParam(required = false) String role) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null || !tokenValidationResponseDto.getUserRole().equals("admin")){
+        if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null || !tokenValidationResponseDto.getUserRole().equalsIgnoreCase("admin")){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        return  ResponseEntity.ok(userService.getListUserDetail(tokenValidationResponseDto));
+        return ResponseEntity.ok(userService.getListUserDetail(role));
     }
 }

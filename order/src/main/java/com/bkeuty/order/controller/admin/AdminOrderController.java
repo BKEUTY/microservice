@@ -6,6 +6,7 @@ import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.service.auth.AuthService;
 import com.bkeuty.order.service.admin.AdminOrderService;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,7 @@ public class AdminOrderController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         
-        return ResponseEntity.ok(adminOrderService.getAllOrders(PageRequest.of(page, size)));
+        return ResponseEntity.ok(adminOrderService.getAllOrders(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
     }
 
     @GetMapping("/{orderId}")

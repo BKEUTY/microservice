@@ -9,6 +9,7 @@ import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.product.service.admin.BrandService;
 import com.bkeuty.product.service.authservice.AuthService;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +39,7 @@ public class BrandController {
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
         return ResponseEntity.ok(brandService.getBrands(pageable));
     }
     @PostMapping

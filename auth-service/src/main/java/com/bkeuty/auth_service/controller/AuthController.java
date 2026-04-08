@@ -16,62 +16,79 @@ public class AuthController {
     private final UserService userService;
     private final AuthService authService;
     private final AccessTokenValidator accessTokenValidator;
-    public AuthController(UserService userService, AuthService authService,  AccessTokenValidator accessTokenValidator) {
+
+    public AuthController(UserService userService, AuthService authService, AccessTokenValidator accessTokenValidator) {
         this.userService = userService;
         this.authService = authService;
         this.accessTokenValidator = accessTokenValidator;
     }
+
     @PostMapping("/register")
     public ResponseEntity<RegisterResponseDto> registerUser(@RequestBody RegisterRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.registerUser(dto));
     }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginDto, HttpServletResponse response) {
         try {
             LoginResponseDto loginResponse = authService.loginUser(loginDto);
-
-            Cookie refreshTokenCookie = new Cookie("refreshToken", loginResponse.getRefreshToken());
-            refreshTokenCookie.setHttpOnly(true);
-            refreshTokenCookie.setSecure(false); // Set to true in production with HTTPS
-            refreshTokenCookie.setPath("/");
-            refreshTokenCookie.setMaxAge(loginResponse.getRefreshTokenExpiresIn());
-            response.addCookie(refreshTokenCookie);
-
+            String cookieName = "ADMIN".equalsIgnoreCase(loginDto.getClientType()) ? "admin_refreshToken" : "user_refreshToken";
+            
+            setCookie(response, cookieName, loginResponse.getRefreshToken(), loginResponse.getRefreshTokenExpiresIn());
             loginResponse.setRefreshToken(null); 
+            
             return ResponseEntity.ok(loginResponse);
         } catch (RuntimeException e) {
-            if (e.getMessage().equals("Wrong credentials")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong credentials");
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            HttpStatus status = "Wrong credentials".equals(e.getMessage()) ? HttpStatus.UNAUTHORIZED : HttpStatus.INTERNAL_SERVER_ERROR;
+            return ResponseEntity.status(status).body(e.getMessage());
         }
     }
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@CookieValue(name = "refreshToken", required = false) String refreshToken, 
-                                        @RequestBody(required = false) RefreshTokenRequestDto refreshTokenDto,
-                                        HttpServletResponse response) {
-        try {
-            String tokenToUse = refreshToken != null ? refreshToken : (refreshTokenDto != null ? refreshTokenDto.getRefreshToken() : null);
-            
-            if (tokenToUse == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Refresh token is missing");
-            }
 
-            RefreshTokenResponseDto refreshResponse = authService.refreshToken(new RefreshTokenRequestDto(tokenToUse));
-            
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(
+            @CookieValue(name = "admin_refreshToken", required = false) String adminToken,
+            @CookieValue(name = "user_refreshToken", required = false) String userToken,
+            @RequestHeader(name = "X-Client-Type", required = false) String clientType,
+            @RequestBody(required = false) RefreshTokenRequestDto dto,
+            HttpServletResponse response) {
+        try {
+            String token = "ADMIN".equalsIgnoreCase(clientType) ? adminToken : 
+                           "USER".equalsIgnoreCase(clientType) ? userToken : 
+                           (adminToken != null ? adminToken : userToken);
+                           
+            token = (token == null && dto != null) ? dto.getRefreshToken() : token;
+
+            if (token == null) return ResponseEntity.badRequest().body("Refresh token is missing");
+
+            RefreshTokenResponseDto refreshResponse = authService.refreshToken(new RefreshTokenRequestDto(token));
+            // String cookieName = "ADMIN".equalsIgnoreCase(clientType) ? "admin_refreshToken" : "user_refreshToken";
+            // setCookie(response, cookieName, refreshResponse.getRefreshToken(), 1800);
+            // refreshResponse.setRefreshToken(null);
+
             return ResponseEntity.ok(refreshResponse);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid refresh token: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid refresh token: " + e.getMessage());
         }
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
-        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
-        refreshTokenCookie.setHttpOnly(true);
-        refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(0);
-        response.addCookie(refreshTokenCookie);
+    public ResponseEntity<?> logout(@RequestHeader(name = "X-Client-Type", required = false) String clientType, HttpServletResponse response) {
+        String[] cookies = "ADMIN".equalsIgnoreCase(clientType) ? new String[]{"admin_refreshToken"} :
+                           "USER".equalsIgnoreCase(clientType) ? new String[]{"user_refreshToken"} :
+                           new String[]{"admin_refreshToken", "user_refreshToken"};
+
+        for (String name : cookies) {
+            setCookie(response, name, null, 0);
+        }
         return ResponseEntity.ok("Logged out successfully");
+    }
+
+    private void setCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // Chuyển thành true khi deploy production (HTTPS)
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAge);
+        response.addCookie(cookie);
     }
 }

@@ -32,7 +32,7 @@ public class ProductController {
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String status) {
 
-        Sort sortObj = Sort.unsorted();
+        Sort sortObj = Sort.by(Sort.Direction.ASC, "id");
         if ("price_asc".equals(sort)) {
             sortObj = Sort.by(Sort.Direction.ASC, "promotionPrice");
         } else if ("price_desc".equals(sort)) {

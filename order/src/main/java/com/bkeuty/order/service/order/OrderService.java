@@ -166,7 +166,7 @@ public class OrderService {
     }
 
     public ResponseEntity<List<OrderResponseDto>> getListOrders(String userId) {
-        List<Order> listOrders = orderRepository.findByUserId(userId);
+        List<Order> listOrders = orderRepository.findByUserIdOrderByIdAsc(userId);
         List<OrderResponseDto> orderResponseDTOList = new ArrayList<>();
         for (Order orders : listOrders) {
             List<OrderItem> items = orderItemRepository.findByOrderId(orders.getId());

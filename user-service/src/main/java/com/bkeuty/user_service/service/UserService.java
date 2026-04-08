@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.Comparator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -218,7 +219,11 @@ public class UserService {
         return result;
     }
 
-    public List<UserDetailResponseDto>  getListUserDetail(TokenValidationResponseDto tokenValidationResponseDto) {
-        return keycloak.realm(realmName).users().list().stream().map(this::toUserDetailResponseDto).toList();
+    public List<UserDetailResponseDto> getListUserDetail(String role) {
+        return keycloak.realm(realmName).users().list().stream()
+                .sorted(Comparator.comparing(UserRepresentation::getCreatedTimestamp))
+                .map(this::toUserDetailResponseDto)
+                .filter(u -> role == null || (u.getUserRole() != null && u.getUserRole().equalsIgnoreCase(role)))
+                .toList();
     }
 }
