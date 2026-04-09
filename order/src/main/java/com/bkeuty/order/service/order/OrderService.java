@@ -178,6 +178,7 @@ public class OrderService {
     public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
         OrderResponseDto orderResponseDTO = new OrderResponseDto();
         orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
+        orderResponseDTO.setUserName(order.getUserName());
         orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
         orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
