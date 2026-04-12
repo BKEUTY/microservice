@@ -1,5 +1,6 @@
 package com.bkeuty.product.dto.user.product;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,13 +13,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DisplayProductDto {
     private Integer productId;
     private String variantName;
     private BigDecimal originPrice;
     private BigDecimal discountPrice;
     private String imageUrl;
-    private Integer stock;
+    private Integer stockQuantity;
     private String brand;
     private List<CategoryDto> categories;
     private String status;

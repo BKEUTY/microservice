@@ -15,12 +15,12 @@ import java.util.List;
 @Builder
 public class UpdateProductVariantResponseDto {
     private Integer id;
-    private BigDecimal price = null;
-    private String productVariantName = null;
-    private Integer stockQuantity = null;
-    private String description = null;
-    private String productImageUrl = null;
-    private List<String> optionValues = null;
-    private ProductStatus status = null;
-    private String productName = null;
+    private BigDecimal price;
+    private String productVariantName;
+    private Integer stockQuantity;
+    private String description;
+    private String productImageUrl;
+    private List<String> optionValues;
+    private ProductStatus status;
+    private String productName;
 }

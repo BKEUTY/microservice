@@ -72,7 +72,7 @@ public class ProductService {
         return DisplayProductDto.builder()
                 .productId(productVariant.getId())
                 .variantName(productVariant.getProductVariantName())
-                .stock(productVariant.getStockQuantity())
+                .stockQuantity(productVariant.getStockQuantity())
                 .imageUrl(productVariant.getProductImageUrl())
                 .originPrice(productVariant.getPrice())
                 .discountPrice(promotionPrice.get(productVariant.getId()).getNewPrice())

@@ -15,4 +15,5 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     boolean existsByOrder_UserIdAndProductVariantIdAndOrder_StatusAndIsReviewedFalse(String userId, Integer variantId, PaymentStatus status);
     
     java.util.Optional<OrderItem> findFirstByOrder_UserIdAndProductVariantIdAndOrder_StatusAndIsReviewedFalse(String userId, Integer variantId, PaymentStatus status);
+    List<OrderItem> findAllByOrder_UserId(String userId);
 }
