@@ -15,8 +15,13 @@ import com.bkeuty.order.repository.CartItemRepository;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
 import com.bkeuty.order.service.shipping.ShippingService;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -165,14 +170,33 @@ public class OrderService {
         return "https://qr.sepay.vn/img?acc=" + accountNumber + "&bank=" + bank + "&amount=" + intTotal + "&des=DH" + orderId + "&template=" + template + "&download=false";
     }
 
-    public ResponseEntity<List<OrderResponseDto>> getListOrders(String userId) {
-        List<Order> listOrders = orderRepository.findByUserIdOrderByIdAsc(userId);
+    public Page<OrderResponseDto> getListOrders(String userId, Pageable pageable, String status, LocalDate startDate, LocalDate endDate) {
+        Specification<Order> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("userId"), userId));
+            
+            if (status != null && !status.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
+            }
+            
+            if (startDate != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDate));
+            }
+            
+            if (endDate != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("orderDate"), endDate));
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Order> pageOrders = orderRepository.findAll(spec, pageable);
         List<OrderResponseDto> orderResponseDTOList = new ArrayList<>();
-        for (Order orders : listOrders) {
+        for (Order orders : pageOrders.getContent()) {
             List<OrderItem> items = orderItemRepository.findByOrderId(orders.getId());
             orderResponseDTOList.add(toOrderResponseDto(orders, items));
         }
-        return ResponseEntity.ok(orderResponseDTOList);
+        return new PageImpl<>(orderResponseDTOList, pageable, pageOrders.getTotalElements());
     }
 
     public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {

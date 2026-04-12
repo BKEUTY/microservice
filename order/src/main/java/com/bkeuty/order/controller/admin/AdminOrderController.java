@@ -9,9 +9,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/admin/order")
@@ -29,14 +32,33 @@ public class AdminOrderController {
     public ResponseEntity<Page<AdminOrderDto>> getAllOrders(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
             
         TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
         if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+
+        Sort sortObj = Sort.by(Sort.Direction.DESC, "id");
+        if ("date_asc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.ASC, "orderDate");
+        } else if ("date_desc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.DESC, "orderDate");
+        } else if ("total_asc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.ASC, "total");
+        } else if ("total_desc".equals(sort)) {
+            sortObj = Sort.by(Sort.Direction.DESC, "total");
+        }
         
-        return ResponseEntity.ok(adminOrderService.getAllOrders(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
+        return ResponseEntity.ok(adminOrderService.getAllOrders(
+                PageRequest.of(page, size, sortObj), 
+                status, 
+                startDate, 
+                endDate));
     }
 
     @GetMapping("/{orderId}")
