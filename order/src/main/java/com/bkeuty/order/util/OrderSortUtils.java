@@ -2,7 +2,10 @@ package com.bkeuty.order.util;
 
 import org.springframework.data.domain.Sort;
 
-public class OrderSortUtils {
+public final class OrderSortUtils {
+    private OrderSortUtils() {
+    }
+
     public static Sort parseSort(String sort) {
         Sort sortObj = Sort.by(Sort.Direction.ASC, "id");
         if (sort == null || sort.isEmpty()) {
