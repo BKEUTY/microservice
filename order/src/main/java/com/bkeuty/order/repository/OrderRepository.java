@@ -10,5 +10,4 @@ import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpecificationExecutor<Order> {
-    Page<Order> findByUserId(String userId, Pageable pageable);
 }

@@ -42,7 +42,11 @@ public class AdminOrderService {
             List<Predicate> predicates = new ArrayList<>();
             
             if (status != null && !status.isEmpty()) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
+                try {
+                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
+                } catch (IllegalArgumentException e) {
+                    // Ignore invalid status for filtering
+                }
             }
             
             if (startDate != null) {
@@ -90,7 +94,11 @@ public class AdminOrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        order.setStatus(PaymentStatus.valueOf(status.toUpperCase()));
+        try {
+            order.setStatus(PaymentStatus.valueOf(status.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid order status: " + status);
+        }
         Order savedOrder = orderRepository.save(order);
 
         AdminOrderDto dto = new AdminOrderDto();

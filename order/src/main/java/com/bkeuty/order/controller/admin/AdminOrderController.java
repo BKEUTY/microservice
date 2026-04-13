@@ -43,7 +43,7 @@ public class AdminOrderController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        Sort sortObj = Sort.by(Sort.Direction.DESC, "id");
+        Sort sortObj = Sort.by(Sort.Direction.ASC, "id");
         if ("date_asc".equals(sort)) {
             sortObj = Sort.by(Sort.Direction.ASC, "orderDate");
         } else if ("date_desc".equals(sort)) {

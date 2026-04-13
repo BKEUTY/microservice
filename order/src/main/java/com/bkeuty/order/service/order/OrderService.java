@@ -35,6 +35,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -176,7 +177,11 @@ public class OrderService {
             predicates.add(criteriaBuilder.equal(root.get("userId"), userId));
             
             if (status != null && !status.isEmpty()) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
+                try {
+                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
+                } catch (IllegalArgumentException e) {
+                    // Ignore invalid status for filtering
+                }
             }
             
             if (startDate != null) {
@@ -191,15 +196,26 @@ public class OrderService {
         };
 
         Page<Order> pageOrders = orderRepository.findAll(spec, pageable);
-        List<OrderResponseDto> orderResponseDTOList = new ArrayList<>();
-        for (Order orders : pageOrders.getContent()) {
-            List<OrderItem> items = orderItemRepository.findByOrderId(orders.getId());
-            orderResponseDTOList.add(toOrderResponseDto(orders, items));
+        if (pageOrders.isEmpty()) {
+            return Page.empty(pageable);
         }
+
+        List<Integer> orderIds = pageOrders.stream().map(Order::getId).toList();
+        List<OrderItem> allOrderItems = orderItemRepository.findByOrderIdIn(orderIds);
+        List<Integer> variantIds = allOrderItems.stream().map(OrderItem::getProductVariantId).distinct().toList();
+        Map<Integer, ProductVariantDto> productVariants = fetchVariantMap(variantIds);
+
+        Map<Integer, List<OrderItem>> itemsByOrderId = allOrderItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
+        List<OrderResponseDto> orderResponseDTOList = pageOrders.getContent().stream()
+                .map(order -> toOrderResponseDto(order, itemsByOrderId.getOrDefault(order.getId(), new ArrayList<>()), productVariants))
+                .toList();
+        
         return new PageImpl<>(orderResponseDTOList, pageable, pageOrders.getTotalElements());
     }
 
-    public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
+    public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
         OrderResponseDto orderResponseDTO = new OrderResponseDto();
         orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
         orderResponseDTO.setUserName(order.getUserName());
@@ -209,42 +225,49 @@ public class OrderService {
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
         orderResponseDTO.setStatus(order.getStatus().name());
         orderResponseDTO.setShippingFee(order.getShippingFee());
-        orderResponseDTO.setItems(getAddToCartResponseDTOS(items));
+        orderResponseDTO.setItems(getAddToCartResponseDTOS(items, productVariants));
         return orderResponseDTO;
     }
 
-    private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items) {
+    public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
+        List<Integer> variantIds = items.stream().map(OrderItem::getProductVariantId).distinct().toList();
+        return toOrderResponseDto(order, items, fetchVariantMap(variantIds));
+    }
+
+    private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
         if (items == null || items.isEmpty()) return new ArrayList<>();
 
         List<AddToCartResponseDto> itemList = new ArrayList<>();
-        List<Integer> itemIds = items.stream().map(OrderItem::getProductVariantId).toList();
         
-        try {
-            Map<Integer, ProductVariantDto> productVariants = productWebClient.post()
-                    .uri("/api/product/internal/variants/batch")
-                    .bodyValue(itemIds)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
-                    .block();
+        for (OrderItem orderItems : items) {
+            AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
+            addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
+            addToCartResponseDTO.setQuantity(orderItems.getQuantity());
 
-            for (OrderItem orderItems : items) {
-                AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
-                addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
-                addToCartResponseDTO.setQuantity(orderItems.getQuantity());
-
-                if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
-                    ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
-                    addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
-                    addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
-                    addToCartResponseDTO.setPrice(productVariant.getPrice());
-                    addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
-                }
-                itemList.add(addToCartResponseDTO);
+            if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
+                ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
+                addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
+                addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
+                addToCartResponseDTO.setPrice(productVariant.getPrice());
+                addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
             }
-        } catch (Exception e) {
+            itemList.add(addToCartResponseDTO);
         }
         
         return itemList;
+    }
+
+    private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
+        try {
+            return productWebClient.post()
+                    .uri("/api/product/internal/variants/batch")
+                    .bodyValue(variantIds)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
+                    .block();
+        } catch (Exception e) {
+            return null;
+        }
     }
     private String addressDtoToAddress(AddressDto dto) {
         return dto.getAddress()+", "+dto.getWard().getWardName() + ", "+ dto.getDistrict().getDistrictName()+  ", "+ dto.getProvince().getProvinceName()
