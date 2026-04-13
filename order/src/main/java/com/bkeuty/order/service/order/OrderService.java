@@ -234,8 +234,9 @@ public class OrderService {
     }
 
     public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
-        List<Integer> variantIds = items.stream().map(OrderItem::getProductVariantId).distinct().toList();
-        return toOrderResponseDto(order, items, fetchVariantMap(variantIds));
+        List<OrderItem> safeItems = items != null ? items : Collections.emptyList();
+        List<Integer> variantIds = safeItems.stream().map(OrderItem::getProductVariantId).distinct().toList();
+        return toOrderResponseDto(order, safeItems, fetchVariantMap(variantIds));
     }
 
     private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {

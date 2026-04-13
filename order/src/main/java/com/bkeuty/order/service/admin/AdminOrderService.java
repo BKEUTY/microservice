@@ -140,7 +140,8 @@ public class AdminOrderService {
 
     private AdminOrderDto toAdminOrderDto(Order order, List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
-        for (OrderItem item : items) {
+        List<OrderItem> safeItems = items != null ? items : Collections.emptyList();
+        for (OrderItem item : safeItems) {
             AddToCartResponseDto dto = new AddToCartResponseDto();
             dto.setProductVariantId(item.getProductVariantId());
             dto.setQuantity(item.getQuantity());
