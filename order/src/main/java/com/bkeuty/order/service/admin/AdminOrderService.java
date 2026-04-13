@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -77,10 +78,11 @@ public class AdminOrderService {
 
         Map<Integer, ProductVariantDto> productVariants = fetchVariantMap(variantIds);
 
+        Map<Integer, List<OrderItem>> itemsByOrderId = allOrderItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
         return orderPage.map(order -> {
-            List<OrderItem> itemsForOrder = allOrderItems.stream()
-                    .filter(item -> item.getOrder().getId().equals(order.getId()))
-                    .toList();
+            List<OrderItem> itemsForOrder = itemsByOrderId.getOrDefault(order.getId(), Collections.emptyList());
             return toAdminOrderDto(order, itemsForOrder, productVariants);
         });
     }
