@@ -87,7 +87,7 @@ public class AdminOrderService {
 
     public AdminOrderDto getOrderById(Integer orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
         List<Integer> variantIds = items.stream().map(OrderItem::getProductVariantId).distinct().toList();
@@ -98,10 +98,14 @@ public class AdminOrderService {
 
     public AdminOrderDto updateOrderStatus(Integer orderId, String status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
+
+        if (status == null || status.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be null or blank");
+        }
 
         try {
-            order.setStatus(PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT)));
+            order.setStatus(PaymentStatus.valueOf(status.trim().toUpperCase(Locale.ROOT)));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + status + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
         }

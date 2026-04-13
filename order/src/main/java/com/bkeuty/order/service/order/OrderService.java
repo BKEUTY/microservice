@@ -213,7 +213,7 @@ public class OrderService {
                 .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
 
         List<OrderResponseDto> orderResponseDTOList = pageOrders.getContent().stream()
-                .map(order -> toOrderResponseDto(order, itemsByOrderId.getOrDefault(order.getId(), new ArrayList<>()), productVariants))
+                .map(order -> toOrderResponseDto(order, itemsByOrderId.getOrDefault(order.getId(), Collections.emptyList()), productVariants))
                 .toList();
         
         return new PageImpl<>(orderResponseDTOList, pageable, pageOrders.getTotalElements());
