@@ -33,6 +33,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -180,7 +181,7 @@ public class OrderService {
                 try {
                     predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
                 } catch (IllegalArgumentException e) {
-                    // Ignore invalid status for filtering
+                    throw new RuntimeException("Invalid order status: " + status);
                 }
             }
             
@@ -258,6 +259,7 @@ public class OrderService {
     }
 
     private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
+        if (variantIds == null || variantIds.isEmpty()) return Collections.emptyMap();
         try {
             return productWebClient.post()
                     .uri("/api/product/internal/variants/batch")
@@ -266,7 +268,7 @@ public class OrderService {
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();
         } catch (Exception e) {
-            return null;
+            return Collections.emptyMap();
         }
     }
     private String addressDtoToAddress(AddressDto dto) {

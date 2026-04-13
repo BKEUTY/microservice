@@ -20,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,7 @@ public class AdminOrderService {
                 try {
                     predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
                 } catch (IllegalArgumentException e) {
-                    // Ignore invalid status for filtering
+                    throw new RuntimeException("Invalid order status: " + status);
                 }
             }
             
@@ -114,6 +115,7 @@ public class AdminOrderService {
     }
 
     private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
+        if (variantIds == null || variantIds.isEmpty()) return Collections.emptyMap();
         try {
             return productWebClient.post()
                     .uri("/api/product/internal/variants/batch")
@@ -122,7 +124,7 @@ public class AdminOrderService {
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();
         } catch (Exception e) {
-            return null;
+            return Collections.emptyMap();
         }
     }
 
