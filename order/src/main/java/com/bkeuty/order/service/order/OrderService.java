@@ -180,11 +180,12 @@ public class OrderService {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.equal(root.get("userId"), userId));
             
-            if (status != null && !status.isEmpty()) {
+            if (status != null && !status.isBlank()) {
+                String trimmedStatus = status.trim();
                 try {
-                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT))));
+                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + status + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
                 }
             }
             
@@ -227,7 +228,7 @@ public class OrderService {
         orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
-        orderResponseDTO.setStatus(order.getStatus().name());
+        orderResponseDTO.setStatus(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name());
         orderResponseDTO.setShippingFee(order.getShippingFee());
         orderResponseDTO.setItems(getAddToCartResponseDTOS(items, productVariants));
         return orderResponseDTO;

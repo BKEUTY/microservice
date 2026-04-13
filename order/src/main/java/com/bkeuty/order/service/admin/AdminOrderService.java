@@ -48,11 +48,12 @@ public class AdminOrderService {
         Specification<Order> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             
-            if (status != null && !status.isEmpty()) {
+            if (status != null && !status.isBlank()) {
+                String trimmedStatus = status.trim();
                 try {
-                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT))));
+                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + status + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
                 }
             }
             
