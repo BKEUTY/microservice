@@ -5,6 +5,7 @@ import com.bkeuty.order.dto.admin.AdminUpdateOrderStatusRequestDto;
 import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.service.auth.AuthService;
 import com.bkeuty.order.service.admin.AdminOrderService;
+import com.bkeuty.order.util.OrderSortUtils;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
@@ -43,16 +44,7 @@ public class AdminOrderController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        Sort sortObj = Sort.by(Sort.Direction.ASC, "id");
-        if ("date_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "orderDate");
-        } else if ("date_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "orderDate");
-        } else if ("total_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "total");
-        } else if ("total_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "total");
-        }
+        Sort sortObj = OrderSortUtils.parseSort(sort);
         
         return ResponseEntity.ok(adminOrderService.getAllOrders(
                 PageRequest.of(page, size, sortObj), 

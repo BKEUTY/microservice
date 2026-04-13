@@ -5,6 +5,7 @@ import com.bkeuty.order.dto.order.OrderResponseDto;
 import com.bkeuty.order.dto.order.PlaceOrderRequestDto;
 import com.bkeuty.order.service.auth.AuthService;
 import com.bkeuty.order.service.order.OrderService;
+import com.bkeuty.order.util.OrderSortUtils;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,16 +45,7 @@ public class OrderController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        Sort sortObj = Sort.by(Sort.Direction.ASC, "id");
-        if ("date_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "orderDate");
-        } else if ("date_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "orderDate");
-        } else if ("total_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "total");
-        } else if ("total_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "total");
-        }
+        Sort sortObj = OrderSortUtils.parseSort(sort);
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
         return ResponseEntity.ok(orderService.getListOrders(
