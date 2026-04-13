@@ -7,6 +7,8 @@ import com.bkeuty.order.service.auth.AuthService;
 import com.bkeuty.order.service.order.OrderService;
 import com.bkeuty.order.util.OrderSortUtils;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,12 +16,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/order")
+@Validated
 public class OrderController {
 
     private final AuthService authService;
@@ -32,8 +36,8 @@ public class OrderController {
     @GetMapping("/history")
     public ResponseEntity<Page<OrderResponseDto>> findOrderByUserId(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

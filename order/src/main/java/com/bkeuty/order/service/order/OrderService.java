@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -36,11 +37,13 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
     private final CartItemRepository cartItemRepository;
@@ -180,7 +183,7 @@ public class OrderService {
             
             if (status != null && !status.isEmpty()) {
                 try {
-                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
+                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + status + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
                 }
@@ -269,6 +272,7 @@ public class OrderService {
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();
         } catch (Exception e) {
+            log.error("Failed to fetch product variants from product-service for IDs: {}", variantIds, e);
             return Collections.emptyMap();
         }
     }

@@ -19,15 +19,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
+import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
 @Transactional
+@Slf4j
 public class AdminOrderService {
 
     private final OrderRepository orderRepository;
@@ -46,7 +49,7 @@ public class AdminOrderService {
             
             if (status != null && !status.isEmpty()) {
                 try {
-                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase())));
+                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + status + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
                 }
@@ -98,7 +101,7 @@ public class AdminOrderService {
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
         try {
-            order.setStatus(PaymentStatus.valueOf(status.toUpperCase()));
+            order.setStatus(PaymentStatus.valueOf(status.toUpperCase(Locale.ROOT)));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + status + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
         }
@@ -126,6 +129,7 @@ public class AdminOrderService {
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();
         } catch (Exception e) {
+            log.error("Failed to fetch product variants from product-service for IDs: {}", variantIds, e);
             return Collections.emptyMap();
         }
     }
