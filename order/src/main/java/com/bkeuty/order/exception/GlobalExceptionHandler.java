@@ -6,10 +6,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CartItemNotFound.class)
@@ -23,18 +26,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, Object>> handleResponseStatusException(ResponseStatusException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", ex.getStatusCode().value());
-        body.put("message", ex.getReason());
-        return new ResponseEntity<>(body, ex.getStatusCode());
+        Map<String, Object> response = new HashMap<>();
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        response.put("status", ex.getStatusCode().value());
+        response.put("error", status != null ? status.getReasonPhrase() : "Unknown Error");
+        response.put("message", ex.getReason());
+        return new ResponseEntity<>(response, ex.getStatusCode());
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        log.error("Unhandled runtime exception: ", ex);
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("error", "Internal Server Error");
-        response.put("message", ex.getMessage());
+        response.put("error", HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        response.put("message", "An unexpected error occurred. Please try again later.");
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

@@ -128,12 +128,13 @@ public class AdminOrderService {
     private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
         if (variantIds == null || variantIds.isEmpty()) return Collections.emptyMap();
         try {
-            return productWebClient.post()
+            Map<Integer, ProductVariantDto> result = productWebClient.post()
                     .uri("/api/product/internal/variants/batch")
                     .bodyValue(variantIds)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();
+            return result != null ? result : Collections.emptyMap();
         } catch (Exception e) {
             log.error("Failed to fetch product variants from product-service for IDs: {}", variantIds, e);
             return Collections.emptyMap();
