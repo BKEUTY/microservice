@@ -8,22 +8,30 @@ import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 
+import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@Slf4j
 public class AdminOrderService {
 
     private final OrderRepository orderRepository;
@@ -36,8 +44,31 @@ public class AdminOrderService {
         this.productWebClient = productWebClient;
     }
 
-    public Page<AdminOrderDto> getAllOrders(Pageable pageable) {
-        Page<Order> orderPage = orderRepository.findAll(pageable);
+    public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, LocalDate startDate, LocalDate endDate) {
+        Specification<Order> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            if (status != null && !status.isBlank()) {
+                String trimmedStatus = status.trim();
+                try {
+                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
+                } catch (IllegalArgumentException e) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
+                }
+            }
+            
+            if (startDate != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDate));
+            }
+            
+            if (endDate != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("orderDate"), endDate));
+            }
+            
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Order> orderPage = orderRepository.findAll(spec, pageable);
         if (orderPage.isEmpty()) {
             return Page.empty(pageable);
         }
@@ -48,17 +79,18 @@ public class AdminOrderService {
 
         Map<Integer, ProductVariantDto> productVariants = fetchVariantMap(variantIds);
 
+        Map<Integer, List<OrderItem>> itemsByOrderId = allOrderItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
         return orderPage.map(order -> {
-            List<OrderItem> itemsForOrder = allOrderItems.stream()
-                    .filter(item -> item.getOrder().getId().equals(order.getId()))
-                    .toList();
+            List<OrderItem> itemsForOrder = itemsByOrderId.getOrDefault(order.getId(), Collections.emptyList());
             return toAdminOrderDto(order, itemsForOrder, productVariants);
         });
     }
 
     public AdminOrderDto getOrderById(Integer orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
         List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
         List<Integer> variantIds = items.stream().map(OrderItem::getProductVariantId).distinct().toList();
@@ -69,9 +101,17 @@ public class AdminOrderService {
 
     public AdminOrderDto updateOrderStatus(Integer orderId, String status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
 
-        order.setStatus(PaymentStatus.valueOf(status.toUpperCase()));
+        if (status == null || status.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be null or blank");
+        }
+
+        try {
+            order.setStatus(PaymentStatus.valueOf(status.trim().toUpperCase(Locale.ROOT)));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + status + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
+        }
         Order savedOrder = orderRepository.save(order);
 
         AdminOrderDto dto = new AdminOrderDto();
@@ -87,21 +127,25 @@ public class AdminOrderService {
     }
 
     private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
+        if (variantIds == null || variantIds.isEmpty()) return Collections.emptyMap();
         try {
-            return productWebClient.post()
+            Map<Integer, ProductVariantDto> result = productWebClient.post()
                     .uri("/api/product/internal/variants/batch")
                     .bodyValue(variantIds)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();
+            return result != null ? result : Collections.emptyMap();
         } catch (Exception e) {
-            return null;
+            log.error("Failed to fetch product variants from product-service for IDs: {}", variantIds, e);
+            return Collections.emptyMap();
         }
     }
 
     private AdminOrderDto toAdminOrderDto(Order order, List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
-        for (OrderItem item : items) {
+        List<OrderItem> safeItems = items != null ? items : Collections.emptyList();
+        for (OrderItem item : safeItems) {
             AddToCartResponseDto dto = new AddToCartResponseDto();
             dto.setProductVariantId(item.getProductVariantId());
             dto.setQuantity(item.getQuantity());
