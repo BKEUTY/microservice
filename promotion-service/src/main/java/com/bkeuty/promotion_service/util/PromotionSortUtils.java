@@ -12,6 +12,9 @@ public final class PromotionSortUtils {
 
         if (sort != null && sort.length > 0 && sort[0] != null && !sort[0].isBlank()) {
             String firstValue = sort[0].trim();
+            if (firstValue.isBlank()) {
+                return Sort.by(direction, sortField);
+            }
             int commaIndex = firstValue.indexOf(',');
             
             if (commaIndex >= 0) {

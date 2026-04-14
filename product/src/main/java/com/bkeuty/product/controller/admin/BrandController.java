@@ -9,7 +9,6 @@ import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.product.service.admin.BrandService;
 import com.bkeuty.product.service.authservice.AuthService;
 import io.swagger.v3.oas.annotations.Parameter;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

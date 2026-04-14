@@ -8,11 +8,14 @@ public final class OrderSortUtils {
 
     public static Sort parseSort(String[] sort) {
         Sort defaultSort = Sort.by(Sort.Direction.ASC, "id");
-        if (sort == null || sort.length == 0 || sort[0] == null || sort[0].isEmpty()) {
+        if (sort == null || sort.length == 0 || sort[0] == null || sort[0].isBlank()) {
             return defaultSort;
         }
 
         String firstValue = sort[0].trim();
+        if (firstValue.isBlank()) {
+            return defaultSort;
+        }
         
         switch (firstValue) {
             case "default", "id_asc" -> { return Sort.by(Sort.Direction.ASC, "id"); }
