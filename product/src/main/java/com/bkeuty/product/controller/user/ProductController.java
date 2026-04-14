@@ -51,7 +51,8 @@ public class ProductController {
             sortObj = Sort.by(Sort.Direction.DESC, "reviewCount");
         }
 
-        Pageable pageable = PageRequest.of(page - 1, size, sortObj);
+        int normalizedPage = Math.max(page, 1);
+        Pageable pageable = PageRequest.of(normalizedPage - 1, size, sortObj);
         return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
     }
 

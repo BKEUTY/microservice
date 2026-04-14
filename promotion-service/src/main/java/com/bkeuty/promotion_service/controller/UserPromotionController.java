@@ -32,8 +32,12 @@ public class UserPromotionController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
         
-        Sort.Direction direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sort[0]));
+        int normalizedPage = Math.max(page, 1);
+        String sortField = (sort != null && sort.length > 0) ? sort[0] : "id";
+        Sort.Direction direction = (sort != null && sort.length > 1 && "desc".equalsIgnoreCase(sort[1])) 
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        Pageable pageable = PageRequest.of(normalizedPage - 1, size, Sort.by(direction, sortField));
         
         return ResponseEntity.status(HttpStatus.OK)
                 .body(promotionService.findAll(title, status, startAt, endAt, pageable));

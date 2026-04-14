@@ -51,7 +51,8 @@ public class OrderController {
 
         Sort sortObj = OrderSortUtils.parseSort(sort);
 
-        Pageable pageable = PageRequest.of(page - 1, size, sortObj);
+        int normalizedPage = Math.max(page, 1);
+        Pageable pageable = PageRequest.of(normalizedPage - 1, size, sortObj);
         return ResponseEntity.ok(orderService.getListOrders(
                 tokenValidationResponseDto.getUserId(), 
                 pageable, 

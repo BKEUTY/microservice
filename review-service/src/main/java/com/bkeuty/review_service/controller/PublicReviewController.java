@@ -22,7 +22,8 @@ public class PublicReviewController {
             @RequestParam(required = false) Integer rating,
             @RequestParam(required = false) Boolean hasImage) {
         
-        return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, page - 1, size, rating, hasImage));
+        int normalizedPage = Math.max(page, 1);
+        return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, normalizedPage - 1, size, rating, hasImage));
     }
 
     @GetMapping("/product/{variantId}/stats")

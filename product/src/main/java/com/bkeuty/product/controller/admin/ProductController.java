@@ -39,8 +39,9 @@ public class ProductController {
                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
        }
+        int normalizedPage = Math.max(page, 1);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllProducts(PageRequest.of(normalizedPage - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
     }
 
     @GetMapping("/{productId}/variants")
@@ -67,8 +68,9 @@ public class ProductController {
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+        int normalizedPage = Math.max(page, 1);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(normalizedPage - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
     }
 
     @PostMapping()
