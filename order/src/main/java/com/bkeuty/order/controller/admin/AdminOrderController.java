@@ -50,9 +50,8 @@ public class AdminOrderController {
 
         Sort sortObj = OrderSortUtils.parseSort(sort);
         
-        int normalizedPage = Math.max(page, 1);
         return ResponseEntity.ok(adminOrderService.getAllOrders(
-                PageRequest.of(normalizedPage - 1, size, sortObj), 
+                PageRequest.of(page - 1, size, sortObj), 
                 status, 
                 startDate, 
                 endDate));

@@ -10,12 +10,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController("userProductController")
 @RequestMapping("api/product")
+@Validated
 public class ProductController {
     private final ProductService productService;
 
@@ -25,8 +29,8 @@ public class ProductController {
 
     @GetMapping()
     public ResponseEntity<Page<DisplayProductDto>> getProducts(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) String sort,
@@ -51,8 +55,7 @@ public class ProductController {
             sortObj = Sort.by(Sort.Direction.DESC, "reviewCount");
         }
 
-        int normalizedPage = Math.max(page, 1);
-        Pageable pageable = PageRequest.of(normalizedPage - 1, size, sortObj);
+        Pageable pageable = PageRequest.of(page - 1, size, sortObj);
         return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
     }
 

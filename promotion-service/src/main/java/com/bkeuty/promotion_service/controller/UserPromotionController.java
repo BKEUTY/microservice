@@ -10,11 +10,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController("userPromotionController")
 @RequestMapping("/api/promotion")
+@Validated
 public class UserPromotionController {
     private final PromotionService promotionService;
 
@@ -28,16 +32,19 @@ public class UserPromotionController {
             @RequestParam(required = false) PromotionStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
         
-        int normalizedPage = Math.max(page, 1);
-        String sortField = (sort != null && sort.length > 0) ? sort[0] : "id";
-        Sort.Direction direction = (sort != null && sort.length > 1 && "desc".equalsIgnoreCase(sort[1])) 
-                ? Sort.Direction.DESC : Sort.Direction.ASC;
+        String sortField = (sort != null && sort.length > 0 && sort[0] != null && !sort[0].isBlank()) ? sort[0] : "id";
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sort != null && sort.length > 1 && sort[1] != null) {
+            if ("desc".equalsIgnoreCase(sort[1])) {
+                direction = Sort.Direction.DESC;
+            }
+        }
         
-        Pageable pageable = PageRequest.of(normalizedPage - 1, size, Sort.by(direction, sortField));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortField));
         
         return ResponseEntity.status(HttpStatus.OK)
                 .body(promotionService.findAll(title, status, startAt, endAt, pageable));

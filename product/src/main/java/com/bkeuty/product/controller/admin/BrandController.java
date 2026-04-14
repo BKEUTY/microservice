@@ -15,10 +15,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin/brand")
+@Validated
 public class BrandController {
     private final BrandService brandService;
     private final AuthService authService;
@@ -31,16 +35,15 @@ public class BrandController {
     @GetMapping
     public ResponseEntity<Page<BrandDto>> getAllBrands(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "30") int size) {
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "30") @Min(1) @Max(100) int size) {
             
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        int normalizedPage = Math.max(page, 1);
-        Pageable pageable = PageRequest.of(normalizedPage - 1, size, Sort.by(Sort.Direction.ASC, "id"));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"));
         return ResponseEntity.ok(brandService.getBrands(pageable));
     }
     @PostMapping
