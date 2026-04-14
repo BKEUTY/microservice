@@ -44,7 +44,7 @@ public class BrandController {
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"));
+        Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseBrandSort(sort, "id"));
         return ResponseEntity.ok(brandService.getBrands(pageable));
     }
     @PostMapping

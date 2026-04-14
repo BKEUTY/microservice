@@ -45,7 +45,7 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"))));
+                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, ProductSortUtils.parseProductSort(sort, "id"))));
     }
 
     @GetMapping("/{productId}/variants")
@@ -74,7 +74,7 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"))));
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"))));
     }
 
     @PostMapping()

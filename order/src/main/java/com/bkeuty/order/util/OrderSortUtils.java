@@ -6,7 +6,7 @@ public final class OrderSortUtils {
     private OrderSortUtils() {
     }
 
-    private static final java.util.Set<String> ALLOWED_FIELDS = java.util.Set.of("id", "orderDate", "total", "status", "createdAt");
+    private static final java.util.Set<String> ALLOWED_FIELDS = java.util.Set.of("id", "orderDate", "total", "status");
 
     public static Sort parseSort(String[] sort) {
         Sort defaultSort = Sort.by(Sort.Direction.ASC, "id");

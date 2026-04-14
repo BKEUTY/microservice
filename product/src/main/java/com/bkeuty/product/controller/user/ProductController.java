@@ -36,7 +36,7 @@ public class ProductController {
             @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) String status) {
 
-        Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"));
+        Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"));
         return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
     }
 

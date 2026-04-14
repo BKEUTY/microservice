@@ -6,7 +6,7 @@ public final class PromotionSortUtils {
     private PromotionSortUtils() {
     }
 
-    private static final java.util.Set<String> ALLOWED_FIELDS = java.util.Set.of("id", "title", "startAt", "endAt", "discountValue", "createdAt");
+    private static final java.util.Set<String> ALLOWED_FIELDS = java.util.Set.of("id", "title", "startAt", "endAt", "discountValue", "createAt");
 
     public static Sort parseSort(String[] sort) {
         String sortField = "id";
