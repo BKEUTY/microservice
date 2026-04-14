@@ -9,9 +9,7 @@ import com.bkeuty.review_service.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -181,10 +179,7 @@ public class ReviewService {
         return ratingCounts;
     }
 
-    public ReviewPageResponse getReviewsByVariantId(Long variantId, int page, int size, Integer rating,
-            Boolean hasImage) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
+    public ReviewPageResponse getReviewsByVariantId(Long variantId, Integer rating, Boolean hasImage, Pageable pageable) {
         Page<Review> reviewPage = reviewRepository.findByFilters(variantId, rating, hasImage, pageable);
 
         return ReviewPageResponse.builder()

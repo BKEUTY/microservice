@@ -12,15 +12,19 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import com.bkeuty.promotion_service.util.PromotionSortUtils;
 
 @RestController
 @RequestMapping("/api/admin/promotion")
+@Validated
 public class PromotionController {
     private final AuthService authService;
     private final PromotionService promotionService;
@@ -68,8 +72,8 @@ public class PromotionController {
             @RequestParam(required = false) PromotionStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
         
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
@@ -77,8 +81,7 @@ public class PromotionController {
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        Sort.Direction direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort[0]));
+        Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
         return ResponseEntity.status(org.springframework.http.HttpStatus.OK)
                 .body(promotionService.findAll(title, status, startAt, endAt, pageable));
     }

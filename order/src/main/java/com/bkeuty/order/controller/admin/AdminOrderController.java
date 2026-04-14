@@ -36,10 +36,10 @@ public class AdminOrderController {
     @GetMapping
     public ResponseEntity<Page<AdminOrderDto>> getAllOrders(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
             
@@ -51,7 +51,7 @@ public class AdminOrderController {
         Sort sortObj = OrderSortUtils.parseSort(sort);
         
         return ResponseEntity.ok(adminOrderService.getAllOrders(
-                PageRequest.of(page, size, sortObj), 
+                PageRequest.of(page - 1, size, sortObj), 
                 status, 
                 startDate, 
                 endDate));

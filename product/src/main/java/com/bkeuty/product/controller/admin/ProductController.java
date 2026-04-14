@@ -9,17 +9,21 @@ import com.bkeuty.product.service.AdminProductService;
 import com.bkeuty.product.service.authservice.AuthService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Parameter;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.bkeuty.product.util.ProductSortUtils;
 
 import java.util.List;
 
 @RestController("adminProductController")
 @RequestMapping("api/admin/product")
+@Validated
 public class ProductController {
     private final AuthService authService;
     private final AdminProductService adminProductService;
@@ -32,15 +36,16 @@ public class ProductController {
     @GetMapping()
     public ResponseEntity<Page<AdminProductDto>> getAllProducts(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-       TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
-       if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
-               || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-           return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-       }
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(required = false) String[] sort) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+                || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllProducts(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, ProductSortUtils.parseProductSort(sort, "id"))));
     }
 
     @GetMapping("/{productId}/variants")
@@ -60,15 +65,16 @@ public class ProductController {
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(required = false) String[] sort) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"))));
     }
 
     @PostMapping()
