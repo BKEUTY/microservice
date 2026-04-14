@@ -25,7 +25,7 @@ public class ProductController {
 
     @GetMapping()
     public ResponseEntity<Page<DisplayProductDto>> getProducts(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer categoryId,
@@ -51,7 +51,7 @@ public class ProductController {
             sortObj = Sort.by(Sort.Direction.DESC, "reviewCount");
         }
 
-        Pageable pageable = PageRequest.of(page, size, sortObj);
+        Pageable pageable = PageRequest.of(page - 1, size, sortObj);
         return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
     }
 

@@ -31,7 +31,7 @@ public class BrandController {
     @GetMapping
     public ResponseEntity<Page<BrandDto>> getAllBrands(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "30") int size) {
             
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
@@ -39,7 +39,7 @@ public class BrandController {
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"));
         return ResponseEntity.ok(brandService.getBrands(pageable));
     }
     @PostMapping

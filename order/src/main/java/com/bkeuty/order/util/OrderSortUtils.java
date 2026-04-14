@@ -13,6 +13,8 @@ public final class OrderSortUtils {
         }
 
         return switch (sort) {
+            case "default", "id_asc" -> Sort.by(Sort.Direction.ASC, "id");
+            case "id_desc" -> Sort.by(Sort.Direction.DESC, "id");
             case "date_asc" -> Sort.by(Sort.Direction.ASC, "orderDate");
             case "date_desc" -> Sort.by(Sort.Direction.DESC, "orderDate");
             case "total_asc" -> Sort.by(Sort.Direction.ASC, "total");

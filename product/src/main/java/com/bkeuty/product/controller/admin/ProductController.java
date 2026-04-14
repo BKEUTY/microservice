@@ -32,7 +32,7 @@ public class ProductController {
     @GetMapping()
     public ResponseEntity<Page<AdminProductDto>> getAllProducts(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -40,7 +40,7 @@ public class ProductController {
            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
        }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllProducts(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
     }
 
     @GetMapping("/{productId}/variants")
@@ -60,7 +60,7 @@ public class ProductController {
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -68,7 +68,7 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
     }
 
     @PostMapping()

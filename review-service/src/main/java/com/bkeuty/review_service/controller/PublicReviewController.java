@@ -17,12 +17,12 @@ public class PublicReviewController {
     @GetMapping("/product/{variantId}")
     public ResponseEntity<ReviewPageResponse> getReviewsByProduct(
             @PathVariable Long variantId,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Integer rating,
             @RequestParam(required = false) Boolean hasImage) {
         
-        return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, page, size, rating, hasImage));
+        return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, page - 1, size, rating, hasImage));
     }
 
     @GetMapping("/product/{variantId}/stats")

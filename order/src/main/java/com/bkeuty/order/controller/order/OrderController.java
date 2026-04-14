@@ -36,7 +36,7 @@ public class OrderController {
     @GetMapping("/history")
     public ResponseEntity<Page<OrderResponseDto>> findOrderByUserId(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String sort,
@@ -51,7 +51,7 @@ public class OrderController {
 
         Sort sortObj = OrderSortUtils.parseSort(sort);
 
-        Pageable pageable = PageRequest.of(page, size, sortObj);
+        Pageable pageable = PageRequest.of(page - 1, size, sortObj);
         return ResponseEntity.ok(orderService.getListOrders(
                 tokenValidationResponseDto.getUserId(), 
                 pageable, 

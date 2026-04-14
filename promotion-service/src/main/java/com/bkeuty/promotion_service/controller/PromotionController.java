@@ -68,7 +68,7 @@ public class PromotionController {
             @RequestParam(required = false) PromotionStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
         
@@ -78,7 +78,7 @@ public class PromotionController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         Sort.Direction direction = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort[0]));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sort[0]));
         return ResponseEntity.status(org.springframework.http.HttpStatus.OK)
                 .body(promotionService.findAll(title, status, startAt, endAt, pageable));
     }
