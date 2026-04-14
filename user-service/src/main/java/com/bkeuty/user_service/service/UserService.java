@@ -59,6 +59,12 @@ public class UserService {
             if(updateUserDto.getPhoneNumber()!=null){
                 map.put("phoneNumber", List.of(updateUserDto.getPhoneNumber()));
             }
+            if(updateUserDto.getDob()!=null){
+                map.put("dob", List.of(updateUserDto.getDob()));
+            }
+            if(updateUserDto.getGender()!=null){
+                map.put("gender", List.of(updateUserDto.getGender()));
+            }
 
             user.setAttributes(map);
             usersResource.get(userInfo.getUserId()).update(user);
@@ -80,6 +86,7 @@ public class UserService {
                 .phoneNumber(userRepresentation.firstAttribute("phoneNumber"))
                 .addresses(userRepresentation.getAttributes().get("addresses")!=null?userRepresentation.getAttributes().get("addresses").stream().map(this::addressToAddressDto).toList():null)
                 .dob(userRepresentation.firstAttribute("dob"))
+                .gender(userRepresentation.firstAttribute("gender"))
                 .userRole(userRepresentation.firstAttribute("userRole"))
                 .build();
     }

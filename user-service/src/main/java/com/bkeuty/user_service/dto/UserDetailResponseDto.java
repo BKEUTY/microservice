@@ -19,6 +19,7 @@ public class UserDetailResponseDto {
     private List<AddressDto> addresses;
     private String phoneNumber;
     private String dob;
+    private String gender;
     private String userRole;
 
 }

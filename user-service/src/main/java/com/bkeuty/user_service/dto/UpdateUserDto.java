@@ -14,4 +14,6 @@ public class UpdateUserDto {
     private String firstname;
     private String email;
     private String phoneNumber;
+    private String dob;
+    private String gender;
 }
