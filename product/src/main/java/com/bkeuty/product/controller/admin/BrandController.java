@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.bkeuty.product.util.ProductSortUtils;
 
 @RestController
 @RequestMapping("/api/admin/brand")
@@ -36,14 +37,15 @@ public class BrandController {
     public ResponseEntity<Page<BrandDto>> getAllBrands(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size) {
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(required = false) String[] sort) {
             
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"));
+        Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"));
         return ResponseEntity.ok(brandService.getBrands(pageable));
     }
     @PostMapping

@@ -181,10 +181,7 @@ public class ReviewService {
         return ratingCounts;
     }
 
-    public ReviewPageResponse getReviewsByVariantId(Long variantId, int page, int size, Integer rating,
-            Boolean hasImage) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
+    public ReviewPageResponse getReviewsByVariantId(Long variantId, Integer rating, Boolean hasImage, Pageable pageable) {
         Page<Review> reviewPage = reviewRepository.findByFilters(variantId, rating, hasImage, pageable);
 
         return ReviewPageResponse.builder()

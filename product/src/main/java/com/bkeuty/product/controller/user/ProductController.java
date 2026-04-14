@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.bkeuty.product.util.ProductSortUtils;
 
 import java.util.List;
 
@@ -33,29 +34,10 @@ public class ProductController {
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) String status) {
 
-        Sort sortObj = Sort.by(Sort.Direction.ASC, "id");
-        if ("price_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "promotionPrice");
-        } else if ("price_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "promotionPrice");
-        } else if ("stock_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "stockQuantity");
-        } else if ("stock_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "stockQuantity");
-        } else if ("rating_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "averageRating");
-        } else if ("rating_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "averageRating");
-        } else if ("reviews_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "reviewCount");
-        } else if ("reviews_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "reviewCount");
-        }
-
-        Pageable pageable = PageRequest.of(page - 1, size, sortObj);
+        Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"));
         return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
     }
 

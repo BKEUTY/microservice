@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.bkeuty.review_service.util.ReviewSortUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -24,9 +27,11 @@ public class PublicReviewController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(required = false) Integer rating,
-            @RequestParam(required = false) Boolean hasImage) {
+            @RequestParam(required = false) Boolean hasImage,
+            @RequestParam(required = false) String[] sort) {
         
-        return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, page - 1, size, rating, hasImage));
+        Pageable pageable = PageRequest.of(page - 1, size, ReviewSortUtils.parseSort(sort, "createdAt"));
+        return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, rating, hasImage, pageable));
     }
 
     @GetMapping("/product/{variantId}/stats")

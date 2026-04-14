@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.bkeuty.product.util.ProductSortUtils;
 
 import java.util.List;
 
@@ -37,14 +38,15 @@ public class ProductController {
     public ResponseEntity<Page<AdminProductDto>> getAllProducts(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size) {
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(required = false) String[] sort) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"))));
     }
 
     @GetMapping("/{productId}/variants")
@@ -65,14 +67,15 @@ public class ProductController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size) {
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(required = false) String[] sort) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"))));
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, ProductSortUtils.parseSort(sort, "id"))));
     }
 
     @PostMapping()
