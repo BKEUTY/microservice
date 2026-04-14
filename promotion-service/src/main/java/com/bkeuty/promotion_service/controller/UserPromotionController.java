@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.bkeuty.promotion_service.util.PromotionSortUtils;
 import java.time.LocalDateTime;
 
 @RestController("userPromotionController")
@@ -36,15 +37,7 @@ public class UserPromotionController {
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
         
-        String sortField = (sort != null && sort.length > 0 && sort[0] != null && !sort[0].isBlank()) ? sort[0] : "id";
-        Sort.Direction direction = Sort.Direction.ASC;
-        if (sort != null && sort.length > 1 && sort[1] != null) {
-            if ("desc".equalsIgnoreCase(sort[1])) {
-                direction = Sort.Direction.DESC;
-            }
-        }
-        
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortField));
+        Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
         
         return ResponseEntity.status(HttpStatus.OK)
                 .body(promotionService.findAll(title, status, startAt, endAt, pageable));

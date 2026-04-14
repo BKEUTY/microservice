@@ -37,7 +37,7 @@ public class ProductController {
     public ResponseEntity<Page<AdminProductDto>> getAllProducts(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -65,7 +65,7 @@ public class ProductController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size) {
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {

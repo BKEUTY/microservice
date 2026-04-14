@@ -36,7 +36,7 @@ public class BrandController {
     public ResponseEntity<Page<BrandDto>> getAllBrands(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "30") @Min(1) @Max(100) int size) {
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size) {
             
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
