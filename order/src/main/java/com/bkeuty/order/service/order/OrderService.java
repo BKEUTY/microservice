@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -115,6 +116,11 @@ public class OrderService {
         List<Integer> cartItemIds = orderItemList.stream()
                 .map(OrderCartItemDto::getCartItemId)
                 .collect(Collectors.toList());
+        
+        if (cartItemIds.stream().anyMatch(id -> id == null)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Cart item ID cannot be null");
+        }
         
         if (cartItemIds.size() != cartItemIds.stream().distinct().count()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
@@ -322,8 +328,38 @@ public class OrderService {
                         .promotionPrice(item.getPromotionPrice())
                         .quantity(item.getQuantity())
                         .build())
+                    .filter(dto -> dto.getProductVariantName() != null && !dto.getProductVariantName().isBlank())
                     .collect(Collectors.toList())
                 : new ArrayList<>();
+        
+        if (itemDtos.isEmpty() && order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+            List<Integer> variantIds = order.getOrderItems().stream()
+                    .map(OrderItem::getProductVariantId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            
+            if (!variantIds.isEmpty()) {
+                Map<Integer, ProductVariantDto> variants = fetchVariantMap(variantIds);
+                itemDtos = order.getOrderItems().stream()
+                        .map(item -> {
+                            ProductVariantDto variantDto = variants.get(item.getProductVariantId());
+                            if (variantDto != null) {
+                                return AddToCartResponseDto.builder()
+                                        .productVariantId(variantDto.getId())
+                                        .productVariantName(variantDto.getProductVariantName())
+                                        .productVariantImage(variantDto.getProductImageUrl())
+                                        .price(variantDto.getPrice())
+                                        .promotionPrice(variantDto.getPromotionPrice())
+                                        .quantity(item.getQuantity())
+                                        .build();
+                            }
+                            return null;
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            }
+        }
 
         response.setItems(itemDtos);
         return response;

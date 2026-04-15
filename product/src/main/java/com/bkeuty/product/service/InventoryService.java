@@ -53,17 +53,13 @@ public class InventoryService {
                     "Insufficient stock for variant ID: " + productVariant.getId());
             }
 
-            ProductVariant refreshedVariant = productVariantRepository.findById(productVariant.getId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                            "Product variant not found after stock update: " + productVariant.getId()));
-
             decreaseStockResponseDtos.add(new DecreaseStockResponseDto(
-                    refreshedVariant.getId(),
-                    refreshedVariant.getProductVariantName(),
-                    refreshedVariant.getProductImageUrl(),
+                    productVariant.getId(),
+                    productVariant.getProductVariantName(),
+                    productVariant.getProductImageUrl(),
                     orderItem.getQuantity(),
-                    refreshedVariant.getPrice(),
-                    refreshedVariant.getPromotionPrice()
+                    productVariant.getPrice(),
+                    productVariant.getPromotionPrice()
             ));
         }
         return decreaseStockResponseDtos;
