@@ -110,9 +110,20 @@ public class OrderService {
         List<AddToCartResponseDto> items = new ArrayList<>();
         List<OrderItem> orderItemsToSave = new ArrayList<>();
         List<Integer> variantIds = new ArrayList<>();
+        List<Integer> cartItemIds = orderItemList.stream()
+                .map(OrderCartItemDto::getCartItemId)
+                .collect(Collectors.toList());
+        List<CartItem> cartItems = cartItemRepository.findAllById(cartItemIds);
+        
+        if (cartItems.size() != cartItemIds.size()) {
+            throw new CartItemNotFound("One or more cart items not found", null);
+        }
+        
+        Map<Integer, CartItem> cartItemMap = cartItems.stream()
+                .collect(Collectors.toMap(CartItem::getId, item -> item));
+        
         for (OrderCartItemDto cartItemDto : orderItemList) {
-            CartItem cartItem = cartItemRepository.findById(cartItemDto.getCartItemId())
-                    .orElseThrow(() -> new CartItemNotFound("Cart item not found", cartItemDto.getCartItemId()));
+            CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
             variantIds.add(cartItem.getProductVariant());
             decreaseVariants.add(new OrderItemDto(cartItem.getProductVariant(), cartItem.getQuantity()));
         }
@@ -120,8 +131,7 @@ public class OrderService {
         Map<Integer, ProductVariantDto> variants = fetchVariantMap(variantIds);
 
         for (OrderCartItemDto cartItemDto : orderItemList) {
-            CartItem cartItem = cartItemRepository.findById(cartItemDto.getCartItemId())
-                    .orElseThrow(() -> new CartItemNotFound("Cart item not found", cartItemDto.getCartItemId()));
+            CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
 
             ProductVariantDto variantDto = variants.get(cartItem.getProductVariant());
             if (variantDto == null) {
@@ -178,9 +188,7 @@ public class OrderService {
                     "Internal error processing stock: " + e.getMessage());
         }
 
-        if (request.getShippingFee() != null) {
-            totalAmount = totalAmount.add(request.getShippingFee());
-        }
+        totalAmount = totalAmount.add(BigDecimal.valueOf(shippingFee));
         orderSave.setTotal(totalAmount);
         orderRepository.save(orderSave);
         OrderResponseDto response = OrderResponseDto.builder()

@@ -1,5 +1,12 @@
 package com.bkeuty.product.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.bkeuty.product.dto.user.order.DecreaseStockResponseDto;
 import com.bkeuty.product.dto.user.order.OrderItemDto;
 import com.bkeuty.product.dto.user.product.PromotionPriceDto;
@@ -7,10 +14,6 @@ import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.exception.ProductVariantNotFoundException;
 import com.bkeuty.product.microservicecommunication.PromotionService;
 import com.bkeuty.product.repository.ProductVariantRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class InventoryService {
@@ -36,7 +39,8 @@ public class InventoryService {
             );
             
             if (updatedRows == 0) {
-                throw new RuntimeException("Insufficient stock for variant ID: " + productVariant.getId());
+                throw new ResponseStatusException(HttpStatus.CONFLICT, 
+                    "Insufficient stock for variant ID: " + productVariant.getId());
             }
 
             decreaseStockResponseDtos.add(new DecreaseStockResponseDto(
