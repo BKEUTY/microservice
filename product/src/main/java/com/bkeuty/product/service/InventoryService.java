@@ -22,8 +22,18 @@ public class InventoryService {
 
     @Transactional
     public List<DecreaseStockResponseDto> decreaseOrderItem(List<OrderItemDto> orderItems) {
+        if (orderItems == null || orderItems.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Order items must not be null or empty");
+        }
+        
         List<DecreaseStockResponseDto> decreaseStockResponseDtos = new ArrayList<>();
         for (OrderItemDto orderItem : orderItems) {
+            if (orderItem.getProductVariantId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Product variant ID is required for each order item");
+            }
+            
             if (orderItem.getQuantity() == null || orderItem.getQuantity() <= 0) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Invalid quantity for order item: " + orderItem.getQuantity());
@@ -43,13 +53,17 @@ public class InventoryService {
                     "Insufficient stock for variant ID: " + productVariant.getId());
             }
 
+            ProductVariant refreshedVariant = productVariantRepository.findById(productVariant.getId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                            "Product variant not found after stock update: " + productVariant.getId()));
+
             decreaseStockResponseDtos.add(new DecreaseStockResponseDto(
-                    productVariant.getId(),
-                    productVariant.getProductVariantName(),
-                    productVariant.getProductImageUrl(),
+                    refreshedVariant.getId(),
+                    refreshedVariant.getProductVariantName(),
+                    refreshedVariant.getProductImageUrl(),
                     orderItem.getQuantity(),
-                    productVariant.getPrice(),
-                    productVariant.getPromotionPrice()
+                    refreshedVariant.getPrice(),
+                    refreshedVariant.getPromotionPrice()
             ));
         }
         return decreaseStockResponseDtos;

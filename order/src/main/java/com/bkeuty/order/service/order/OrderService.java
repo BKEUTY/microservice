@@ -27,7 +27,6 @@ import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.cart.ProductVariantDto;
 import com.bkeuty.order.dto.order.DecreaseStockRequestDto;
-import com.bkeuty.order.dto.order.DecreaseStockResponseDto;
 import com.bkeuty.order.dto.order.OrderCartItemDto;
 import com.bkeuty.order.dto.order.OrderItemDto;
 import com.bkeuty.order.dto.order.OrderResponseDto;
@@ -138,6 +137,22 @@ public class OrderService {
         
         for (OrderCartItemDto cartItemDto : orderItemList) {
             CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
+            
+            if (cartItem == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Cart item not found in map: " + cartItemDto.getCartItemId());
+            }
+            
+            if (cartItem.getProductVariant() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Product variant ID is missing for cart item: " + cartItem.getId());
+            }
+            
+            if (cartItem.getQuantity() == null || cartItem.getQuantity() <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Invalid quantity for cart item: " + cartItem.getId());
+            }
+            
             variantIds.add(cartItem.getProductVariant());
             decreaseVariants.add(new OrderItemDto(cartItem.getProductVariant(), cartItem.getQuantity()));
         }
@@ -147,6 +162,16 @@ public class OrderService {
 
         for (OrderCartItemDto cartItemDto : orderItemList) {
             CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
+            
+            if (cartItem == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Cart item not found in map: " + cartItemDto.getCartItemId());
+            }
+            
+            if (cartItem.getProductVariant() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Product variant ID is missing for cart item: " + cartItem.getId());
+            }
 
             ProductVariantDto variantDto = variants.get(cartItem.getProductVariant());
             if (variantDto == null) {
@@ -197,7 +222,7 @@ public class OrderService {
                     .uri("/api/inventory/internal/decreaseStock")
                     .bodyValue(new DecreaseStockRequestDto(decreaseVariants))
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<DecreaseStockResponseDto>>() {})
+                    .bodyToMono(Void.class)
                     .block();
         } catch (WebClientResponseException e) {
             HttpStatus statusCode = HttpStatus.valueOf(e.getStatusCode().value());
