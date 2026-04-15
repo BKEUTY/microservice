@@ -139,7 +139,8 @@ public class OrderService {
             decreaseVariants.add(new OrderItemDto(cartItem.getProductVariant(), cartItem.getQuantity()));
         }
 
-        Map<Integer, ProductVariantDto> variants = fetchVariantMap(variantIds);
+        Map<Integer, ProductVariantDto> variants = fetchVariantMap(
+                variantIds.stream().distinct().collect(Collectors.toList()));
 
         for (OrderCartItemDto cartItemDto : orderItemList) {
             CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
@@ -281,6 +282,7 @@ public class OrderService {
         response.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
         response.setStatus(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name());
         response.setShippingFee(order.getShippingFee());
+        response.setEstShippingDate(order.getEstimatedShippingDate());
 
         List<AddToCartResponseDto> itemDtos = order.getOrderItems() != null ?
                 order.getOrderItems().stream()
