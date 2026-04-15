@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.core.ParameterizedTypeReference;
@@ -25,7 +27,6 @@ import com.bkeuty.order.dto.admin.AdminOrderDto;
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.cart.ProductVariantDto;
 import com.bkeuty.order.entity.Order;
-import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.repository.OrderRepository;
 
@@ -115,46 +116,53 @@ public class AdminOrderService {
     private AdminOrderDto toAdminOrderDto(Order order) {
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
         
-        if (order.getOrderItems() != null) {
+        if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+            Set<Integer> missingVariantIds = new HashSet<>();
+            
             itemDtos = order.getOrderItems().stream()
-                    .filter(item -> item.getProductVariantName() != null && !item.getProductVariantName().isBlank())
-                    .map(item -> AddToCartResponseDto.builder()
-                        .productVariantId(item.getProductVariantId())
-                        .productVariantName(item.getProductVariantName())
-                        .productVariantImage(item.getProductImageUrl())
-                        .price(item.getPrice())
-                        .promotionPrice(item.getPromotionPrice())
-                        .quantity(item.getQuantity())
-                        .build())
+                    .map(item -> {
+                        if (item.getProductVariantName() != null && !item.getProductVariantName().isBlank()) {
+                            return AddToCartResponseDto.builder()
+                                    .productVariantId(item.getProductVariantId())
+                                    .productVariantName(item.getProductVariantName())
+                                    .productVariantImage(item.getProductImageUrl())
+                                    .price(item.getPrice())
+                                    .promotionPrice(item.getPromotionPrice())
+                                    .quantity(item.getQuantity())
+                                    .build();
+                        } else {
+                            if (item.getProductVariantId() != null) {
+                                missingVariantIds.add(item.getProductVariantId());
+                            }
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             
-            if (itemDtos.isEmpty()) {
-                List<Integer> variantIds = order.getOrderItems().stream()
-                        .map(OrderItem::getProductVariantId)
+            if (!missingVariantIds.isEmpty()) {
+                Map<Integer, ProductVariantDto> variants = fetchVariantMap(new ArrayList<>(missingVariantIds));
+                
+                List<AddToCartResponseDto> fallbackItems = order.getOrderItems().stream()
+                        .filter(item -> item.getProductVariantName() == null || item.getProductVariantName().isBlank())
+                        .map(item -> {
+                            ProductVariantDto variantDto = variants.get(item.getProductVariantId());
+                            if (variantDto != null) {
+                                return AddToCartResponseDto.builder()
+                                        .productVariantId(variantDto.getId())
+                                        .productVariantName(variantDto.getProductVariantName())
+                                        .productVariantImage(variantDto.getProductImageUrl())
+                                        .price(variantDto.getPrice())
+                                        .promotionPrice(variantDto.getPromotionPrice())
+                                        .quantity(item.getQuantity())
+                                        .build();
+                            }
+                            return null;
+                        })
                         .filter(Objects::nonNull)
-                        .distinct()
                         .collect(Collectors.toList());
                 
-                if (!variantIds.isEmpty()) {
-                    Map<Integer, ProductVariantDto> variants = fetchVariantMap(variantIds);
-                    itemDtos = order.getOrderItems().stream()
-                            .map(item -> {
-                                ProductVariantDto variantDto = variants.get(item.getProductVariantId());
-                                if (variantDto != null) {
-                                    return AddToCartResponseDto.builder()
-                                            .productVariantId(variantDto.getId())
-                                            .productVariantName(variantDto.getProductVariantName())
-                                            .productVariantImage(variantDto.getProductImageUrl())
-                                            .price(variantDto.getPrice())
-                                            .promotionPrice(variantDto.getPromotionPrice())
-                                            .quantity(item.getQuantity())
-                                            .build();
-                                }
-                                return null;
-                            })
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                }
+                itemDtos.addAll(fallbackItems);
             }
         }
 
@@ -162,10 +170,10 @@ public class AdminOrderService {
                 .id(order.getId())
                 .userId(order.getUserId())
                 .userName(order.getUserName())
-                .total(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO)
+                .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
                 .shippingFee(order.getShippingFee())
                 .paymentMethod(order.getPaymentMethod())
-                .orderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now())
+                .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
                 .address(order.getAddress())
                 .status(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name())
                 .items(itemDtos)
@@ -186,5 +194,9 @@ public class AdminOrderService {
             log.error("Failed to fetch product variants from product-service for IDs: {}", variantIds, e);
             return Collections.emptyMap();
         }
+    }
+
+    private <T> T emptyIfNull(T value, T defaultValue) {
+        return value != null ? value : defaultValue;
     }
 }
