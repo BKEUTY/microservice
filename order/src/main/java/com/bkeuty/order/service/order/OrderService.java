@@ -128,7 +128,9 @@ public class OrderService {
         List<CartItem> cartItems = cartItemRepository.findAllById(cartItemIds);
         
         if (cartItems.size() != cartItemIds.size()) {
-            throw new CartItemNotFound("One or more cart items not found", null);
+            List<Integer> foundIds = cartItems.stream().map(CartItem::getId).toList();
+            Integer missingId = cartItemIds.stream().filter(id -> !foundIds.contains(id)).findFirst().orElse(null);
+            throw new CartItemNotFound("One or more cart items not found", missingId);
         }
         
         if (cartItems.stream().anyMatch(item -> !userInfo.getUserId().equals(item.getUserId()))) {
@@ -242,7 +244,7 @@ public class OrderService {
                     .toBodilessEntity()
                     .block();
         } catch (WebClientResponseException e) {
-            HttpStatus statusCode = HttpStatus.valueOf(e.getStatusCode().value());
+            HttpStatus statusCode = HttpStatus.resolve(e.getStatusCode().value());
             
             if (statusCode == HttpStatus.CONFLICT) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, 
@@ -250,15 +252,17 @@ public class OrderService {
             } else if (statusCode == HttpStatus.NOT_FOUND) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Product variant not found", e);
-            } else if (statusCode.is5xxServerError()) {
+            } else if (statusCode != null && statusCode.is5xxServerError()) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
                         "Inventory service error, please try again", e);
             } else {
-                throw new ResponseStatusException(statusCode, "Failed to update inventory", e);
+                throw new ResponseStatusException(
+                        statusCode != null ? statusCode : HttpStatus.INTERNAL_SERVER_ERROR, 
+                        "Failed to update inventory", e);
             }
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
-                    "Internal error processing stock: " + e.getMessage());
+                    "Internal error processing stock: " + e.getMessage(), e);
         }
 
         OrderResponseDto response = OrderResponseDto.builder()
