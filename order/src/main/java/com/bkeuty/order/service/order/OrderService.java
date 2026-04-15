@@ -48,6 +48,7 @@ import com.bkeuty.order.repository.CartItemRepository;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
 import com.bkeuty.order.service.shipping.ShippingService;
+
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 
@@ -121,8 +122,16 @@ public class OrderService {
             throw new CartItemNotFound("One or more cart items not found", null);
         }
         
+        if (cartItems.stream().anyMatch(item -> !userInfo.getUserId().equals(item.getUserId()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                    "One or more cart items do not belong to the authenticated user");
+        }
+        
         Map<Integer, CartItem> cartItemMap = cartItems.stream()
-                .collect(Collectors.toMap(CartItem::getId, item -> item));
+                .collect(Collectors.toMap(CartItem::getId, item -> item, (existing, duplicate) -> {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                            "Duplicate cart item ID in request: " + existing.getId());
+                }));
         
         for (OrderCartItemDto cartItemDto : orderItemList) {
             CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
@@ -137,6 +146,10 @@ public class OrderService {
 
             ProductVariantDto variantDto = variants.get(cartItem.getProductVariant());
             if (variantDto == null) {
+                if (variants.isEmpty() && !variantIds.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, 
+                        "Product service temporarily unavailable");
+                }
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                     "Product variant not found: " + cartItem.getProductVariant());
             }
