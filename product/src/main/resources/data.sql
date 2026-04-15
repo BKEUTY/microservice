@@ -108,7 +108,7 @@ INSERT INTO product_variant (id, product_id, product_variant_name, price, promot
 (37, 13, 'Romand Juicy Tint - Peeling Angdoo', 195000, 195000, 100, 560, 'Màu đỏ đào', 0, 'v37.jpg', 4.7, 150),
 (38, 14, 'Klairs Toner - Có mùi', 345000, 310000, 200, 1350, 'Hương thảo mộc', 0, 'v38.jpg', 4.9, 680),
 (39, 14, 'Klairs Toner - Không mùi', 345000, 310000, 250, 1495, 'Cho da siêu nhạy cảm', 0, 'v39.jpg', 4.9, 940),
-(40, 15, 'Skin1004 Sun Physcial - 50ml', 385000, 345000, 150, 890, 'Chống nắng rau má', 0, 'v40.jpg', 4.8, 380),
+(40, 15, 'Skin1004 Sun Physical - 50ml', 385000, 345000, 150, 890, 'Chống nắng rau má', 0, 'v40.jpg', 4.8, 380),
 (41, 1, 'CeraVe Foaming Cleanser mini - 88ml', 185000, 185000, 200, 450, 'Bản du lịch', 0, 'v41.jpg', 4.7, 120),
 (42, 2, 'LRP Anthelios Fluid - 50ml', 525000, 485000, 150, 1150, 'Dạng sữa mỏng nhẹ', 0, 'v42.jpg', 4.9, 560),
 (43, 3, 'Estee Lauder ANR mini - 7ml', 350000, 350000, 100, 890, 'Dùng thử 7 ngày', 0, 'v43.jpg', 4.8, 230),

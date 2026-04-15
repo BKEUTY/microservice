@@ -13,5 +13,5 @@ import com.bkeuty.order.entity.Order;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpecificationExecutor<Order> {
     @EntityGraph(attributePaths = {"orderItems"})
-    Page<Order> findAll(Specification<Object> spec, Pageable pageable);
+    Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 }

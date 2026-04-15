@@ -5,7 +5,6 @@ import java.util.Set;
 
 import com.bkeuty.product.enums.ProductStatus;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -56,7 +55,6 @@ public class ProductVariant {
     @Builder.Default
     private Integer reviewCount = 0;
     @Builder.Default
-    @Column(nullable = false)
     private Integer sold = 0;
 
     @ManyToOne
