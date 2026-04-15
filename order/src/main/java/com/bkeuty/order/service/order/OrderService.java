@@ -116,6 +116,12 @@ public class OrderService {
         List<Integer> cartItemIds = orderItemList.stream()
                 .map(OrderCartItemDto::getCartItemId)
                 .collect(Collectors.toList());
+        
+        if (cartItemIds.size() != cartItemIds.stream().distinct().count()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Duplicate cart item ID in request");
+        }
+        
         List<CartItem> cartItems = cartItemRepository.findAllById(cartItemIds);
         
         if (cartItems.size() != cartItemIds.size()) {
@@ -128,10 +134,7 @@ public class OrderService {
         }
         
         Map<Integer, CartItem> cartItemMap = cartItems.stream()
-                .collect(Collectors.toMap(CartItem::getId, item -> item, (existing, duplicate) -> {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                            "Duplicate cart item ID in request: " + existing.getId());
-                }));
+                .collect(Collectors.toMap(CartItem::getId, item -> item));
         
         for (OrderCartItemDto cartItemDto : orderItemList) {
             CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());

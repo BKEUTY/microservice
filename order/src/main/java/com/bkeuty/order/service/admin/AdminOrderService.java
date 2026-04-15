@@ -18,7 +18,6 @@ import com.bkeuty.order.dto.admin.AdminOrderDto;
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.enums.PaymentStatus;
-import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 public class AdminOrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
 
-    public AdminOrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
+    public AdminOrderService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
     }
 
     public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, LocalDate startDate, LocalDate endDate) {
