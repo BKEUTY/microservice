@@ -82,6 +82,7 @@ public class ProductService {
                 .description(productVariant.getDescription())
                 .averageRating(productVariant.getAverageRating())
                 .reviewCount(productVariant.getReviewCount())
+                .sold(productVariant.getSold())
                 .build();
     }
 
@@ -170,6 +171,7 @@ public class ProductService {
                 .status(productVariant.getStatus().name())
                 .averageRating(productVariant.getAverageRating())
                 .reviewCount(productVariant.getReviewCount())
+                .sold(productVariant.getSold())
                 .build();
     }
 
@@ -194,6 +196,7 @@ public class ProductService {
                 .price(productVariant.getPrice())
                 .productImageUrl(productVariant.getProductImageUrl())
                 .stockQuantity(productVariant.getStockQuantity())
+                .sold(productVariant.getSold())
                 .variantOptions(options)
                 .discount(promotionPrice.getNewPrice())
                 .build();

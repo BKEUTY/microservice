@@ -1,4 +1,13 @@
 package com.bkeuty.product.service.recommendation;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 
 import com.bkeuty.product.dto.recommendation.RecommendationResponse;
 import com.bkeuty.product.dto.user.product.CategoryDto;
@@ -8,12 +17,6 @@ import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.microservicecommunication.OrderServiceCommunication;
 import com.bkeuty.product.microservicecommunication.PromotionService;
 import com.bkeuty.product.repository.ProductVariantRepository;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
@@ -93,6 +96,7 @@ public class RecommendationService {
                             .originPrice(v.getPrice())
                             .discountPrice(promo != null ? promo.getNewPrice() : v.getPrice())
                             .stockQuantity(v.getStockQuantity())
+                            .sold(v.getSold())
                             .brand(v.getProduct().getBrand() != null ? v.getProduct().getBrand().getBrandName() : "N/A")
                             .categories(v.getProduct().getCategories().stream()
                                     .map(cat -> new CategoryDto(cat.getId(), cat.getCategoryName()))

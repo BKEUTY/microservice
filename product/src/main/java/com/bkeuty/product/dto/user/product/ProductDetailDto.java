@@ -26,4 +26,5 @@ public class ProductDetailDto {
     private String status;
     private Double averageRating;
     private Integer reviewCount;
+    private Integer sold;
 }
