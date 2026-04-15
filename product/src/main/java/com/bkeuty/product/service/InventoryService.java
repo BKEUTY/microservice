@@ -21,16 +21,32 @@ public class InventoryService {
         this.promotionService = promotionService;
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public List<DecreaseStockResponseDto> decreaseOrderItem(List<OrderItemDto> orderItems) {
         List<DecreaseStockResponseDto> decreaseStockResponseDtos = new ArrayList<>();
         for (OrderItemDto orderItem : orderItems) {
-            ProductVariant productVariant = productVariantRepository.findById(orderItem.getProductVariantId()).orElseThrow(() -> new ProductVariantNotFoundException("ProductVariantNotFound"));
+            ProductVariant productVariant = productVariantRepository.findById(orderItem.getProductVariantId())
+                    .orElseThrow(() -> new ProductVariantNotFoundException("ProductVariantNotFound"));
+            
             PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
-            Integer remainQuantity = productVariant.getStockQuantity() - orderItem.getQuantity();
-            productVariant.setStockQuantity(remainQuantity);
-            productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
-            productVariantRepository.save(productVariant);
-            decreaseStockResponseDtos.add(new DecreaseStockResponseDto(productVariant.getId(),productVariant.getProductVariantName(),productVariant.getProductImageUrl(),orderItem.getQuantity(),productVariant.getPrice(),promotionPriceDto.getNewPrice()));
+            
+            int updatedRows = productVariantRepository.decreaseStockAndIncreaseSold(
+                    productVariant.getId(), 
+                    orderItem.getQuantity()
+            );
+            
+            if (updatedRows == 0) {
+                throw new RuntimeException("Insufficient stock for variant ID: " + productVariant.getId());
+            }
+
+            decreaseStockResponseDtos.add(new DecreaseStockResponseDto(
+                    productVariant.getId(),
+                    productVariant.getProductVariantName(),
+                    productVariant.getProductImageUrl(),
+                    orderItem.getQuantity(),
+                    productVariant.getPrice(),
+                    promotionPriceDto.getNewPrice()
+            ));
         }
         return decreaseStockResponseDtos;
     }

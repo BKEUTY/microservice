@@ -40,6 +40,8 @@ public class ProductVariant {
     private Double averageRating = 0.0;
     @Builder.Default
     private Integer reviewCount = 0;
+    @Builder.Default
+    private Integer sold = 0;
 
     @ManyToOne
     @JoinColumn(name = "product_id")

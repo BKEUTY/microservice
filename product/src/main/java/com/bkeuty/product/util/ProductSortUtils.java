@@ -8,7 +8,7 @@ public final class ProductSortUtils {
     private ProductSortUtils() {
     }
 
-    private static final Set<String> VARIANT_ALLOWED = Set.of("id", "price", "promotionPrice", "stockQuantity", "productVariantName", "averageRating", "reviewCount", "status");
+    private static final Set<String> VARIANT_ALLOWED = Set.of("id", "price", "promotionPrice", "stockQuantity", "productVariantName", "averageRating", "reviewCount", "status", "sold");
     private static final Set<String> PRODUCT_ALLOWED = Set.of("id", "name", "description");
     private static final Set<String> BRAND_ALLOWED = Set.of("id", "brandName", "brandStatus", "category");
 

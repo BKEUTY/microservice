@@ -8,12 +8,14 @@ import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.shipping.AddressDto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class OrderResponseDto {
     private String orderId;
     private String userName;

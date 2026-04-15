@@ -21,6 +21,7 @@ public class DisplayProductDto {
     private BigDecimal discountPrice;
     private String imageUrl;
     private Integer stockQuantity;
+    private Integer sold;
     private String brand;
     private List<CategoryDto> categories;
     private String status;
