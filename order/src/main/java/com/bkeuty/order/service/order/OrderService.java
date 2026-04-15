@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
+
 import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.cart.ProductVariantDto;
@@ -181,8 +183,20 @@ public class OrderService {
                     .bodyToMono(new ParameterizedTypeReference<List<DecreaseStockResponseDto>>() {})
                     .block();
         } catch (WebClientResponseException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed to update inventory: " + e.getResponseBodyAsString());
+            HttpStatus statusCode = HttpStatus.valueOf(e.getStatusCode().value());
+            
+            if (statusCode == HttpStatus.CONFLICT) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, 
+                        "Insufficient stock for items", e);
+            } else if (statusCode == HttpStatus.NOT_FOUND) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                        "Product variant not found", e);
+            } else if (statusCode.is5xxServerError()) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                        "Inventory service error, please try again", e);
+            } else {
+                throw new ResponseStatusException(statusCode, "Failed to update inventory", e);
+            }
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
                     "Internal error processing stock: " + e.getMessage());
