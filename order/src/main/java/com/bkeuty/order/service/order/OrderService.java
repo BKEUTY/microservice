@@ -96,7 +96,7 @@ public class OrderService {
                 .toDistrictId(request.getAddress().getDistrict().getDistrictID()).serviceTypeId(2).build())
                 .block().getData().getLeaderTimeOrder().getToEstimateTime();
         Order order = Order.builder()
-                .orderDate(LocalDate.now())
+                .orderDate(java.time.LocalDateTime.now())
                 .address(addressDtoToAddress(request.getAddress()))
                 .paymentMethod(request.getPaymentMethod())
                 .userId(userInfo.getUserId())
@@ -333,7 +333,7 @@ public class OrderService {
         OrderResponseDto response = OrderResponseDto.builder()
                 .orderId(order.getId() != null ? order.getId().toString() : "")
                 .userName(order.getUserName())
-                .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
+                .orderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now())
                 .address(toAddressDto(order.getAddress()))
                 .paymentMethod(order.getPaymentMethod())
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
@@ -401,7 +401,7 @@ public class OrderService {
         OrderResponseDto orderResponseDTO = new OrderResponseDto();
         orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
         orderResponseDTO.setUserName(order.getUserName());
-        orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
+        orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now());
         orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);

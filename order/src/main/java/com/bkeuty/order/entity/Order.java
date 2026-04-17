@@ -1,7 +1,7 @@
 package com.bkeuty.order.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import com.bkeuty.order.enums.PaymentStatus;
 import jakarta.persistence.CascadeType;
@@ -33,7 +33,7 @@ public class Order {
     private Integer id;
     private BigDecimal total;
     private String paymentMethod;
-    private LocalDate orderDate;
+    private LocalDateTime orderDate;
     private String address;
     private BigDecimal shippingFee;
     private String estimatedShippingDate;

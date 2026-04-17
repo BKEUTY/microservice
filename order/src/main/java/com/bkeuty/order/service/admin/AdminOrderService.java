@@ -173,7 +173,7 @@ public class AdminOrderService {
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
                 .shippingFee(order.getShippingFee())
                 .paymentMethod(order.getPaymentMethod())
-                .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
+                .orderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now())
                 .address(order.getAddress())
                 .status(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name())
                 .items(itemDtos)

@@ -45,6 +45,11 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
+    public WebClient userWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
+        return builder.baseUrl("http://user-service").build();
+    }
+
+    @Bean
     public WebClient GHNWebClient(@Qualifier("defaultWebClientBuilder") WebClient.Builder builder) {
         return builder.baseUrl("https://dev-online-gateway.ghn.vn").build();
     }

@@ -233,4 +233,18 @@ public class UserService {
                 .filter(u -> role == null || (u.getUserRole() != null && u.getUserRole().equalsIgnoreCase(role)))
                 .toList();
     }
+
+    public long countUsersByDateRange(Long startDate, Long endDate) {
+        return keycloak.realm(realmName).users().list().stream()
+                .filter(u -> u.getCreatedTimestamp() != null &&
+                             (startDate == null || u.getCreatedTimestamp() >= startDate) &&
+                             (endDate == null || u.getCreatedTimestamp() <= endDate))
+                .filter(u -> {
+                    if (u.getAttributes() == null || u.getAttributes().get("userRole") == null || u.getAttributes().get("userRole").isEmpty()) {
+                        return true;
+                    }
+                    return u.getAttributes().get("userRole").get(0).equalsIgnoreCase("USER");
+                })
+                .count();
+    }
 }
