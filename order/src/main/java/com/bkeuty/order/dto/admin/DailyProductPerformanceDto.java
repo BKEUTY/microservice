@@ -14,16 +14,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class DailyProductPerformanceDto {
     private LocalDateTime date;
-    private Integer productId;
-    private String productVariantName;
+    private Integer variantId;
+    private String name;
     private Long quantity;
     private BigDecimal revenue;
     private BigDecimal profit;
 
-    public DailyProductPerformanceDto(LocalDateTime date, Integer productId, String productVariantName, Long quantity, BigDecimal revenue) {
+    public DailyProductPerformanceDto(LocalDateTime date, Integer variantId, String name, Long quantity, BigDecimal revenue) {
         this.date = date;
-        this.productId = productId;
-        this.productVariantName = productVariantName;
+        this.variantId = variantId;
+        this.name = name;
         this.quantity = quantity;
         this.revenue = revenue;
         this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;

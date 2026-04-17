@@ -73,15 +73,15 @@ public class AdminDashboardService {
                 ? analytics.getVariantMappings() : Collections.emptyMap();
             
             productDetail.forEach(item -> {
-                VariantMappingDto mapping = mappings.get(item.getProductId());
+                VariantMappingDto mapping = mappings.get(item.getVariantId());
                 if (mapping != null) {
-                    item.setProductVariantName(mapping.getVariantName());
+                    item.setName(mapping.getVariantName());
                     
                     // Brand Detail Entry
                     if (mapping.getBrandId() != null) {
                         brandDetail.add(new TransactionalPerformanceDto(
                             item.getDate(), mapping.getBrandId(), mapping.getBrandName(),
-                            item.getProductId(), mapping.getVariantName(), 
+                            item.getVariantId(), mapping.getVariantName(), 
                             item.getQuantity(), item.getRevenue()
                         ));
                     }
@@ -90,7 +90,7 @@ public class AdminDashboardService {
                     if (mapping.getCategoryId() != null) {
                         categoryDetail.add(new TransactionalPerformanceDto(
                             item.getDate(), mapping.getCategoryId(), mapping.getCategoryName(),
-                            item.getProductId(), mapping.getVariantName(), 
+                            item.getVariantId(), mapping.getVariantName(), 
                             item.getQuantity(), item.getRevenue()
                         ));
                     }
@@ -137,12 +137,13 @@ public class AdminDashboardService {
 
     private Long fetchUserCount(Long startTimestamp, Long endTimestamp) {
         try {
-            String countUrl = "/api/user/internal/count?";
-            if (startTimestamp != null) countUrl += "startDate=" + startTimestamp + "&";
-            if (endTimestamp != null) countUrl += "endDate=" + endTimestamp;
-
             return userWebClient.get()
-                    .uri(countUrl)
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder.path("/api/user/internal/count");
+                        if (startTimestamp != null) builder.queryParam("startDate", startTimestamp);
+                        if (endTimestamp != null) builder.queryParam("endDate", endTimestamp);
+                        return builder.build();
+                    })
                     .retrieve()
                     .bodyToMono(Long.class)
                     .block();

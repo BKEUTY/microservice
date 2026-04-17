@@ -1,5 +1,6 @@
 package com.bkeuty.order.controller.admin;
 
+import com.bkeuty.order.dto.admin.DashboardDto;
 import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.service.admin.AdminDashboardService;
 import com.bkeuty.order.service.auth.AuthService;
@@ -34,20 +35,19 @@ public class AdminReportController {
             
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
-        com.bkeuty.order.dto.admin.DashboardDto dashboard = adminDashboardService.getDashboardData(startDate, endDate);
+        DashboardDto dashboard = adminDashboardService.getDashboardData(startDate, endDate);
 
-        switch (type.toLowerCase()) {
-            case "product":
-            case "category":
-            case "brand":
-            case "combined":
-            default:
-                return ResponseEntity.ok(dashboard);
-        }
+        return switch (type.toLowerCase()) {
+            case "product", "category", "brand", "combined" -> ResponseEntity.ok(dashboard);
+            default -> new ResponseEntity<>("Invalid report type. Supported types: product, category, brand, combined.", HttpStatus.BAD_REQUEST);
+        };
     }
 
     private boolean isAdmin(String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return false;
+        }
         TokenValidationResponseDto tokenValidation = authService.validateToken(token);
-        return tokenValidation.getUserId() != null && "admin".equals(tokenValidation.getUserRole());
+        return tokenValidation != null && tokenValidation.getUserId() != null && "admin".equals(tokenValidation.getUserRole());
     }
 }

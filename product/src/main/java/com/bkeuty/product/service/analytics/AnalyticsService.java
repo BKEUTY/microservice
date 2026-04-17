@@ -75,6 +75,7 @@ public class AnalyticsService {
                 k -> new PerformanceResultDto(variant.getId(), variant.getProductVariantName(), variant.getProductImageUrl(), 0L, BigDecimal.ZERO));
             variantResult.setQuantity(variantResult.getQuantity() + (vp.getQuantity() != null ? vp.getQuantity() : 0L));
             variantResult.setRevenue(variantResult.getRevenue().add(vp.getRevenue() != null ? vp.getRevenue() : BigDecimal.ZERO));
+            variantResult.setProfit(variantResult.getRevenue().multiply(BigDecimal.valueOf(0.40)));
 
             ProductBrand brand = product.getBrand();
             if (brand != null) {
@@ -82,6 +83,7 @@ public class AnalyticsService {
                     k -> new PerformanceResultDto(brand.getId(), brand.getBrandName(), brand.getImage(), 0L, BigDecimal.ZERO));
                 brandResult.setQuantity(brandResult.getQuantity() + (vp.getQuantity() != null ? vp.getQuantity() : 0L));
                 brandResult.setRevenue(brandResult.getRevenue().add(vp.getRevenue() != null ? vp.getRevenue() : BigDecimal.ZERO));
+                brandResult.setProfit(brandResult.getRevenue().multiply(BigDecimal.valueOf(0.40)));
             }
 
             Set<ProductCategory> categories = product.getCategories();
@@ -92,6 +94,7 @@ public class AnalyticsService {
                             k -> new PerformanceResultDto(category.getId(), category.getCategoryName(), null, 0L, BigDecimal.ZERO));
                         categoryResult.setQuantity(categoryResult.getQuantity() + (vp.getQuantity() != null ? vp.getQuantity() : 0L));
                         categoryResult.setRevenue(categoryResult.getRevenue().add(vp.getRevenue() != null ? vp.getRevenue() : BigDecimal.ZERO));
+                        categoryResult.setProfit(categoryResult.getRevenue().multiply(BigDecimal.valueOf(0.40)));
                     }
                 }
             }

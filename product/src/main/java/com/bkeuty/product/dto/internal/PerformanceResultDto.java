@@ -16,8 +16,8 @@ public class PerformanceResultDto {
     @JsonProperty("id")
     private Integer id;
     
-    @JsonProperty("productVariantName")
-    private String productVariantName;
+    @JsonProperty("name")
+    private String name;
     
     @JsonProperty("imageUrl")
     private String imageUrl;
@@ -31,9 +31,9 @@ public class PerformanceResultDto {
     @JsonProperty("profit")
     private BigDecimal profit;
 
-    public PerformanceResultDto(Integer id, String productVariantName, String imageUrl, Long quantity, BigDecimal revenue) {
+    public PerformanceResultDto(Integer id, String name, String imageUrl, Long quantity, BigDecimal revenue) {
         this.id = id;
-        this.productVariantName = productVariantName;
+        this.name = name;
         this.imageUrl = imageUrl;
         this.quantity = quantity;
         this.revenue = revenue;

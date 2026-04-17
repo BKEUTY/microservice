@@ -64,7 +64,10 @@ public class AdminDashboardController {
     }
 
     private boolean isAdmin(String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return false;
+        }
         TokenValidationResponseDto tokenValidation = authService.validateToken(token);
-        return tokenValidation.getUserId() != null && "admin".equals(tokenValidation.getUserRole());
+        return tokenValidation != null && tokenValidation.getUserId() != null && "admin".equals(tokenValidation.getUserRole());
     }
 }

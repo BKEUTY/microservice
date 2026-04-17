@@ -235,16 +235,34 @@ public class UserService {
     }
 
     public long countUsersByDateRange(Long startDate, Long endDate) {
-        return keycloak.realm(realmName).users().list().stream()
-                .filter(u -> u.getCreatedTimestamp() != null &&
-                             (startDate == null || u.getCreatedTimestamp() >= startDate) &&
-                             (endDate == null || u.getCreatedTimestamp() <= endDate))
-                .filter(u -> {
-                    if (u.getAttributes() == null || u.getAttributes().get("userRole") == null || u.getAttributes().get("userRole").isEmpty()) {
-                        return true;
-                    }
-                    return u.getAttributes().get("userRole").get(0).equalsIgnoreCase("USER");
-                })
-                .count();
+        UsersResource usersResource = keycloak.realm(realmName).users();
+        int first = 0;
+        int max = 100;
+        long totalCount = 0;
+
+        while (true) {
+            List<UserRepresentation> usersBatch = usersResource.list(first, max);
+            if (usersBatch.isEmpty()) {
+                break;
+            }
+
+            totalCount += usersBatch.stream()
+                    .filter(u -> u.getCreatedTimestamp() != null &&
+                                 (startDate == null || u.getCreatedTimestamp() >= startDate) &&
+                                 (endDate == null || u.getCreatedTimestamp() <= endDate))
+                    .filter(u -> {
+                        if (u.getAttributes() == null || u.getAttributes().get("userRole") == null || u.getAttributes().get("userRole").isEmpty()) {
+                            return true;
+                        }
+                        return u.getAttributes().get("userRole").get(0).equalsIgnoreCase("USER");
+                    })
+                    .count();
+
+            if (usersBatch.size() < max) {
+                break;
+            }
+            first += usersBatch.size();
+        }
+        return totalCount;
     }
 }

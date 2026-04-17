@@ -33,6 +33,7 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant,I
         @Query("SELECT pv FROM ProductVariant pv WHERE pv.status = com.bkeuty.product.enums.ProductStatus.ACTIVE AND pv.stockQuantity > 0")
         List<ProductVariant> findActiveVariantsWithStock(Pageable pageable);
 
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"product", "product.brand", "product.categories"})
         @Query("SELECT v FROM ProductVariant v where v.id IN :productVariantIds")
         List<ProductVariant> findDtoByProductVariantIdIn(@Param("productVariantIds") List<Integer> productVariantIds);
 
