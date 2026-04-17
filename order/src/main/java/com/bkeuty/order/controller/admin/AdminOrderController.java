@@ -54,7 +54,8 @@ public class AdminOrderController {
                 PageRequest.of(page - 1, size, sortObj), 
                 status, 
                 startDate, 
-                endDate));
+                endDate,
+                bearerToken));
     }
 
     @GetMapping("/{orderId}")
@@ -67,7 +68,7 @@ public class AdminOrderController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         
-        return ResponseEntity.ok(adminOrderService.getOrderById(orderId));
+        return ResponseEntity.ok(adminOrderService.getOrderById(orderId, bearerToken));
     }
 
     @PutMapping("/{orderId}/status")
@@ -81,6 +82,6 @@ public class AdminOrderController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         
-        return ResponseEntity.ok(adminOrderService.updateOrderStatus(orderId, request.getStatus()));
+        return ResponseEntity.ok(adminOrderService.updateOrderStatus(orderId, request.getStatus(), bearerToken));
     }
 }

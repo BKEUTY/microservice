@@ -33,7 +33,7 @@ public class AdminDashboardController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
             
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        return ResponseEntity.ok(adminDashboardService.getDashboardData(startDate, endDate));
+        return ResponseEntity.ok(adminDashboardService.getDashboardData(startDate, endDate, bearerToken));
     }
 
     @GetMapping("/details/orders")
@@ -42,7 +42,7 @@ public class AdminDashboardController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        return ResponseEntity.ok(adminDashboardService.getDetailedOrders(startDate, endDate));
+        return ResponseEntity.ok(adminDashboardService.getDetailedOrders(startDate, endDate, bearerToken));
     }
 
     @GetMapping("/details/products")
@@ -51,7 +51,7 @@ public class AdminDashboardController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        return ResponseEntity.ok(adminDashboardService.getDetailedProducts(startDate, endDate));
+        return ResponseEntity.ok(adminDashboardService.getDetailedProducts(startDate, endDate, bearerToken));
     }
 
     @GetMapping("/details/customers")
@@ -60,7 +60,16 @@ public class AdminDashboardController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        return ResponseEntity.ok(adminDashboardService.getDetailedCustomers(startDate, endDate));
+        return ResponseEntity.ok(adminDashboardService.getDetailedCustomers(startDate, endDate, bearerToken));
+    }
+
+    @GetMapping("/details/new-customers")
+    public ResponseEntity<?> getDetailedNewUsers(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        return ResponseEntity.ok(adminDashboardService.getDetailedNewUsers(startDate, endDate, bearerToken));
     }
 
     private boolean isAdmin(String token) {

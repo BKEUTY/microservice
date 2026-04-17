@@ -40,7 +40,7 @@ public class AnalyticsService {
                 .map(VariantPerformanceDto::getVariantId)
                 .collect(Collectors.toList());
 
-        List<ProductVariant> variants = productVariantRepository.findDtoByProductVariantIdIn(variantIds);
+        List<ProductVariant> variants = productVariantRepository.findByProductVariantIdIn(variantIds);
         Map<Integer, ProductVariant> variantMap = variants.stream()
                 .collect(Collectors.toMap(ProductVariant::getId, v -> v));
 
@@ -59,7 +59,7 @@ public class AnalyticsService {
             variantMappings.computeIfAbsent(variant.getId(), k -> {
                 ProductBrand brand = product.getBrand();
                 ProductCategory category = product.getCategories() != null && !product.getCategories().isEmpty() 
-                    ? product.getCategories().iterator().next() : null;
+                    ? product.getCategories().stream().sorted(Comparator.comparing(ProductCategory::getId)).findFirst().orElse(null) : null;
                 
                 return VariantMappingDto.builder()
                         .id(variant.getId())
@@ -115,6 +115,7 @@ public class AnalyticsService {
     private List<PerformanceResultDto> getTopResults(Map<Integer, PerformanceResultDto> map) {
         return map.values().stream()
                 .sorted((a, b) -> b.getRevenue().compareTo(a.getRevenue()))
+                .limit(50)
                 .collect(Collectors.toList());
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardDto {
-    private OverviewOverview overview;
+    private Overview overview;
     private PerformanceAggregationResponseDto topPerformers;
     private List<ChartDataDto> revenueChart;
     private List<DashboardOrderDto> recentOrders;
@@ -26,7 +26,7 @@ public class DashboardDto {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class OverviewOverview {
+    public static class Overview {
         private Long totalProductsSold;
         private Long totalRegisteredCustomers;
         private Long totalOrders;

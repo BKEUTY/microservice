@@ -46,7 +46,7 @@ public class AdminOrderService {
         this.productWebClient = productWebClient;
     }
 
-    public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, LocalDate startDate, LocalDate endDate) {
+    public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, LocalDate startDate, LocalDate endDate, String token) {
         Specification<Order> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -79,20 +79,20 @@ public class AdminOrderService {
         }
 
         List<AdminOrderDto> adminOrderDtos = orderPage.getContent().stream()
-                .map(this::toAdminOrderDto)
+                .map(o -> this.toAdminOrderDto(o, token))
                 .collect(Collectors.toList());
 
         return new PageImpl<>(adminOrderDtos, pageable, orderPage.getTotalElements());
     }
 
-    public AdminOrderDto getOrderById(Integer orderId) {
+    public AdminOrderDto getOrderById(Integer orderId, String token) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
                     "Order not found with ID: " + orderId));
-        return toAdminOrderDto(order);
+        return toAdminOrderDto(order, token);
     }
 
-    public AdminOrderDto updateOrderStatus(Integer orderId, String status) {
+    public AdminOrderDto updateOrderStatus(Integer orderId, String status, String token) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
                     "Order not found with ID: " + orderId));
@@ -110,10 +110,10 @@ public class AdminOrderService {
         }
 
         Order savedOrder = orderRepository.save(order);
-        return toAdminOrderDto(savedOrder);
+        return toAdminOrderDto(savedOrder, token);
     }
 
-    private AdminOrderDto toAdminOrderDto(Order order) {
+    private AdminOrderDto toAdminOrderDto(Order order, String token) {
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
         
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
@@ -141,7 +141,7 @@ public class AdminOrderService {
                     .collect(Collectors.toList());
             
             if (!missingVariantIds.isEmpty()) {
-                Map<Integer, ProductVariantDto> variants = fetchVariantMap(new ArrayList<>(missingVariantIds));
+                Map<Integer, ProductVariantDto> variants = fetchVariantMap(new ArrayList<>(missingVariantIds), token);
                 
                 List<AddToCartResponseDto> fallbackItems = order.getOrderItems().stream()
                         .filter(item -> item.getProductVariantName() == null || item.getProductVariantName().isBlank())
@@ -180,12 +180,13 @@ public class AdminOrderService {
                 .build();
     }
 
-    private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
+    private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds, String token) {
         if (variantIds == null || variantIds.isEmpty()) return Collections.emptyMap();
         try {
             Map<Integer, ProductVariantDto> result = productWebClient.post()
                     .uri("/api/product/internal/variants/batch")
                     .bodyValue(variantIds)
+                    .header("Authorization", token)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();

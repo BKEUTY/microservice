@@ -33,7 +33,7 @@ public class AdminDashboardService {
         this.userWebClient = userWebClient;
     }
 
-    public DashboardDto getDashboardData(LocalDate startDate, LocalDate endDate) {
+    public DashboardDto getDashboardData(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999999999) : null;
         
@@ -46,14 +46,14 @@ public class AdminDashboardService {
         Long startTimestamp = start != null ? start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : null;
         Long endTimestamp = end != null ? end.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : null;
 
-        Long totalUsers = fetchUserCount(startTimestamp, endTimestamp);
+        Long totalUsers = fetchUserCount(startTimestamp, endTimestamp, token);
 
         List<VariantPerformanceDto> variantPerformances = orderRepository.findVariantPerformanceByDateRangeAndStatus(start, end, validStatuses);
-        PerformanceAggregationResponseDto analytics = fetchTopPerformers(variantPerformances);
+        PerformanceAggregationResponseDto analytics = fetchTopPerformers(variantPerformances, token);
 
         BigDecimal totalProfit = totalRevenue != null ? totalRevenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
 
-        DashboardDto.OverviewOverview overview = DashboardDto.OverviewOverview.builder()
+        DashboardDto.Overview overview = DashboardDto.Overview.builder()
                 .totalOrders(totalOrders != null ? totalOrders : 0L)
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
                 .totalProfit(totalProfit)
@@ -113,29 +113,54 @@ public class AdminDashboardService {
                 .build();
     }
 
-    public List<DashboardOrderDto> getDetailedOrders(LocalDate startDate, LocalDate endDate) {
+    public List<DashboardOrderDto> getDetailedOrders(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999999999) : null;
         List<PaymentStatus> validStatuses = Arrays.asList(PaymentStatus.PAID, PaymentStatus.COMPLETED);
         return orderRepository.findAllOrdersInDateRange(start, end, validStatuses);
     }
 
-    public PerformanceAggregationResponseDto getDetailedProducts(LocalDate startDate, LocalDate endDate) {
+    public PerformanceAggregationResponseDto getDetailedProducts(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999999999) : null;
         List<PaymentStatus> validStatuses = Arrays.asList(PaymentStatus.PAID, PaymentStatus.COMPLETED);
         List<VariantPerformanceDto> variantPerformances = orderRepository.findVariantPerformanceByDateRangeAndStatus(start, end, validStatuses);
-        return fetchTopPerformers(variantPerformances);
+        return fetchTopPerformers(variantPerformances, token);
     }
 
-    public List<TopCustomerDto> getDetailedCustomers(LocalDate startDate, LocalDate endDate) {
+    public List<TopCustomerDto> getDetailedCustomers(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
         LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999999999) : null;
         List<PaymentStatus> validStatuses = Arrays.asList(PaymentStatus.PAID, PaymentStatus.COMPLETED);
         return orderRepository.findTopCustomers(start, end, validStatuses, PageRequest.of(0, 100));
     }
 
-    private Long fetchUserCount(Long startTimestamp, Long endTimestamp) {
+    public List<UserDetailDto> getDetailedNewUsers(LocalDate startDate, LocalDate endDate, String token) {
+        LocalDateTime start = startDate != null ? startDate.atStartOfDay() : null;
+        LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999999999) : null;
+        Long startTimestamp = start != null ? start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : null;
+        Long endTimestamp = end != null ? end.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : null;
+
+        try {
+            return userWebClient.get()
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder.path("/api/user/internal/list");
+                        if (startTimestamp != null) builder.queryParam("startDate", startTimestamp);
+                        if (endTimestamp != null) builder.queryParam("endDate", endTimestamp);
+                        return builder.build();
+                    })
+                    .header("Authorization", token)
+                    .retrieve()
+                    .bodyToFlux(UserDetailDto.class)
+                    .collectList()
+                    .block();
+        } catch (Exception e) {
+            log.error("Failed to fetch detailed new users", e);
+            return Collections.emptyList();
+        }
+    }
+
+    private Long fetchUserCount(Long startTimestamp, Long endTimestamp, String token) {
         try {
             return userWebClient.get()
                     .uri(uriBuilder -> {
@@ -144,6 +169,7 @@ public class AdminDashboardService {
                         if (endTimestamp != null) builder.queryParam("endDate", endTimestamp);
                         return builder.build();
                     })
+                    .header("Authorization", token)
                     .retrieve()
                     .bodyToMono(Long.class)
                     .block();
@@ -153,8 +179,8 @@ public class AdminDashboardService {
         }
     }
 
-    private PerformanceAggregationResponseDto fetchTopPerformers(List<VariantPerformanceDto> variantPerformances) {
-        if (variantPerformances.isEmpty()) {
+    private PerformanceAggregationResponseDto fetchTopPerformers(List<VariantPerformanceDto> variantPerformances, String token) {
+        if (variantPerformances == null || variantPerformances.isEmpty()) {
             return PerformanceAggregationResponseDto.builder()
                     .topProducts(Collections.emptyList())
                     .topBrands(Collections.emptyList())
@@ -165,6 +191,7 @@ public class AdminDashboardService {
         try {
             PerformanceAggregationResponseDto response = productWebClient.post()
                     .uri("/api/product/internal/analytics/aggregate")
+                    .header("Authorization", token)
                     .bodyValue(variantPerformances)
                     .retrieve()
                     .bodyToMono(PerformanceAggregationResponseDto.class)

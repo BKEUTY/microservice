@@ -20,9 +20,9 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant,I
         @Query("SELECT DISTINCT pv FROM ProductVariant pv " +
                         "LEFT JOIN pv.product p " +
                         "LEFT JOIN p.categories c " +
-                        "WHERE (:pattern IS NULL OR LOWER(pv.productVariantName) LIKE :pattern) AND " +
-                        "(:categoryId IS NULL OR c.id = :categoryId) AND " +
-                        "(:status IS NULL OR pv.status = :status)"
+                        "WHERE (pv.productVariantName IS NOT NULL AND LOWER(pv.productVariantName) LIKE COALESCE(:pattern, LOWER(pv.productVariantName))) AND " +
+                        "(c.id = COALESCE(:categoryId, c.id)) AND " +
+                        "(pv.status = COALESCE(:status, pv.status))"
         )
         Page<ProductVariant> findWithFilters(
                         @Param("pattern") String pattern,
@@ -35,7 +35,7 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant,I
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"product", "product.brand", "product.categories"})
         @Query("SELECT v FROM ProductVariant v where v.id IN :productVariantIds")
-        List<ProductVariant> findDtoByProductVariantIdIn(@Param("productVariantIds") List<Integer> productVariantIds);
+        List<ProductVariant> findByProductVariantIdIn(@Param("productVariantIds") List<Integer> productVariantIds);
 
         Optional<ProductVariant> findFirstByProductVariantName(String productVariantName);
 

@@ -234,6 +234,41 @@ public class UserService {
                 .toList();
     }
 
+    public List<UserDetailResponseDto> getNewUsersByDateRange(Long startDate, Long endDate) {
+        UsersResource usersResource = keycloak.realm(realmName).users();
+        int first = 0;
+        int max = 100;
+        List<UserDetailResponseDto> result = new ArrayList<>();
+
+        while (true) {
+            List<UserRepresentation> usersBatch = usersResource.list(first, max);
+            if (usersBatch.isEmpty()) {
+                break;
+            }
+
+            List<UserDetailResponseDto> filteredBatch = usersBatch.stream()
+                    .filter(u -> u.getCreatedTimestamp() != null &&
+                                 (startDate == null || u.getCreatedTimestamp() >= startDate) &&
+                                 (endDate == null || u.getCreatedTimestamp() <= endDate))
+                    .filter(u -> {
+                        if (u.getAttributes() == null || u.getAttributes().get("userRole") == null || u.getAttributes().get("userRole").isEmpty()) {
+                            return false;
+                        }
+                        return u.getAttributes().get("userRole").get(0).equalsIgnoreCase("USER");
+                    })
+                    .map(this::toUserDetailResponseDto)
+                    .toList();
+            
+            result.addAll(filteredBatch);
+
+            if (usersBatch.size() < max) {
+                break;
+            }
+            first += usersBatch.size();
+        }
+        return result;
+    }
+
     public long countUsersByDateRange(Long startDate, Long endDate) {
         UsersResource usersResource = keycloak.realm(realmName).users();
         int first = 0;
@@ -252,7 +287,7 @@ public class UserService {
                                  (endDate == null || u.getCreatedTimestamp() <= endDate))
                     .filter(u -> {
                         if (u.getAttributes() == null || u.getAttributes().get("userRole") == null || u.getAttributes().get("userRole").isEmpty()) {
-                            return true;
+                            return false;
                         }
                         return u.getAttributes().get("userRole").get(0).equalsIgnoreCase("USER");
                     })

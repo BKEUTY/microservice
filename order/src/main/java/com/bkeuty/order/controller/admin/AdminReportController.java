@@ -35,7 +35,7 @@ public class AdminReportController {
             
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
-        DashboardDto dashboard = adminDashboardService.getDashboardData(startDate, endDate);
+        DashboardDto dashboard = adminDashboardService.getDashboardData(startDate, endDate, bearerToken);
 
         return switch (type.toLowerCase()) {
             case "product", "category", "brand", "combined" -> ResponseEntity.ok(dashboard);
