@@ -27,7 +27,7 @@ public class CartController {
     public ResponseEntity<Map<Integer, CartProductVariantDto>> getVariantsByProductIds(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody List<Integer> requestedProductIds) {
-        if (!isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
         return ResponseEntity.ok(cartService.findDtoByProductVariantIdIn(requestedProductIds));
     }
@@ -36,15 +36,17 @@ public class CartController {
     public ResponseEntity<CartProductVariantDto> getVariantById(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable("variantId") Integer variantId) {
-        if (!isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(cartService.findDtoById(variantId));
     }
 
-    private boolean isAdmin(String token) {
+    private boolean isAuthenticated(String token) {
         if (token == null || !token.startsWith("Bearer ")) return false;
         try {
             TokenValidationResponseDto val = authService.validateToken(token);
-            return val != null && "admin".equalsIgnoreCase(val.getUserRole());
+            if (val == null || val.getUserId() == null) return false;
+            String role = val.getUserRole();
+            return "ADMIN".equalsIgnoreCase(role) || "USER".equalsIgnoreCase(role);
         } catch (Exception e) {
             return false;
         }

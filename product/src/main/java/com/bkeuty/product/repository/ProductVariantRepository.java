@@ -13,22 +13,9 @@ import org.springframework.data.repository.query.Param;
 import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.enums.ProductStatus;
 
-public interface ProductVariantRepository extends JpaRepository<ProductVariant,Integer> {
+public interface ProductVariantRepository extends JpaRepository<ProductVariant,Integer>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<ProductVariant> {
         @Query("SELECT pv FROM ProductVariant pv WHERE pv.product.id = :productId")
         List<ProductVariant> findAllByProductId(Integer productId);
-
-        @Query("SELECT DISTINCT pv FROM ProductVariant pv " +
-                        "LEFT JOIN pv.product p " +
-                        "LEFT JOIN p.categories c " +
-                        "WHERE (pv.productVariantName IS NOT NULL AND LOWER(pv.productVariantName) LIKE COALESCE(:pattern, LOWER(pv.productVariantName))) AND " +
-                        "(c.id = COALESCE(:categoryId, c.id)) AND " +
-                        "(pv.status = COALESCE(:status, pv.status))"
-        )
-        Page<ProductVariant> findWithFilters(
-                        @Param("pattern") String pattern,
-                        @Param("categoryId") Integer categoryId,
-                        @Param("status") ProductStatus status,
-                        Pageable pageable);
 
         @Query("SELECT pv FROM ProductVariant pv WHERE pv.status = com.bkeuty.product.enums.ProductStatus.ACTIVE AND pv.stockQuantity > 0")
         List<ProductVariant> findActiveVariantsWithStock(Pageable pageable);

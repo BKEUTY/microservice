@@ -24,37 +24,37 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     @EntityGraph(attributePaths = {"orderItems"})
     Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 
-    @Query("SELECT COUNT(o) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate)")
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
     Long countOrdersByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT SUM(o.total) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate)")
+    @Query("SELECT SUM(o.total) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
     BigDecimal sumRevenueByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT SUM(i.quantity) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate)")
+    @Query("SELECT SUM(i.quantity) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
     Long sumProductsSoldByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT new com.bkeuty.order.dto.admin.VariantPerformanceDto(i.productVariantId, SUM(CAST(i.quantity AS long)), SUM(i.price * i.quantity)) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate) GROUP BY i.productVariantId")
+    @Query("SELECT new com.bkeuty.order.dto.admin.VariantPerformanceDto(i.productVariantId, SUM(CAST(i.quantity AS long)), SUM(i.price * i.quantity)) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate GROUP BY i.productVariantId")
     List<VariantPerformanceDto> findVariantPerformanceByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT new com.bkeuty.order.dto.admin.ChartDataDto(CAST(o.orderDate AS date), SUM(o.total), COUNT(o)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate) GROUP BY CAST(o.orderDate AS date) ORDER BY CAST(o.orderDate AS date) ASC")
+    @Query("SELECT new com.bkeuty.order.dto.admin.ChartDataDto(CAST(o.orderDate AS date), SUM(o.total), COUNT(o)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate GROUP BY CAST(o.orderDate AS date) ORDER BY CAST(o.orderDate AS date) ASC")
     List<ChartDataDto> findRevenueChartDataByDateRange(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT new com.bkeuty.order.dto.admin.TopCustomerDto(o.userId, MIN(o.userName), COUNT(o), SUM(o.total)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate) GROUP BY o.userId ORDER BY SUM(o.total) DESC")
+    @Query("SELECT new com.bkeuty.order.dto.admin.TopCustomerDto(o.userId, MIN(o.userName), COUNT(o), SUM(o.total)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate GROUP BY o.userId ORDER BY SUM(o.total) DESC")
     List<TopCustomerDto> findTopCustomers(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
@@ -64,13 +64,13 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     @Query("SELECT new com.bkeuty.order.dto.admin.DashboardOrderDto(cast(o.id as string), o.userName, o.orderDate, o.total, o.status) FROM Order o ORDER BY o.id DESC")
     List<DashboardOrderDto> findRecentOrders(Pageable pageable);
 
-    @Query("SELECT new com.bkeuty.order.dto.admin.DashboardOrderDto(cast(o.id as string), o.userName, o.orderDate, o.total, o.status) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate) ORDER BY o.orderDate DESC")
+    @Query("SELECT new com.bkeuty.order.dto.admin.DashboardOrderDto(cast(o.id as string), o.userName, o.orderDate, o.total, o.status) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate ORDER BY o.orderDate DESC")
     List<DashboardOrderDto> findAllOrdersInDateRange(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(o.orderDate, i.productVariantId, i.productVariantName, CAST(i.quantity AS long), i.price * i.quantity) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= COALESCE(:startDate, o.orderDate) AND o.orderDate <= COALESCE(:endDate, o.orderDate) ORDER BY o.orderDate DESC")
+    @Query("SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(o.orderDate, i.productVariantId, i.productVariantName, CAST(i.quantity AS long), i.price * i.quantity) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate ORDER BY o.orderDate DESC")
     List<DailyProductPerformanceDto> findDetailedItemPerformance(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 

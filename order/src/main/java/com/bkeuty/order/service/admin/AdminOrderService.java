@@ -63,11 +63,10 @@ public class AdminOrderService {
             }
 
             if (startDate != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDate));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDate.atStartOfDay()));
             }
-
             if (endDate != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("orderDate"), endDate));
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("orderDate"), endDate.atTime(23, 59, 59, 999999999)));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

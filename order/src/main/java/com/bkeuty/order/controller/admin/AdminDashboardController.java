@@ -76,7 +76,13 @@ public class AdminDashboardController {
         if (token == null || !token.startsWith("Bearer ")) {
             return false;
         }
-        TokenValidationResponseDto tokenValidation = authService.validateToken(token);
-        return tokenValidation != null && tokenValidation.getUserId() != null && "admin".equals(tokenValidation.getUserRole());
+        try {
+            TokenValidationResponseDto tokenValidation = authService.validateToken(token);
+            return tokenValidation != null 
+                    && tokenValidation.getUserId() != null 
+                    && "admin".equalsIgnoreCase(tokenValidation.getUserRole());
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

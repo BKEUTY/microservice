@@ -26,7 +26,7 @@ public class InternalUserController {
     public ResponseEntity<UserDetailResponseDto> getUserDetail(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String userId) {
-        if (!isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.getUserDetailById(userId));
     }
     
@@ -34,7 +34,7 @@ public class InternalUserController {
     public ResponseEntity<Map<String, String>> getUserNames(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody List<String> userIds) {
-        if (!isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.getUserNames(userIds));
     }
 
@@ -56,11 +56,23 @@ public class InternalUserController {
         return ResponseEntity.ok(userService.getNewUsersByDateRange(startDate, endDate));
     }
 
+    private boolean isAuthenticated(String token) {
+        if (token == null || !token.startsWith("Bearer ")) return false;
+        try {
+            TokenValidationResponseDto val = authService.validateToken(token);
+            if (val == null || val.getUserId() == null) return false;
+            String role = val.getUserRole();
+            return "ADMIN".equalsIgnoreCase(role) || "USER".equalsIgnoreCase(role);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private boolean isAdmin(String token) {
         if (token == null || !token.startsWith("Bearer ")) return false;
         try {
             TokenValidationResponseDto val = authService.validateToken(token);
-            return val != null && "admin".equalsIgnoreCase(val.getUserRole());
+            return val != null && "ADMIN".equalsIgnoreCase(val.getUserRole());
         } catch (Exception e) {
             return false;
         }

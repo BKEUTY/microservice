@@ -58,16 +58,22 @@ public class AnalyticsService {
             // Build Variant Mapping Detail
             variantMappings.computeIfAbsent(variant.getId(), k -> {
                 ProductBrand brand = product.getBrand();
-                ProductCategory category = product.getCategories() != null && !product.getCategories().isEmpty() 
-                    ? product.getCategories().stream().sorted(Comparator.comparing(ProductCategory::getId)).findFirst().orElse(null) : null;
+                List<ProductCategory> sortedCats = product.getCategories() != null 
+                    ? product.getCategories().stream().sorted(Comparator.comparing(ProductCategory::getId)).toList()
+                    : Collections.emptyList();
                 
+                ProductCategory primaryCategory = sortedCats.isEmpty() ? null : sortedCats.get(0);
+                String categoryNames = sortedCats.stream()
+                        .map(ProductCategory::getCategoryName)
+                        .collect(Collectors.joining(", "));
+
                 return VariantMappingDto.builder()
                         .id(variant.getId())
                         .variantName(variant.getProductVariantName())
                         .brandId(brand != null ? brand.getId() : null)
                         .brandName(brand != null ? brand.getBrandName() : null)
-                        .categoryId(category != null ? category.getId() : null)
-                        .categoryName(category != null ? category.getCategoryName() : null)
+                        .categoryId(primaryCategory != null ? primaryCategory.getId() : null)
+                        .categoryName(categoryNames.isEmpty() ? null : categoryNames)
                         .build();
             });
 
