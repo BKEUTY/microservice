@@ -1,10 +1,7 @@
 package com.bkeuty.user_service.controller;
 
 import com.bkeuty.user_service.dto.UserDetailResponseDto;
-import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
-import com.bkeuty.user_service.service.AuthService;
 import com.bkeuty.user_service.service.UserService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,11 +12,9 @@ import java.util.List;
 @RequestMapping("/api/user/internal")
 public class InternalUserController {
     private final UserService userService;
-    private final AuthService authService;
 
-    public InternalUserController(UserService userService, AuthService authService) {
+    public InternalUserController(UserService userService) {
         this.userService = userService;
-        this.authService = authService;
     }
 
     @GetMapping("/{userId}")

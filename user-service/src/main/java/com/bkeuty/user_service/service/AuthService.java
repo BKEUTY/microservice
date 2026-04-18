@@ -2,7 +2,6 @@ package com.bkeuty.user_service.service;
 
 import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.user_service.servicecommunication.AuthServiceCommunication;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -7,7 +7,7 @@ spring:
         webmvc:
           routes:
             - id: block-internal
-              uri: lb://auth-service
+              uri: no://op
               predicates:
                 - Path= /api/*/internal/**
               filters:

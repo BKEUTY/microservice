@@ -2,7 +2,6 @@ package com.bkeuty.product.service.authservice;
 
 import com.bkeuty.product.dto.auth.TokenValidationRequestDto;
 import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 

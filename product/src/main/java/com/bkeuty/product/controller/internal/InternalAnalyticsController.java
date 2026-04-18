@@ -1,11 +1,8 @@
 package com.bkeuty.product.controller.internal;
 
-import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.product.dto.internal.PerformanceAggregationResponseDto;
 import com.bkeuty.product.dto.internal.VariantPerformanceDto;
 import com.bkeuty.product.service.analytics.AnalyticsService;
-import com.bkeuty.product.service.authservice.AuthService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,11 +13,9 @@ import java.util.List;
 public class InternalAnalyticsController {
 
     private final AnalyticsService analyticsService;
-    private final AuthService authService;
 
-    public InternalAnalyticsController(AnalyticsService analyticsService, AuthService authService) {
+    public InternalAnalyticsController(AnalyticsService analyticsService) {
         this.analyticsService = analyticsService;
-        this.authService = authService;
     }
 
     @PostMapping("/aggregate")
