@@ -33,6 +33,7 @@ public class Order {
     private Integer id;
     private BigDecimal total;
     private String paymentMethod;
+    @Column(name = "order_date", columnDefinition = "TIMESTAMP")
     private LocalDateTime orderDate;
     private String address;
     private BigDecimal shippingFee;

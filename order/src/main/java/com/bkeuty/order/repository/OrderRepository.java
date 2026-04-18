@@ -1,6 +1,10 @@
 package com.bkeuty.order.repository;
 
-import com.bkeuty.order.dto.admin.*;
+import com.bkeuty.order.dto.admin.ChartDataDto;
+import com.bkeuty.order.dto.admin.DailyProductPerformanceDto;
+import com.bkeuty.order.dto.admin.DashboardOrderDto;
+import com.bkeuty.order.dto.admin.TopCustomerDto;
+import com.bkeuty.order.dto.admin.VariantPerformanceDto;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.enums.PaymentStatus;
 import org.springframework.data.domain.Page;
@@ -42,7 +46,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT new com.bkeuty.order.dto.admin.VariantPerformanceDto(i.productVariantId, SUM(CAST(i.quantity AS long)), SUM(i.price * i.quantity)) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate GROUP BY i.productVariantId")
+    @Query("SELECT new com.bkeuty.order.dto.admin.VariantPerformanceDto(i.productVariantId, SUM(CAST(i.quantity AS long)), SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.price THEN i.promotionPrice ELSE i.price END * i.quantity)) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate GROUP BY i.productVariantId")
     List<VariantPerformanceDto> findVariantPerformanceByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
@@ -70,7 +74,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
         @Param("endDate") LocalDateTime endDate, 
         @Param("statuses") Collection<PaymentStatus> statuses);
 
-    @Query("SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(o.orderDate, i.productVariantId, i.productVariantName, CAST(i.quantity AS long), i.price * i.quantity) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate ORDER BY o.orderDate DESC")
+    @Query("SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(o.orderDate, i.productVariantId, i.productVariantName, CAST(i.quantity AS long), CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.price THEN i.promotionPrice ELSE i.price END * i.quantity) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate ORDER BY o.orderDate DESC")
     List<DailyProductPerformanceDto> findDetailedItemPerformance(
         @Param("startDate") LocalDateTime startDate, 
         @Param("endDate") LocalDateTime endDate, 
