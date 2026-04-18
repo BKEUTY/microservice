@@ -23,58 +23,26 @@ public class InternalUserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDetailResponseDto> getUserDetail(
-            @RequestHeader(value = "Authorization", required = false) String token,
-            @PathVariable String userId) {
-        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<UserDetailResponseDto> getUserDetail(@PathVariable String userId) {
         return ResponseEntity.ok(userService.getUserDetailById(userId));
     }
     
     @PostMapping("/names")
-    public ResponseEntity<Map<String, String>> getUserNames(
-            @RequestHeader(value = "Authorization", required = false) String token,
-            @RequestBody List<String> userIds) {
-        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<Map<String, String>> getUserNames(@RequestBody List<String> userIds) {
         return ResponseEntity.ok(userService.getUserNames(userIds));
     }
 
     @GetMapping("/count")
     public ResponseEntity<Long> countUsers(
-            @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(required = false) Long startDate,
             @RequestParam(required = false) Long endDate) {
-        if (token != null && !isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.countUsersByDateRange(startDate, endDate));
     }
 
     @GetMapping("/list")
     public ResponseEntity<List<UserDetailResponseDto>> listNewUsers(
-            @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(required = false) Long startDate,
             @RequestParam(required = false) Long endDate) {
-        if (token != null && !isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.getNewUsersByDateRange(startDate, endDate));
-    }
-
-    private boolean isAuthenticated(String token) {
-        if (token == null || !token.startsWith("Bearer ")) return false;
-        try {
-            TokenValidationResponseDto val = authService.validateToken(token);
-            if (val == null || val.getUserId() == null) return false;
-            String role = val.getUserRole();
-            return "ADMIN".equalsIgnoreCase(role) || "USER".equalsIgnoreCase(role);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean isAdmin(String token) {
-        if (token == null || !token.startsWith("Bearer ")) return false;
-        try {
-            TokenValidationResponseDto val = authService.validateToken(token);
-            return val != null && "ADMIN".equalsIgnoreCase(val.getUserRole());
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

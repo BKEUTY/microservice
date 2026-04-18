@@ -25,30 +25,13 @@ public class CartController {
 
     @PostMapping("/variants/batch")
     public ResponseEntity<Map<Integer, CartProductVariantDto>> getVariantsByProductIds(
-            @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody List<Integer> requestedProductIds) {
-        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-
         return ResponseEntity.ok(cartService.findDtoByProductVariantIdIn(requestedProductIds));
     }
 
     @GetMapping("/variant/{variantId}")
     public ResponseEntity<CartProductVariantDto> getVariantById(
-            @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable("variantId") Integer variantId) {
-        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(cartService.findDtoById(variantId));
-    }
-
-    private boolean isAuthenticated(String token) {
-        if (token == null || !token.startsWith("Bearer ")) return false;
-        try {
-            TokenValidationResponseDto val = authService.validateToken(token);
-            if (val == null || val.getUserId() == null) return false;
-            String role = val.getUserRole();
-            return "ADMIN".equalsIgnoreCase(role) || "USER".equalsIgnoreCase(role);
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

@@ -10,15 +10,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
+import com.bkeuty.product.service.authservice.AuthService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/api/product/internal")
 public class InternalProductController {
 
     private final ProductVariantRepository productVariantRepository;
+    private final AuthService authService;
 
     @Autowired
-    public InternalProductController(ProductVariantRepository productVariantRepository) {
+    public InternalProductController(ProductVariantRepository productVariantRepository, AuthService authService) {
         this.productVariantRepository = productVariantRepository;
+        this.authService = authService;
     }
 
     @PostMapping("/update-rating")

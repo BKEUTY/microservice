@@ -40,9 +40,9 @@ public class AnalyticsService {
                 .map(VariantPerformanceDto::getVariantId)
                 .collect(Collectors.toList());
 
-        List<ProductVariant> variants = productVariantRepository.findByProductVariantIdIn(variantIds);
+        List<ProductVariant> variants = productVariantRepository.findAllByIdIn(variantIds);
         Map<Integer, ProductVariant> variantMap = variants.stream()
-                .collect(Collectors.toMap(ProductVariant::getId, v -> v));
+                .collect(Collectors.toMap(ProductVariant::getId, v -> v, (existing, replacement) -> existing));
 
         Map<Integer, PerformanceResultDto> variantMapResult = new HashMap<>();
         Map<Integer, PerformanceResultDto> brandMap = new HashMap<>();

@@ -11,15 +11,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.bkeuty.order.entity.OrderItem;
 
+import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
+import com.bkeuty.order.service.auth.AuthService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/api/order/internal")
 public class InternalOrderController {
 
     private final OrderItemRepository orderItemRepository;
+    private final AuthService authService;
 
     @Autowired
-    public InternalOrderController(OrderItemRepository orderItemRepository) {
+    public InternalOrderController(OrderItemRepository orderItemRepository, AuthService authService) {
         this.orderItemRepository = orderItemRepository;
+        this.authService = authService;
     }
 
     @PostMapping("/check-delivered")
@@ -41,8 +48,8 @@ public class InternalOrderController {
         return ResponseEntity.ok().build();
     }
 
-    @org.springframework.web.bind.annotation.GetMapping("/history/{userId}")
-    public ResponseEntity<java.util.List<OrderItem>> getOrderHistory(@org.springframework.web.bind.annotation.PathVariable String userId) {
+    @GetMapping("/history/{userId}")
+    public ResponseEntity<java.util.List<OrderItem>> getOrderHistory(@PathVariable String userId) {
         return ResponseEntity.ok(orderItemRepository.findAllByOrder_UserId(userId));
     }
 }

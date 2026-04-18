@@ -21,8 +21,7 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant,I
         List<ProductVariant> findActiveVariantsWithStock(Pageable pageable);
 
         @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"product", "product.brand", "product.categories"})
-        @Query("SELECT v FROM ProductVariant v where v.id IN :productVariantIds")
-        List<ProductVariant> findByProductVariantIdIn(@Param("productVariantIds") List<Integer> productVariantIds);
+        List<ProductVariant> findAllByIdIn(@Param("productVariantIds") List<Integer> productVariantIds);
 
         Optional<ProductVariant> findFirstByProductVariantName(String productVariantName);
 
