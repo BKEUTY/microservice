@@ -1,6 +1,7 @@
 package com.bkeuty.order.controller.order;
 
 import com.bkeuty.order.dto.internal.CheckOrderDeliveredRequestDto;
+import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.repository.OrderItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,14 +26,14 @@ public class InternalOrderController {
     @PostMapping("/check-delivered")
     public ResponseEntity<Boolean> checkOrderDelivered(@RequestBody CheckOrderDeliveredRequestDto request) {
         boolean canReview = orderItemRepository.existsByOrder_UserIdAndProductVariantIdAndOrder_StatusAndIsReviewedFalse(
-                request.getUserId(), request.getVariantId(), PaymentStatus.COMPLETED);
+                request.getUserId(), request.getVariantId(), OrderStatus.SUCCEEDED);
         return ResponseEntity.ok(canReview);
     }
 
     @PostMapping("/mark-reviewed")
     public ResponseEntity<Void> markReviewed(@RequestBody CheckOrderDeliveredRequestDto request) {
         OrderItem orderItem = orderItemRepository.findFirstByOrder_UserIdAndProductVariantIdAndOrder_StatusAndIsReviewedFalse(
-                request.getUserId(), request.getVariantId(), PaymentStatus.COMPLETED)
+                request.getUserId(), request.getVariantId(), OrderStatus.SUCCEEDED)
                 .orElse(null);
         if (orderItem != null) {
             orderItem.setReviewed(true);

@@ -13,5 +13,6 @@ import lombok.NoArgsConstructor;
 public class CreateShippingOrderResponseDto {
     private Integer code;
     private String message;
+    private ShippingOrderDto data;
 
 }

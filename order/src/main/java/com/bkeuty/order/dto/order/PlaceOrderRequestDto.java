@@ -1,6 +1,7 @@
 package com.bkeuty.order.dto.order;
 
 import com.bkeuty.order.dto.shipping.AddressDto;
+import com.bkeuty.order.enums.PaymentMethod;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,10 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PlaceOrderRequestDto {
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
     private AddressDto address;
+    private String phoneNumber;
+    private String name;
+    private String note;
     private List<OrderCartItemDto> orderItems;
 }

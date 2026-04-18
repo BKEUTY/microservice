@@ -1,5 +1,7 @@
 package com.bkeuty.order.entity;
 
+import com.bkeuty.order.enums.OrderStatus;
+import com.bkeuty.order.enums.PaymentMethod;
 import com.bkeuty.order.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -22,15 +24,21 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private BigDecimal total;
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
     private LocalDate orderDate;
     private String address;
     private BigDecimal shippingFee;
     private String estimatedShippingDate;
-    private PaymentStatus paymentStatus;
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+    private String buyerName;
+    private String buyerNumber;
+    private String buyerNote;
+    private String shippingCode;
     @Column(name = "user_id", nullable = false)
     private String userId;
-
     @Builder.Default
-    private PaymentStatus status = PaymentStatus.UNPAID;
+    private String shippingStatus = "NOT_CREATED";
+    @Builder.Default
+    private OrderStatus status = OrderStatus.NOT_CONFIRMED;
 }

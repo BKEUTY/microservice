@@ -10,5 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DecreaseStockRequestDto {
+    private Integer orderId;
     List<OrderItemDto> orderItems;
 }

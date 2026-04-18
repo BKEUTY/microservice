@@ -8,6 +8,7 @@ import com.bkeuty.order.dto.shipping.*;
 import com.bkeuty.order.entity.CartItem;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
+import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.exception.CartItemNotFound;
 import com.bkeuty.order.microservicecommunication.GHNCommunication;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -45,13 +47,14 @@ public class OrderService {
     private String bank;
     @Value("${sepay.template:}")
     private String template;
-
-    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient, GHNCommunication ghnCommunication, ShippingService shippingService) {
+    private final KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate;
+    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient, GHNCommunication ghnCommunication, ShippingService shippingService, KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
         this.orderItemRepository = orderItemRepository;
         this.productWebClient = productWebClient;
         this.shippingService = shippingService;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     public ResponseEntity<?> placeOrder(TokenValidationResponseDto userInfo, PlaceOrderRequestDto request) {
@@ -73,68 +76,73 @@ public class OrderService {
                 .userId(userInfo.getUserId())
                 .shippingFee(BigDecimal.valueOf(shippingFee))
                 .estimatedShippingDate(shippingDate)
-                .status(PaymentStatus.UNPAID)
+                .buyerName(request.getName())
+                .buyerNumber(request.getPhoneNumber())
+                .buyerNote(request.getNote())
                 .build();
 
         Order orderSave = orderRepository.save(order);
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItemDto> decreaseVariants = new ArrayList<>();
         List<AddToCartResponseDto> items = new ArrayList<>();
-
+        List<Integer> buyVariants = new ArrayList<>();
         for (OrderCartItemDto orderCartItemDto : orderItemList) {
             CartItem cartItems = cartItemRepository.findById(orderCartItemDto.getCartItemId())
                     .orElseThrow(() -> new CartItemNotFound("Cart item not found", orderCartItemDto.getCartItemId()));
-            
+
             decreaseVariants.add(new OrderItemDto(cartItems.getProductVariant(), cartItems.getQuantity()));
-            
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(orderSave);
-            orderItem.setProductVariantId(cartItems.getProductVariant());
-            orderItem.setQuantity(cartItems.getQuantity());
-            
+
+
+            buyVariants.add(cartItems.getProductVariant());
             cartItemRepository.delete(cartItems);
-            orderItemRepository.save(orderItem);
         }
-
         try {
-            List<DecreaseStockResponseDto> decreaseStockResponseDtos = productWebClient.post()
-                    .uri("/api/inventory/internal/decreaseStock")
-                    .bodyValue(new DecreaseStockRequestDto(decreaseVariants))
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<DecreaseStockResponseDto>>() {})
-                    .block();
-
-            if (decreaseStockResponseDtos != null) {
-                for (DecreaseStockResponseDto dto : decreaseStockResponseDtos) {
+            Map<Integer, ProductVariantDto> buyProductVariantMap = productWebClient.post()
+                    .uri("/api/product/internal/variants/batch")
+                    .bodyValue(buyVariants).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {
+                    }).block();
+            for (OrderItemDto variants : decreaseVariants) {
+                if(buyProductVariantMap!=null && buyProductVariantMap.containsKey(variants.getProductVariantId()) && buyProductVariantMap.get(variants.getProductVariantId()) != null) {
+                    System.out.println("Create Order Item");
+                    ProductVariantDto dto = buyProductVariantMap.get(variants.getProductVariantId());
                     AddToCartResponseDto addToCartResponseDTO = AddToCartResponseDto.builder()
                             .price(dto.getPrice())
-                            .productVariantId(dto.getProductVariantId())
+                            .productVariantId(dto.getId())
                             .productVariantName(dto.getProductVariantName())
-                            .quantity(dto.getQuantity())
-                            .productVariantImage(dto.getProductVariantImage())
+                            .quantity(variants.getQuantity())
+                            .productVariantImage(dto.getProductImageUrl())
                             .promotionPrice(dto.getPromotionPrice())
                             .build();
-
-                    if (dto.getPrice() != null && dto.getQuantity() != null) {
+                    if (dto.getPrice() != null && variants.getQuantity() != null) {
                         if(dto.getPromotionPrice() == null){
-                            totalAmount = totalAmount.add(dto.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+                            totalAmount = totalAmount.add(dto.getPrice().multiply(BigDecimal.valueOf(variants.getQuantity())));
                         }
                         else {
-                            totalAmount = totalAmount.add(dto.getPromotionPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+                            totalAmount = totalAmount.add(dto.getPromotionPrice().multiply(BigDecimal.valueOf(variants.getQuantity())));
                         }
                     }
+                    OrderItem orderItem = new OrderItem();
+                    orderItem.setOrder(orderSave);
+                    orderItem.setProductVariantId(dto.getId());
+                    orderItem.setQuantity(variants.getQuantity());
+                    orderItem.setProductVariantName(dto.getProductVariantName());
+                    orderItem.setProductVariantPrice(dto.getPrice());
+                    orderItemRepository.save(orderItem);
                     items.add(addToCartResponseDTO);
                 }
+                else {
+                    System.out.println("Item is null");
+                }
+
             }
-        } catch (WebClientResponseException e) {
+        }catch (WebClientResponseException e) {
             throw new RuntimeException("Failed to communicate with inventory service: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             throw new RuntimeException("Internal error processing stock: " + e.getMessage());
         }
-
         orderSave.setTotal(totalAmount);
         orderRepository.save(orderSave);
-        
+
         OrderResponseDto placeOrderResponseDTO = new OrderResponseDto();
         placeOrderResponseDTO.setOrderId(orderSave.getId().toString());
         placeOrderResponseDTO.setOrderDate(LocalDate.now());
@@ -144,10 +152,58 @@ public class OrderService {
         placeOrderResponseDTO.setPaymentMethod(request.getPaymentMethod());
         placeOrderResponseDTO.setTotal(totalAmount);
         placeOrderResponseDTO.setItems(items);
-        placeOrderResponseDTO.setStatus(PaymentStatus.UNPAID.name());
+        placeOrderResponseDTO.setStatus(OrderStatus.NOT_CONFIRMED);
         placeOrderResponseDTO.setQrCodeLink(generateQrCode(totalAmount.add(BigDecimal.valueOf(shippingFee)), orderSave.getId()));
-        
+        placeOrderResponseDTO.setBuyerName(request.getName());
+        placeOrderResponseDTO.setBuyerPhoneNumber(request.getPhoneNumber());
+        placeOrderResponseDTO.setBuyerNote(request.getNote());
+        kafkaTemplate.send("decrease-stock-topic",new DecreaseStockRequestDto(orderSave.getId(),decreaseVariants));
+
         return ResponseEntity.ok(placeOrderResponseDTO);
+//        try {
+//            List<DecreaseStockResponseDto> decreaseStockResponseDtos = productWebClient.post()
+//                    .uri("/api/inventory/internal/decreaseStock")
+//                    .bodyValue(new DecreaseStockRequestDto(decreaseVariants))
+//                    .retrieve()
+//                    .bodyToMono(new ParameterizedTypeReference<List<DecreaseStockResponseDto>>() {})
+//                    .block();
+//
+//            if (decreaseStockResponseDtos != null) {
+//                for (DecreaseStockResponseDto dto : decreaseStockResponseDtos) {
+//                    AddToCartResponseDto addToCartResponseDTO = AddToCartResponseDto.builder()
+//                            .price(dto.getPrice())
+//                            .productVariantId(dto.getProductVariantId())
+//                            .productVariantName(dto.getProductVariantName())
+//                            .quantity(dto.getQuantity())
+//                            .productVariantImage(dto.getProductVariantImage())
+//                            .promotionPrice(dto.getPromotionPrice())
+//                            .build();
+//
+//                    if (dto.getPrice() != null && dto.getQuantity() != null) {
+//                        if(dto.getPromotionPrice() == null){
+//                            totalAmount = totalAmount.add(dto.getPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+//                        }
+//                        else {
+//                            totalAmount = totalAmount.add(dto.getPromotionPrice().multiply(BigDecimal.valueOf(dto.getQuantity())));
+//                        }
+//                    }
+//                    OrderItem orderItem = new OrderItem();
+//                    orderItem.setOrder(orderSave);
+//                    orderItem.setProductVariantId(dto.getProductVariantId());
+//                    orderItem.setQuantity(dto.getQuantity());
+//                    orderItem.setProductVariantName(dto.getProductVariantName());
+//                    orderItem.setProductVariantPrice(dto.getPrice());
+//                    orderItemRepository.save(orderItem);
+//                    items.add(addToCartResponseDTO);
+//                }
+//            }
+//        } catch (WebClientResponseException e) {
+//            throw new RuntimeException("Failed to communicate with inventory service: " + e.getResponseBodyAsString());
+//        } catch (Exception e) {
+//            throw new RuntimeException("Internal error processing stock: " + e.getMessage());
+//        }
+
+
     }
 
     private String generateQrCode(BigDecimal total, Integer orderId) {
@@ -172,7 +228,11 @@ public class OrderService {
         orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
-        orderResponseDTO.setStatus(order.getStatus().name());
+        orderResponseDTO.setStatus(order.getStatus());
+        orderResponseDTO.setShippingFee(order.getShippingFee());
+        orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
+        orderResponseDTO.setPaymentStatus(order.getPaymentStatus());
+        orderResponseDTO.setShippingStatus(order.getShippingStatus());
         orderResponseDTO.setItems(getAddToCartResponseDTOS(items));
         return orderResponseDTO;
     }

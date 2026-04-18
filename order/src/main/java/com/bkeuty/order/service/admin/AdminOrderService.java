@@ -71,7 +71,7 @@ public class AdminOrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        order.setStatus(PaymentStatus.valueOf(status.toUpperCase()));
+        order.setPaymentStatus(PaymentStatus.valueOf(status.toUpperCase()));
         Order savedOrder = orderRepository.save(order);
 
         AdminOrderDto dto = new AdminOrderDto();
@@ -118,7 +118,7 @@ public class AdminOrderService {
         adminOrderDto.setId(order.getId());
         adminOrderDto.setUserId(order.getUserId());
         adminOrderDto.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
-        adminOrderDto.setPaymentMethod(order.getPaymentMethod());
+        adminOrderDto.setPaymentMethod(order.getPaymentMethod().toString());
         adminOrderDto.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
         adminOrderDto.setAddress(order.getAddress());
         adminOrderDto.setStatus(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name());

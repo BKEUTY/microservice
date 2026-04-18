@@ -1,0 +1,18 @@
+package com.bkeuty.shipping_service.dto;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ShippingTimeDto {
+    private Integer leadtime;
+
+    @JsonProperty("leadtime_order")
+    private LeaderTimeOrderDto leaderTimeOrder;
+}
