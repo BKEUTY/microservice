@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.bkeuty.order.enums.OrderStatus;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -102,7 +103,7 @@ public class AdminOrderService {
         }
 
         try {
-            order.setStatus(PaymentStatus.valueOf(status.trim().toUpperCase(Locale.ROOT)));
+            order.setStatus(OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT)));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                 "Invalid order status: " + status + ". Allowed values: " + 
@@ -172,7 +173,7 @@ public class AdminOrderService {
                 .userName(order.getUserName())
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
                 .shippingFee(order.getShippingFee())
-                .paymentMethod(order.getPaymentMethod())
+                .paymentMethod(order.getPaymentMethod().toString())
                 .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
                 .address(order.getAddress())
                 .status(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name())

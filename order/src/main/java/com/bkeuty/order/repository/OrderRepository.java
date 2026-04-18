@@ -10,8 +10,14 @@ import org.springframework.stereotype.Repository;
 
 import com.bkeuty.order.entity.Order;
 
+import java.util.List;
+
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpecificationExecutor<Order> {
     @EntityGraph(attributePaths = {"orderItems"})
     Page<Order> findAll(Specification<Order> spec, Pageable pageable);
+
+    List<Order> findByUserId(String userId);
+
+    Order findByIdAndUserId(Integer orderId,String userId);
 }

@@ -1,5 +1,7 @@
 package com.bkeuty.order.entity;
 
+import com.bkeuty.order.enums.OrderStatus;
+import com.bkeuty.order.enums.PaymentMethod;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,12 +34,17 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     private BigDecimal total;
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
     private LocalDate orderDate;
     private String address;
     private BigDecimal shippingFee;
     private String estimatedShippingDate;
-    private PaymentStatus paymentStatus;
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+    private String buyerName;
+    private String buyerNumber;
+    private String buyerNote;
+    private String shippingCode;
     @Column(name = "user_id", nullable = false)
     private String userId;
 
@@ -45,8 +52,9 @@ public class Order {
     private String userName;
 
     @Builder.Default
-    private PaymentStatus status = PaymentStatus.UNPAID;
-
+    private String shippingStatus = "NOT_CREATED";
+    @Builder.Default
+    private OrderStatus status = OrderStatus.NOT_CONFIRMED;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
