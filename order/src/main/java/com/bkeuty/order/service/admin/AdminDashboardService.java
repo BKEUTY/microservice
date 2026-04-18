@@ -35,7 +35,7 @@ public class AdminDashboardService {
 
     public DashboardDto getDashboardData(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
-        LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999) : LocalDateTime.now();
+        LocalDateTime end = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : LocalDateTime.now();
         
         List<PaymentStatus> validStatuses = Arrays.asList(PaymentStatus.PAID, PaymentStatus.COMPLETED);
 
@@ -115,14 +115,14 @@ public class AdminDashboardService {
 
     public List<DashboardOrderDto> getDetailedOrders(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
-        LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999) : LocalDateTime.now();
+        LocalDateTime end = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : LocalDateTime.now();
         List<PaymentStatus> validStatuses = Arrays.asList(PaymentStatus.PAID, PaymentStatus.COMPLETED);
         return orderRepository.findAllOrdersInDateRange(start, end, validStatuses);
     }
 
     public PerformanceAggregationResponseDto getDetailedProducts(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
-        LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999) : LocalDateTime.now();
+        LocalDateTime end = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : LocalDateTime.now();
         List<PaymentStatus> validStatuses = Arrays.asList(PaymentStatus.PAID, PaymentStatus.COMPLETED);
         List<VariantPerformanceDto> variantPerformances = orderRepository.findVariantPerformanceByDateRangeAndStatus(start, end, validStatuses);
         return fetchTopPerformers(variantPerformances, token);
@@ -130,14 +130,14 @@ public class AdminDashboardService {
 
     public List<TopCustomerDto> getDetailedCustomers(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
-        LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999) : LocalDateTime.now();
+        LocalDateTime end = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : LocalDateTime.now();
         List<PaymentStatus> validStatuses = Arrays.asList(PaymentStatus.PAID, PaymentStatus.COMPLETED);
         return orderRepository.findTopCustomers(start, end, validStatuses, PageRequest.of(0, 100));
     }
 
     public List<UserDetailDto> getDetailedNewUsers(LocalDate startDate, LocalDate endDate, String token) {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.of(2000, 1, 1, 0, 0);
-        LocalDateTime end = endDate != null ? endDate.atTime(23, 59, 59, 999) : LocalDateTime.now();
+        LocalDateTime end = endDate != null ? endDate.atTime(java.time.LocalTime.MAX) : LocalDateTime.now();
         Long startTimestamp = start != null ? start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : null;
         Long endTimestamp = end != null ? end.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : null;
 

@@ -36,11 +36,7 @@ public class AdminReportController {
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
         DashboardDto dashboard = adminDashboardService.getDashboardData(startDate, endDate, bearerToken);
-
-        return switch (type.toLowerCase()) {
-            case "product", "category", "brand", "combined" -> ResponseEntity.ok(dashboard);
-            default -> new ResponseEntity<>("Invalid report type. Supported types: product, category, brand, combined.", HttpStatus.BAD_REQUEST);
-        };
+        return ResponseEntity.ok(dashboard);
     }
 
     private boolean isAdmin(String token) {

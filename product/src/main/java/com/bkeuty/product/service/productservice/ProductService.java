@@ -61,9 +61,9 @@ public class ProductService {
             
             if (status != null && !status.trim().isEmpty()) {
                 try {
-                    predicates.add(cb.equal(root.get("status"), ProductStatus.valueOf(status)));
+                    predicates.add(cb.equal(root.get("status"), ProductStatus.valueOf(status.toUpperCase())));
                 } catch (IllegalArgumentException e) {
-                    // Ignore invalid status
+                    throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid product status: " + status);
                 }
             }
             

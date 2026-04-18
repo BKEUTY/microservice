@@ -26,7 +26,7 @@ public class InternalUserController {
     public ResponseEntity<UserDetailResponseDto> getUserDetail(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable String userId) {
-        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.getUserDetailById(userId));
     }
     
@@ -34,7 +34,7 @@ public class InternalUserController {
     public ResponseEntity<Map<String, String>> getUserNames(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody List<String> userIds) {
-        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.getUserNames(userIds));
     }
 
@@ -43,7 +43,7 @@ public class InternalUserController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(required = false) Long startDate,
             @RequestParam(required = false) Long endDate) {
-        if (!isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (token != null && !isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.countUsersByDateRange(startDate, endDate));
     }
 
@@ -52,7 +52,7 @@ public class InternalUserController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(required = false) Long startDate,
             @RequestParam(required = false) Long endDate) {
-        if (!isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (token != null && !isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(userService.getNewUsersByDateRange(startDate, endDate));
     }
 

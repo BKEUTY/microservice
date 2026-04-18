@@ -27,7 +27,7 @@ public class InternalAnalyticsController {
     public ResponseEntity<PerformanceAggregationResponseDto> aggregatePerformance(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody List<VariantPerformanceDto> variantPerformances) {
-        if (!isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (token != null && !isAdmin(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(analyticsService.aggregatePerformance(variantPerformances));
     }
 

@@ -27,7 +27,7 @@ public class CartController {
     public ResponseEntity<Map<Integer, CartProductVariantDto>> getVariantsByProductIds(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody List<Integer> requestedProductIds) {
-        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
         return ResponseEntity.ok(cartService.findDtoByProductVariantIdIn(requestedProductIds));
     }
@@ -36,7 +36,7 @@ public class CartController {
     public ResponseEntity<CartProductVariantDto> getVariantById(
             @RequestHeader(value = "Authorization", required = false) String token,
             @PathVariable("variantId") Integer variantId) {
-        if (!isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if (token != null && !isAuthenticated(token)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         return ResponseEntity.ok(cartService.findDtoById(variantId));
     }
 
