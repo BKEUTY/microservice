@@ -89,8 +89,8 @@ public class AdminProductService {
         } else {
             pattern = null;
         }
-        return productVariantRepository.findWithFilters(pattern, categoryId, null, pageable)
-                .map(this::toAdminProductVariantDto);
+        Page<ProductVariant> variants = productVariantRepository.findWithFilters(pattern, categoryId, null, pageable);
+        return variants.map(this::toAdminProductVariantDto);
     }
 
     private AdminProductVariantDto toAdminProductVariantDto(ProductVariant productVariant) {
@@ -110,6 +110,7 @@ public class AdminProductService {
                 .productImageUrl(productVariant.getProductImageUrl())
                 .productName(productVariant.getProduct().getName())
                 .price(productVariant.getPrice())
+                .promotionPrice(productVariant.getPromotionPrice())
                 .optionValues(
                         productVariant.getOptionValues().stream().map(ProductOptionValue::getOptionValueName).toList())
                 .variantOptions(options)
@@ -201,6 +202,7 @@ public class AdminProductService {
                 .productImageUrl(productVariant.getProductImageUrl())
                 .productName(productVariant.getProduct().getName())
                 .price(productVariant.getPrice())
+                .promotionPrice(productVariant.getPromotionPrice())
                 .optionValues(
                         productVariant.getOptionValues().stream().map(ProductOptionValue::getOptionValueName).toList())
                 .status(productVariant.getStatus())
@@ -281,7 +283,14 @@ public class AdminProductService {
         Optional.ofNullable(dto.getProductImageUrl()).ifPresent(productVariant::setProductImageUrl);
         Optional.ofNullable(dto.getStockQuantity()).ifPresent(productVariant::setStockQuantity);
         Optional.ofNullable(dto.getDescription()).ifPresent(productVariant::setDescription);
-        Optional.ofNullable(dto.getPrice()).ifPresent(productVariant::setPrice);
+        Optional.ofNullable(dto.getPrice()).ifPresent(price -> {
+            boolean noActivePromotion = productVariant.getPromotionPrice() == null || 
+                                        productVariant.getPromotionPrice().compareTo(productVariant.getPrice()) == 0;
+            productVariant.setPrice(price);
+            if (noActivePromotion) {
+                productVariant.setPromotionPrice(price);
+            }
+        });
         Optional.ofNullable(dto.getStatus()).ifPresent(productVariant::setStatus);
         return productVariant;
     }

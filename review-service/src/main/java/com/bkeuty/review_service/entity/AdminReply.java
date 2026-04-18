@@ -28,6 +28,8 @@ public class AdminReply {
 
     private String adminId;
 
+    private String adminName;
+
     @CreationTimestamp
     private LocalDateTime repliedAt;
     

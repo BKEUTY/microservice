@@ -21,6 +21,7 @@ public class Review {
     private Long id;
 
     private String userId;
+    private String userName;
     private Long variantId;
 
     @Column(nullable = false)

@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class ReplyResponse {
     private Long id;
     private String adminId;
+    private String adminName;
     private String comment;
     private LocalDateTime repliedAt;
     private LocalDateTime updatedAt;

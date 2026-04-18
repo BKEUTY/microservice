@@ -5,15 +5,24 @@ import com.bkeuty.order.dto.admin.AdminUpdateOrderStatusRequestDto;
 import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.service.auth.AuthService;
 import com.bkeuty.order.service.admin.AdminOrderService;
+import com.bkeuty.order.util.OrderSortUtils;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/admin/order")
+@Validated
 public class AdminOrderController {
 
     private final AdminOrderService adminOrderService;
@@ -27,15 +36,25 @@ public class AdminOrderController {
     @GetMapping
     public ResponseEntity<Page<AdminOrderDto>> getAllOrders(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String[] sort,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
             
         TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
         if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
+
+        Sort sortObj = OrderSortUtils.parseSort(sort);
         
-        return ResponseEntity.ok(adminOrderService.getAllOrders(PageRequest.of(page, size)));
+        return ResponseEntity.ok(adminOrderService.getAllOrders(
+                PageRequest.of(page - 1, size, sortObj), 
+                status, 
+                startDate, 
+                endDate));
     }
 
     @GetMapping("/{orderId}")

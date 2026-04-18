@@ -7,15 +7,19 @@ import com.bkeuty.product.service.productservice.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com.bkeuty.product.util.ProductSortUtils;
 
 import java.util.List;
 
 @RestController("userProductController")
 @RequestMapping("api/product")
+@Validated
 public class ProductController {
     private final ProductService productService;
 
@@ -25,33 +29,14 @@ public class ProductController {
 
     @GetMapping()
     public ResponseEntity<Page<DisplayProductDto>> getProducts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) String status) {
 
-        Sort sortObj = Sort.unsorted();
-        if ("price_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "price");
-        } else if ("price_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "price");
-        } else if ("stock_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "stockQuantity");
-        } else if ("stock_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "stockQuantity");
-        } else if ("rating_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "averageRating");
-        } else if ("rating_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "averageRating");
-        } else if ("reviews_asc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.ASC, "reviewCount");
-        } else if ("reviews_desc".equals(sort)) {
-            sortObj = Sort.by(Sort.Direction.DESC, "reviewCount");
-        }
-
-        Pageable pageable = PageRequest.of(page, size, sortObj);
+        Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"));
         return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
     }
 

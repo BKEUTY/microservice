@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.Comparator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,6 +59,12 @@ public class UserService {
             if(updateUserDto.getPhoneNumber()!=null){
                 map.put("phoneNumber", List.of(updateUserDto.getPhoneNumber()));
             }
+            if(updateUserDto.getDob()!=null){
+                map.put("dob", List.of(updateUserDto.getDob()));
+            }
+            if(updateUserDto.getGender()!=null){
+                map.put("gender", List.of(updateUserDto.getGender()));
+            }
 
             user.setAttributes(map);
             usersResource.get(userInfo.getUserId()).update(user);
@@ -79,6 +86,7 @@ public class UserService {
                 .phoneNumber(userRepresentation.firstAttribute("phoneNumber"))
                 .addresses(userRepresentation.getAttributes().get("addresses")!=null?userRepresentation.getAttributes().get("addresses").stream().map(this::addressToAddressDto).toList():null)
                 .dob(userRepresentation.firstAttribute("dob"))
+                .gender(userRepresentation.firstAttribute("gender"))
                 .userRole(userRepresentation.firstAttribute("userRole"))
                 .build();
     }
@@ -128,6 +136,7 @@ public class UserService {
                    System.out.println("Found address");
                    listAddress.remove(key);
                    deleted = true;
+                   break;
                }
            }
             map.put("addresses", listAddress);
@@ -166,9 +175,12 @@ public class UserService {
         }
         int nameLength = nameArray.length;
 
-        StringBuilder addressName  = new StringBuilder();
-        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
-            addressName.append(", ").append(nameArray[nameIndex]);
+        StringBuilder addressName = new StringBuilder();
+        for (int nameIndex = 0; nameIndex < nameLength - 3; nameIndex++) {
+            if (nameIndex > 0) {
+                addressName.append(", ");
+            }
+            addressName.append(nameArray[nameIndex]);
         }
 
         String wardName  = nameArray[nameLength-3];
@@ -188,7 +200,37 @@ public class UserService {
                 .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
                 .build();
     }
-    public List<UserDetailResponseDto>  getListUserDetail(TokenValidationResponseDto tokenValidationResponseDto) {
-        return keycloak.realm(realmName).users().list().stream().map(this::toUserDetailResponseDto).toList();
+    public UserDetailResponseDto getUserDetailById(String userId) {
+
+        UserResource response = keycloak.realm(realmName).users().get(userId);
+        if (response != null) {
+            UserRepresentation userRepresentation = response.toRepresentation();
+            return toUserDetailResponseDto(userRepresentation);
+        }
+        return null;
+    }
+
+    public Map<String, String> getUserNames(List<String> userIds) {
+        Map<String, String> result = new HashMap<>();
+        for (String id : userIds) {
+            try {
+                UserRepresentation user = keycloak.realm(realmName).users().get(id).toRepresentation();
+                String firstName = user.getFirstName() != null ? user.getFirstName() : "";
+                String lastName = user.getLastName() != null ? user.getLastName() : "";
+                String fullName = (firstName + " " + lastName).trim();
+                result.put(id, fullName.isEmpty() ? "User " + id : fullName);
+            } catch (Exception e) {
+                result.put(id, "User " + id);
+            }
+        }
+        return result;
+    }
+
+    public List<UserDetailResponseDto> getListUserDetail(String role) {
+        return keycloak.realm(realmName).users().list().stream()
+                .sorted(Comparator.comparing(UserRepresentation::getCreatedTimestamp))
+                .map(this::toUserDetailResponseDto)
+                .filter(u -> role == null || (u.getUserRole() != null && u.getUserRole().equalsIgnoreCase(role)))
+                .toList();
     }
 }

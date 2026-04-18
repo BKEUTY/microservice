@@ -7,16 +7,24 @@ import com.bkeuty.promotion_service.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.promotion_service.service.AuthService;
 import com.bkeuty.promotion_service.service.PromotionFactory;
 import com.bkeuty.promotion_service.service.PromotionService;
+import com.bkeuty.promotion_service.enums.PromotionStatus;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
+import com.bkeuty.promotion_service.util.PromotionSortUtils;
 
 @RestController
 @RequestMapping("/api/admin/promotion")
+@Validated
 public class PromotionController {
     private final AuthService authService;
     private final PromotionService promotionService;
@@ -60,13 +68,21 @@ public class PromotionController {
     @GetMapping
     public ResponseEntity<Page<PromotionResponseDto>> getPromotion(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) PromotionStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+        
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        Pageable pageable = PageRequest.of(page, 30);
-        return ResponseEntity.status(org.springframework.http.HttpStatus.OK).body(promotionService.findAll(pageable));
+        Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
+        return ResponseEntity.status(org.springframework.http.HttpStatus.OK)
+                .body(promotionService.findAll(title, status, startAt, endAt, pageable));
     }
 }

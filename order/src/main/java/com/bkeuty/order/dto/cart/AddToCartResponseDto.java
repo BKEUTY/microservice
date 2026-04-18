@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 @Builder
 public class AddToCartResponseDto {
     private Integer productVariantId;
+    private Integer cartId;
     private String productVariantName;
     private String productVariantImage;
     private Integer quantity;

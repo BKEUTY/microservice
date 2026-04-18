@@ -40,4 +40,9 @@ public class InternalOrderController {
         }
         return ResponseEntity.ok().build();
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/history/{userId}")
+    public ResponseEntity<java.util.List<OrderItem>> getOrderHistory(@org.springframework.web.bind.annotation.PathVariable String userId) {
+        return ResponseEntity.ok(orderItemRepository.findAllByOrder_UserId(userId));
+    }
 }

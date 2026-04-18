@@ -17,6 +17,7 @@ public class ProductVariantDto {
     private BigDecimal price;
     private BigDecimal discount;
     private Integer stockQuantity;
+    private Integer sold;
     private String productImageUrl;
     private String productVariantName;
     private Map<String, String> variantOptions;
