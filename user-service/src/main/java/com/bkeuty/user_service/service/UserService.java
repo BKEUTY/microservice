@@ -235,10 +235,20 @@ public class UserService {
     }
 
     public List<UserDetailResponseDto> getNewUsersByDateRange(Long startDate, Long endDate) {
+        return getFilteredUserRepresentations(startDate, endDate).stream()
+                .map(this::toUserDetailResponseDto)
+                .toList();
+    }
+
+    public long countUsersByDateRange(Long startDate, Long endDate) {
+        return getFilteredUserRepresentations(startDate, endDate).size();
+    }
+
+    private List<UserRepresentation> getFilteredUserRepresentations(Long startDate, Long endDate) {
         UsersResource usersResource = keycloak.realm(realmName).users();
         int first = 0;
         int max = 100;
-        List<UserDetailResponseDto> result = new ArrayList<>();
+        List<UserRepresentation> result = new ArrayList<>();
 
         while (true) {
             List<UserRepresentation> usersBatch = usersResource.list(first, max);
@@ -246,7 +256,7 @@ public class UserService {
                 break;
             }
 
-            List<UserDetailResponseDto> filteredBatch = usersBatch.stream()
+            usersBatch.stream()
                     .filter(u -> u.getCreatedTimestamp() != null &&
                                  (startDate == null || u.getCreatedTimestamp() >= startDate) &&
                                  (endDate == null || u.getCreatedTimestamp() <= endDate))
@@ -256,10 +266,7 @@ public class UserService {
                         }
                         return u.getAttributes().get("userRole").get(0).equalsIgnoreCase("USER");
                     })
-                    .map(this::toUserDetailResponseDto)
-                    .toList();
-            
-            result.addAll(filteredBatch);
+                    .forEach(result::add);
 
             if (usersBatch.size() < max) {
                 break;
@@ -267,37 +274,5 @@ public class UserService {
             first += usersBatch.size();
         }
         return result;
-    }
-
-    public long countUsersByDateRange(Long startDate, Long endDate) {
-        UsersResource usersResource = keycloak.realm(realmName).users();
-        int first = 0;
-        int max = 100;
-        long totalCount = 0;
-
-        while (true) {
-            List<UserRepresentation> usersBatch = usersResource.list(first, max);
-            if (usersBatch.isEmpty()) {
-                break;
-            }
-
-            totalCount += usersBatch.stream()
-                    .filter(u -> u.getCreatedTimestamp() != null &&
-                                 (startDate == null || u.getCreatedTimestamp() >= startDate) &&
-                                 (endDate == null || u.getCreatedTimestamp() <= endDate))
-                    .filter(u -> {
-                        if (u.getAttributes() == null || u.getAttributes().get("userRole") == null || u.getAttributes().get("userRole").isEmpty()) {
-                            return false;
-                        }
-                        return u.getAttributes().get("userRole").get(0).equalsIgnoreCase("USER");
-                    })
-                    .count();
-
-            if (usersBatch.size() < max) {
-                break;
-            }
-            first += usersBatch.size();
-        }
-        return totalCount;
     }
 }
