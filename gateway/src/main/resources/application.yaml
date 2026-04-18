@@ -6,6 +6,13 @@ spring:
       server:
         webmvc:
           routes:
+            - id: block-internal
+              uri: lb://auth-service
+              predicates:
+                - Path= /api/*/internal/**
+              filters:
+                - SetStatus=403
+
             - id: product-service
               uri: lb://product
               predicates:
