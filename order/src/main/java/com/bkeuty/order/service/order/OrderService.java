@@ -89,6 +89,7 @@ public class OrderService {
                 .serviceTypeId(2).weight(100).build())
                 .block().getData().getServiceFee();
 
+        // userName từ userInfo để lưu vào Order, hiển thị ở admin
         String userName = buildUserName(userInfo);
 
         String shippingDate = shippingService.calShippingTime(CalShippingTimeDto.builder()
@@ -100,69 +101,72 @@ public class OrderService {
                 .address(addressDtoToAddress(request.getAddress()))
                 .paymentMethod(request.getPaymentMethod())
                 .userId(userInfo.getUserId())
-                .userName(userName)
+                .userName(userName) // Thêm field userName vào Order entity
                 .shippingFee(BigDecimal.valueOf(shippingFee))
                 .estimatedShippingDate(shippingDate)
                 .status(PaymentStatus.UNPAID)
                 .build();
 
+        // Code mới: chỉ save Order SAU KHI validate và tính toán xong, đảm bảo tính nhất quán.
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItemDto> decreaseVariants = new ArrayList<>();
         List<AddToCartResponseDto> items = new ArrayList<>();
         List<OrderItem> orderItemsToSave = new ArrayList<>();
         List<Integer> variantIds = new ArrayList<>();
+        // Code cũ dùng vòng lặp findById() từng item một (N+1 queries) -> findAllById().
         List<Integer> cartItemIds = orderItemList.stream()
                 .map(OrderCartItemDto::getCartItemId)
                 .collect(Collectors.toList());
-        
+        // Thêm validation: kiểm tra cartItemId không null trước khi query DB
         if (cartItemIds.stream().anyMatch(id -> id == null)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Cart item ID cannot be null");
         }
-        
+        // Thêm validation: kiểm tra không có cartItemId trùng lặp trong cùng request
         if (cartItemIds.size() != cartItemIds.stream().distinct().count()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Duplicate cart item ID in request");
         }
-        
+        // Fetch toàn bộ CartItem thay vì từng item (tránh N+1)
         List<CartItem> cartItems = cartItemRepository.findAllById(cartItemIds);
-        
+        // Thêm validation: kiểm tra tất cả cartItem được yêu cầu có thực sự tồn tại không.
         if (cartItems.size() != cartItemIds.size()) {
             List<Integer> foundIds = cartItems.stream().map(CartItem::getId).toList();
             Integer missingId = cartItemIds.stream().filter(id -> !foundIds.contains(id)).findFirst().orElse(null);
             throw new CartItemNotFound("One or more cart items not found", missingId);
         }
-        
+        // Thêm security check: đảm bảo tất cả CartItem thuộc về user đang thực hiện request.
         if (cartItems.stream().anyMatch(item -> !userInfo.getUserId().equals(item.getUserId()))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
                     "One or more cart items do not belong to the authenticated user");
         }
-        
+        // Chuyển sang Map thay vì dùng findById trong vòng lặp
         Map<Integer, CartItem> cartItemMap = cartItems.stream()
                 .collect(Collectors.toMap(CartItem::getId, item -> item));
-        
+        // Lấy variantId để fetch product variant
         for (OrderCartItemDto cartItemDto : orderItemList) {
             CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
-            
+
             if (cartItem == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Cart item not found in map: " + cartItemDto.getCartItemId());
             }
-            
+            // Thêm validation: kiểm tra productVariant không null trước khi tiếp tục
             if (cartItem.getProductVariant() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Product variant ID is missing for cart item: " + cartItem.getId());
             }
-            
+            // Thêm validation: kiểm tra quantity hợp lệ
             if (cartItem.getQuantity() == null || cartItem.getQuantity() <= 0) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Invalid quantity for cart item: " + cartItem.getId());
             }
-            
+
             variantIds.add(cartItem.getProductVariant());
             decreaseVariants.add(new OrderItemDto(cartItem.getProductVariant(), cartItem.getQuantity()));
         }
 
+        // Lấy product variant
         Map<Integer, ProductVariantDto> variants = fetchVariantMap(
                 variantIds.stream().distinct().collect(Collectors.toList()));
 
@@ -171,12 +175,12 @@ public class OrderService {
 
         for (OrderCartItemDto cartItemDto : orderItemList) {
             CartItem cartItem = cartItemMap.get(cartItemDto.getCartItemId());
-            
+
             if (cartItem == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Cart item not found in map: " + cartItemDto.getCartItemId());
             }
-            
+
             if (cartItem.getProductVariant() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Product variant ID is missing for cart item: " + cartItem.getId());
@@ -196,7 +200,8 @@ public class OrderService {
                     cartItem.getQuantity(), variantDto));
             cartItemsToDelete.add(cartItem);
 
-            BigDecimal effectivePrice = variantDto.getPromotionPrice() != null && 
+            // Handle trường hợp promotionPrice cao hơn price gốc nếu dữ liệu sai
+            BigDecimal effectivePrice = variantDto.getPromotionPrice() != null &&
                     variantDto.getPromotionPrice().compareTo(variantDto.getPrice()) < 0
                     ? variantDto.getPromotionPrice() 
                     : variantDto.getPrice();
@@ -212,13 +217,16 @@ public class OrderService {
                     .build();
             items.add(itemDto);
         }
-        
+
+        // Delete hết cartItems thay vì delete từng cái trong vòng lặp (tránh N queries)
         cartItemRepository.deleteAll(cartItemsToDelete);
 
+        // Tổng tiền đã bao gồm shipping fee (code cũ: tổng tiền chỉ là hàng, QR code mới cộng thêm shipping)
         totalAmount = totalAmount.add(BigDecimal.valueOf(shippingFee));
         order.setTotal(totalAmount);
         Order orderSave = orderRepository.save(order);
 
+        // OrderItem nay lưu thêm các field detail để getListOrders không cần gọi product-service mỗi lần (trường hợp sau này product bị thay đổi thông tin).
         for (OrderItemData itemData : itemDataList) {
             OrderItem orderItem = OrderItem.builder()
                     .order(orderSave)
@@ -229,13 +237,15 @@ public class OrderService {
                     .promotionPrice(itemData.variantDto.getPromotionPrice())
                     .productDescription(itemData.variantDto.getProductVariantDescription())
                     .quantity(itemData.quantity)
-                    .isReviewed(false)
+                    .isReviewed(false) // Thêm field isReviewed
                     .build();
             orderItemsToSave.add(orderItem);
         }
 
+        // Save tất cả OrderItem thay vì save từng cái trong vòng lặp
         orderItemRepository.saveAll(orderItemsToSave);
 
+        // Gọi decreaseStock SAU KHI đã save order và order items.
         try {
             productWebClient.post()
                     .uri("/api/inventory/internal/decreaseStock")
@@ -245,7 +255,7 @@ public class OrderService {
                     .block();
         } catch (WebClientResponseException e) {
             HttpStatus statusCode = HttpStatus.resolve(e.getStatusCode().value());
-            
+
             if (statusCode == HttpStatus.CONFLICT) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, 
                         "Insufficient stock for items", e);
@@ -265,6 +275,7 @@ public class OrderService {
                     "Internal error processing stock: " + e.getMessage(), e);
         }
 
+        // QR code nhận totalAmount đã bao gồm shippingFee (vì totalAmount đã cộng shipping ở trên)
         OrderResponseDto response = OrderResponseDto.builder()
                 .orderId(orderSave.getId().toString())
                 .orderDate(LocalDate.now())
@@ -281,6 +292,7 @@ public class OrderService {
         return ResponseEntity.ok(response);
     }
 
+    // Build tên user từ firstName + lastName trong token.
     private String buildUserName(TokenValidationResponseDto userInfo) {
         String lastName = emptyIfNull(userInfo.getLastName(), "");
         String firstName = emptyIfNull(userInfo.getFirstName(), "");
@@ -288,6 +300,7 @@ public class OrderService {
         return fullName.isEmpty() ? "Guest" : fullName;
     }
 
+    // Helper method: trả về defaultValue nếu value null, tránh lặp null-check.
     private <T> T emptyIfNull(T value, T defaultValue) {
         return value != null ? value : defaultValue;
     }
@@ -297,6 +310,7 @@ public class OrderService {
         return "https://qr.sepay.vn/img?acc=" + accountNumber + "&bank=" + bank + "&amount=" + intTotal + "&des=DH" + orderId + "&template=" + template + "&download=false";
     }
 
+    // getListOrders có phân trang, filter theo status, startDate, endDate
     public Page<OrderResponseDto> getListOrders(String userId, Pageable pageable, String status, LocalDate startDate, LocalDate endDate) {
         Specification<Order> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -329,6 +343,7 @@ public class OrderService {
         return new PageImpl<>(orderResponseList, pageable, pageOrders.getTotalElements());
     }
 
+    // toOrderResponseDto không cần truyền items từ ngoài vào
     public OrderResponseDto toOrderResponseDto(Order order) {
         OrderResponseDto response = OrderResponseDto.builder()
                 .orderId(order.getId() != null ? order.getId().toString() : "")
@@ -338,17 +353,19 @@ public class OrderService {
                 .paymentMethod(order.getPaymentMethod())
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
                 .status(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name())
-                .shippingFee(order.getShippingFee())
-                .estShippingDate(order.getEstimatedShippingDate())
+                .shippingFee(order.getShippingFee()) // Thêm ShippingFee
+                .estShippingDate(order.getEstimatedShippingDate()) // Thêm estShippingDate
                 .build();
 
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
         Set<Integer> missingVariantIds = new HashSet<>();
-        
+
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+            // Dùng data đã lưu trong OrderItem nếu productVariantName != null
             itemDtos = order.getOrderItems().stream()
                     .map(item -> {
                         if (item.getProductVariantName() != null && !item.getProductVariantName().isBlank()) {
+                            // Data đã có sẵn
                             return AddToCartResponseDto.builder()
                                     .productVariantId(item.getProductVariantId())
                                     .productVariantName(item.getProductVariantName())
@@ -358,6 +375,7 @@ public class OrderService {
                                     .quantity(item.getQuantity())
                                     .build();
                         } else {
+                            // Item cũ chưa có snapshot, đánh dấu để fetch sau
                             if (item.getProductVariantId() != null) {
                                 missingVariantIds.add(item.getProductVariantId());
                             }
@@ -366,10 +384,10 @@ public class OrderService {
                     })
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            
+            // Nếu có item cũ gọi product-service
             if (!missingVariantIds.isEmpty()) {
                 Map<Integer, ProductVariantDto> variants = fetchVariantMap(new ArrayList<>(missingVariantIds));
-                
+
                 List<AddToCartResponseDto> fallbackItems = order.getOrderItems().stream()
                         .filter(item -> item.getProductVariantName() == null || item.getProductVariantName().isBlank())
                         .map(item -> {
@@ -388,7 +406,7 @@ public class OrderService {
                         })
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
-                
+
                 itemDtos.addAll(fallbackItems);
             }
         }
@@ -397,6 +415,7 @@ public class OrderService {
         return response;
     }
 
+    // Dùng khi đã có sẵn productVariants map.
     public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
         OrderResponseDto orderResponseDTO = new OrderResponseDto();
         orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
@@ -411,12 +430,14 @@ public class OrderService {
         return orderResponseDTO;
     }
 
+    // Fetch variants nếu chưa có.
     public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
         List<OrderItem> safeItems = items != null ? items : Collections.emptyList();
         List<Integer> variantIds = safeItems.stream().map(OrderItem::getProductVariantId).distinct().toList();
         return toOrderResponseDto(order, safeItems, fetchVariantMap(variantIds));
     }
 
+    // Method này chỉ map dữ liệu, không gọi external service. Nếu variant không có trong map, dùng data đã lưu trong OrderItem.
     private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
         if (items == null || items.isEmpty()) return new ArrayList<>();
 
@@ -428,12 +449,14 @@ public class OrderService {
             addToCartResponseDTO.setQuantity(orderItems.getQuantity());
 
             if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
+                // Ưu tiên dữ liệu từ product-service nếu có trong map
                 ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
                 addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
                 addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
                 addToCartResponseDTO.setPrice(productVariant.getPrice());
                 addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
             } else {
+                // Fallback
                 addToCartResponseDTO.setProductVariantName(orderItems.getProductVariantName());
                 addToCartResponseDTO.setProductVariantImage(orderItems.getProductImageUrl());
                 addToCartResponseDTO.setPrice(orderItems.getPrice());
@@ -441,7 +464,7 @@ public class OrderService {
             }
             itemList.add(addToCartResponseDTO);
         }
-        
+
         return itemList;
     }
 
@@ -480,6 +503,7 @@ public class OrderService {
         }
         int nameLength = nameArray.length;
 
+        // Fix Thừa ", " ở đầu (", Long Phước, huyện Long Thành, tỉnh Đồng Nai")
         StringBuilder addressName = new StringBuilder();
         for (int nameIndex = 0; nameIndex < nameLength - 3; nameIndex++) {
             if (nameIndex > 0) {
@@ -506,6 +530,8 @@ public class OrderService {
                 .build();
     }
 
+    // class OrderItemData: để giữ tạm dữ liệu trong quá trình xử lý placeorder.
+    // Thay thế việc liên kết CartItem với ProductVariantDto qua Map lồng nhau.
     private static class OrderItemData {
         Integer variantId;
         Integer quantity;
