@@ -415,58 +415,58 @@ public class OrderService {
         return response;
     }
 
-    // Dùng khi đã có sẵn productVariants map.
-    public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
-        OrderResponseDto orderResponseDTO = new OrderResponseDto();
-        orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
-        orderResponseDTO.setUserName(order.getUserName());
-        orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
-        orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
-        orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
-        orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
-        orderResponseDTO.setStatus(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name());
-        orderResponseDTO.setShippingFee(order.getShippingFee());
-        orderResponseDTO.setItems(getAddToCartResponseDTOS(items, productVariants));
-        return orderResponseDTO;
-    }
+    // // Dùng khi đã có sẵn productVariants map (remove được).
+    // public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
+    //     OrderResponseDto orderResponseDTO = new OrderResponseDto();
+    //     orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
+    //     orderResponseDTO.setUserName(order.getUserName());
+    //     orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
+    //     orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
+    //     orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
+    //     orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
+    //     orderResponseDTO.setStatus(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name());
+    //     orderResponseDTO.setShippingFee(order.getShippingFee());
+    //     orderResponseDTO.setItems(getAddToCartResponseDTOS(items, productVariants));
+    //     return orderResponseDTO;
+    // }
 
-    // Fetch variants nếu chưa có.
-    public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
-        List<OrderItem> safeItems = items != null ? items : Collections.emptyList();
-        List<Integer> variantIds = safeItems.stream().map(OrderItem::getProductVariantId).distinct().toList();
-        return toOrderResponseDto(order, safeItems, fetchVariantMap(variantIds));
-    }
+    // // Fetch variants nếu chưa có (remove được).
+    // public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
+    //     List<OrderItem> safeItems = items != null ? items : Collections.emptyList();
+    //     List<Integer> variantIds = safeItems.stream().map(OrderItem::getProductVariantId).distinct().toList();
+    //     return toOrderResponseDto(order, safeItems, fetchVariantMap(variantIds));
+    // }
 
-    // Method này chỉ map dữ liệu, không gọi external service. Nếu variant không có trong map, dùng data đã lưu trong OrderItem.
-    private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
-        if (items == null || items.isEmpty()) return new ArrayList<>();
+    // // Method này chỉ map dữ liệu, không gọi external service. Nếu variant không có trong map, dùng data đã lưu trong OrderItem (remove được).
+    // private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items, Map<Integer, ProductVariantDto> productVariants) {
+    //     if (items == null || items.isEmpty()) return new ArrayList<>();
 
-        List<AddToCartResponseDto> itemList = new ArrayList<>();
+    //     List<AddToCartResponseDto> itemList = new ArrayList<>();
         
-        for (OrderItem orderItems : items) {
-            AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
-            addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
-            addToCartResponseDTO.setQuantity(orderItems.getQuantity());
+    //     for (OrderItem orderItems : items) {
+    //         AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
+    //         addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
+    //         addToCartResponseDTO.setQuantity(orderItems.getQuantity());
 
-            if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
-                // Ưu tiên dữ liệu từ product-service nếu có trong map
-                ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
-                addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
-                addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
-                addToCartResponseDTO.setPrice(productVariant.getPrice());
-                addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
-            } else {
-                // Fallback
-                addToCartResponseDTO.setProductVariantName(orderItems.getProductVariantName());
-                addToCartResponseDTO.setProductVariantImage(orderItems.getProductImageUrl());
-                addToCartResponseDTO.setPrice(orderItems.getPrice());
-                addToCartResponseDTO.setPromotionPrice(orderItems.getPromotionPrice());
-            }
-            itemList.add(addToCartResponseDTO);
-        }
+    //         if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
+    //             // Ưu tiên dữ liệu từ product-service nếu có trong map
+    //             ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
+    //             addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
+    //             addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
+    //             addToCartResponseDTO.setPrice(productVariant.getPrice());
+    //             addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
+    //         } else {
+    //             // Fallback
+    //             addToCartResponseDTO.setProductVariantName(orderItems.getProductVariantName());
+    //             addToCartResponseDTO.setProductVariantImage(orderItems.getProductImageUrl());
+    //             addToCartResponseDTO.setPrice(orderItems.getPrice());
+    //             addToCartResponseDTO.setPromotionPrice(orderItems.getPromotionPrice());
+    //         }
+    //         itemList.add(addToCartResponseDTO);
+    //     }
 
-        return itemList;
-    }
+    //     return itemList;
+    // }
 
     private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
         if (variantIds == null || variantIds.isEmpty()) return Collections.emptyMap();
