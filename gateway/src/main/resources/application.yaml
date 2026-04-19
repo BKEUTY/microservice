@@ -19,7 +19,25 @@ spring:
             - id: order-service
               uri: lb://order
               predicates:
-                - Path= /api/order/**,/api/cart/**, /api/payment/**, /api/admin/order/**,/api/admin/cart/**, /api/shipping/**, /api/address/**
+                - Path= /api/order/**,/api/cart/**, /api/admin/order/**, /api/admin/cart/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
+            - id: payment-service
+              uri: lb://payment-service
+              predicates:
+                - Path= /api/payment/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
+            - id: shipping-service
+              uri: lb://shipping-service
+              predicates:
+                - Path= /api/shipping/**, /api/address/**
               filters:
                 - RemoveResponseHeader=Access-Control-Allow-Origin
                 - RemoveResponseHeader=Access-Control-Allow-Methods
@@ -82,6 +100,10 @@ springdoc:
         url: /api/promotion/v3/api-docs
       - name: Review Service
         url: /api/review/v3/api-docs
+      - name: Payment Service
+        url: /api/payment/v3/api-docs
+      - name: Shipping Service
+        url: /api/shipping/v3/api-docs
 logging:
   level:
     root: INFO

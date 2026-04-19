@@ -41,7 +41,7 @@ eureka:
 
 springdoc:
   api-docs:
-    path: /api/product/v3/api-docs
+    path: /api/shipping/v3/api-docs
 ghn:
   api-token: "7e4ff493-2f3f-11f1-a973-aee5264794df"
   return-phone: "0898680945"
