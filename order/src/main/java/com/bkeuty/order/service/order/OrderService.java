@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -134,6 +133,9 @@ public class OrderService {
                     orderItem.setQuantity(variants.getQuantity());
                     orderItem.setProductVariantName(dto.getProductVariantName());
                     orderItem.setProductVariantPrice(dto.getPrice());
+                    orderItem.setPromotionPrice(dto.getPromotionPrice());
+                    orderItem.setProductImageUrl(dto.getProductImageUrl());
+                    orderItem.setProductDescription(dto.getProductVariantDescription());
                     orderItemRepository.save(orderItem);
                     items.add(addToCartResponseDTO);
                 }
@@ -225,9 +227,9 @@ public class OrderService {
             if (status != null && !status.isBlank()) {
                 String trimmedStatus = status.trim();
                 try {
-                    predicates.add(criteriaBuilder.equal(root.get("status"), PaymentStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
+                    predicates.add(criteriaBuilder.equal(root.get("status"), OrderStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus + ". Allowed values: " + java.util.Arrays.toString(PaymentStatus.values()));
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus + ". Allowed values: " + java.util.Arrays.toString(OrderStatus.values()));
                 }
             }
             if (startDate != null) {
@@ -252,7 +254,6 @@ public class OrderService {
     private <T> T emptyIfNull(T value, T defaultValue) {
         return value != null ? value : defaultValue;
     }
-    // toOrderResponseDto không cần truyền items từ ngoài vào
     public OrderResponseDto toOrderResponseDto(Order order) {
         OrderResponseDto response = OrderResponseDto.builder()
                 .orderId(order.getId() != null ? order.getId().toString() : "")
@@ -261,30 +262,32 @@ public class OrderService {
                 .address(toAddressDto(order.getAddress()))
                 .paymentMethod(order.getPaymentMethod())
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
-                .status(order.getStatus()) // Status chỗ này đổi rồi
-                .shippingFee(order.getShippingFee()) // Thêm ShippingFee
-                .estShippingDate(order.getEstimatedShippingDate()) // Thêm estShippingDate
+                .status(order.getStatus())
+                .paymentStatus(order.getPaymentStatus())
+                .shippingStatus(order.getShippingStatus())
+                .shippingFee(order.getShippingFee())
+                .estShippingDate(order.getEstimatedShippingDate())
+                .buyerName(order.getBuyerName())
+                .buyerPhoneNumber(order.getBuyerNumber())
+                .buyerNote(order.getBuyerNote())
                 .build();
 
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
         Set<Integer> missingVariantIds = new HashSet<>();
 
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
-            // Dùng data đã lưu trong OrderItem nếu productVariantName != null
             itemDtos = order.getOrderItems().stream()
                     .map(item -> {
                         if (item.getProductVariantName() != null && !item.getProductVariantName().isBlank()) {
-                            // Data đã có sẵn
                             return AddToCartResponseDto.builder()
                                     .productVariantId(item.getProductVariantId())
                                     .productVariantName(item.getProductVariantName())
                                     .productVariantImage(item.getProductImageUrl())
-                                    .price(item.getPrice())
+                                    .price(item.getProductVariantPrice())
                                     .promotionPrice(item.getPromotionPrice())
                                     .quantity(item.getQuantity())
                                     .build();
                         } else {
-                            // Item cũ chưa có snapshot, đánh dấu để fetch sau
                             if (item.getProductVariantId() != null) {
                                 missingVariantIds.add(item.getProductVariantId());
                             }
@@ -359,31 +362,21 @@ public class OrderService {
 
         List<AddToCartResponseDto> itemList = new ArrayList<>();
         List<Integer> itemIds = items.stream().map(OrderItem::getProductVariantId).toList();
-        
-        try {
-            Map<Integer, ProductVariantDto> productVariants = productWebClient.post()
-                    .uri("/api/product/internal/variants/batch")
-                    .bodyValue(itemIds)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
-                    .block();
+        Map<Integer, ProductVariantDto> productVariants = fetchVariantMap(itemIds);
 
-            for (OrderItem orderItems : items) {
-                AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
-                addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
-                addToCartResponseDTO.setQuantity(orderItems.getQuantity());
+        for (OrderItem orderItems : items) {
+            AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
+            addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
+            addToCartResponseDTO.setQuantity(orderItems.getQuantity());
 
-
-                if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
-                    ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
-                    addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
-                    addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
-                    addToCartResponseDTO.setPrice(productVariant.getPrice());
-                    addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
-                }
-                itemList.add(addToCartResponseDTO);
+            if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
+                ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
+                addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
+                addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
+                addToCartResponseDTO.setPrice(productVariant.getPrice());
+                addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
             }
-        } catch (Exception e) {
+            itemList.add(addToCartResponseDTO);
         }
         
         return itemList;
@@ -395,39 +388,30 @@ public class OrderService {
                 + ":" + dto.getProvince().getProvinceID().toString();
     }
     private AddressDto toAddressDto(String address) {
-        AddressDto addressDto = new AddressDto();
         String[] addressArray = address.split("\\|");
-        if(addressArray.length!=2){
-            return null;
-        }
+        if(addressArray.length!=2) return null;
         String nameField = addressArray[0];
         String codeField = addressArray[1];
         String[] nameArray = nameField.split(",\\s*");
-        if(nameArray.length< 4){
-            return null;
-        }
+        if(nameArray.length< 4) return null;
         int nameLength = nameArray.length;
 
         StringBuilder addressName  = new StringBuilder();
         for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
-            addressName.append(", ").append(nameArray[nameIndex]);
+            if(nameIndex>0) addressName.append(", ");
+            addressName.append(nameArray[nameIndex]);
         }
 
         String wardName  = nameArray[nameLength-3];
         String districtName = nameArray[nameLength-2];
         String provinceName = nameArray[nameLength-1];
         String[] codeArray = codeField.split(":");
-        if(codeArray.length!=3){
-            return null;
-        }
-        String wardCode = codeArray[0];
-        String districtCode = codeArray[1];
-        String provinceCode = codeArray[2];
+        if(codeArray.length!=3) return null;
         return AddressDto.builder()
                 .address(addressName.toString())
-                .ward(new WardDto(Integer.valueOf(wardCode), wardName))
-                .district(new DistrictDto(Integer.valueOf(districtCode), districtName))
-                .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
+                .ward(new WardDto(Integer.valueOf(codeArray[0]), wardName))
+                .district(new DistrictDto(Integer.valueOf(codeArray[1]), districtName))
+                .province(new ProvinceDto(Integer.valueOf(codeArray[2]), provinceName))
                 .build();
     }
 

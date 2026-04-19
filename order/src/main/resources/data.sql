@@ -25,7 +25,7 @@ INSERT INTO orders (id, total, payment_method, order_date, address, user_id, sta
 (19, 870000, 'COD', '2026-04-22', '477 Tạ Hiện, Phường Hàng Bài, Hoàn Kiếm, Hà Nội|2:3:2', 'user-8', 3, 'Trần Thị N', 10000, '2026-04-24'),
 (20, 2320000, 'Banking', '2026-04-24', '588 Hàng Gai, Phường Hàng Bài, Hoàn Kiếm, Hà Nội|1:3:2', 'user-9', 4, 'Lê Thị O', 40000, '2026-04-26');
 
-INSERT INTO order_item (id, quantity, product_variant_id, order_id, is_reviewed, product_variant_name, product_image_url, price, promotion_price, product_description) VALUES
+INSERT INTO order_item (id, quantity, product_variant_id, order_id, is_reviewed, product_variant_name, product_image_url, product_variant_price, promotion_price, product_description) VALUES
 (1, 1, 1, 1, true, 'CeraVe Foaming Cleanser - 236ml', 'v1.jpg', 350000, 315000, 'Làm sạch sâu da dầu'),
 (2, 2, 2, 2, true, 'CeraVe Foaming Cleanser - 473ml', 'v2.jpg', 560000, 520000, 'Dung tích lớn tiết kiệm'),
 (3, 1, 6, 3, true, 'Estee Lauder ANR - 30ml', 'v6.jpg', 2150000, 1950000, 'Phục hồi ban đêm'),

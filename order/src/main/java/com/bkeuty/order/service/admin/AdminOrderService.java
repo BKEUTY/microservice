@@ -28,7 +28,6 @@ import com.bkeuty.order.dto.admin.AdminOrderDto;
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
 import com.bkeuty.order.dto.cart.ProductVariantDto;
 import com.bkeuty.order.entity.Order;
-import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.repository.OrderRepository;
 
 import jakarta.persistence.criteria.Predicate;
@@ -55,11 +54,11 @@ public class AdminOrderService {
                 String trimmedStatus = status.trim();
                 try {
                     predicates.add(criteriaBuilder.equal(root.get("status"), 
-                        PaymentStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
+                        OrderStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Invalid order status: " + trimmedStatus + ". Allowed values: " + 
-                        java.util.Arrays.toString(PaymentStatus.values()));
+                        java.util.Arrays.toString(OrderStatus.values()));
                 }
             }
 
@@ -107,7 +106,7 @@ public class AdminOrderService {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                 "Invalid order status: " + status + ". Allowed values: " + 
-                java.util.Arrays.toString(PaymentStatus.values()));
+                java.util.Arrays.toString(OrderStatus.values()));
         }
 
         Order savedOrder = orderRepository.save(order);
@@ -127,7 +126,7 @@ public class AdminOrderService {
                                     .productVariantId(item.getProductVariantId())
                                     .productVariantName(item.getProductVariantName())
                                     .productVariantImage(item.getProductImageUrl())
-                                    .price(item.getPrice())
+                                    .price(item.getProductVariantPrice())
                                     .promotionPrice(item.getPromotionPrice())
                                     .quantity(item.getQuantity())
                                     .build();
@@ -176,7 +175,7 @@ public class AdminOrderService {
                 .paymentMethod(order.getPaymentMethod().toString())
                 .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
                 .address(order.getAddress())
-                .status(order.getStatus() != null ? order.getStatus().name() : PaymentStatus.UNPAID.name())
+                .status(order.getStatus() != null ? order.getStatus().name() : OrderStatus.NOT_CONFIRMED.name())
                 .items(itemDtos)
                 .build();
     }

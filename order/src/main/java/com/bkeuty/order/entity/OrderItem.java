@@ -34,9 +34,6 @@ public class OrderItem {
     @Column(name = "product_image_url", length = 500)
     private String productImageUrl;
 
-    @Column(name = "price", precision = 19, scale = 2)
-    private BigDecimal price;
-
     @Column(name = "promotion_price", precision = 19, scale = 2)
     private BigDecimal promotionPrice;
 
