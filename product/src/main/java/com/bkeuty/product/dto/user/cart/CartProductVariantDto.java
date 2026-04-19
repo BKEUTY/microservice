@@ -18,4 +18,5 @@ public class CartProductVariantDto {
     private String productVariantName;
     private String productVariantDescription;
     private BigDecimal promotionPrice;
+    private Integer stockQuantity;
 }

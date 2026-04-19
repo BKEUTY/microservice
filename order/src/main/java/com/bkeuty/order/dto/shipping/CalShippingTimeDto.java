@@ -16,5 +16,6 @@ public class CalShippingTimeDto {
     @JsonProperty("to_district_id")
     private Integer toDistrictId;
     @JsonProperty("service_type_id")
+    @Builder.Default
     private Integer serviceTypeId = 2;
 }

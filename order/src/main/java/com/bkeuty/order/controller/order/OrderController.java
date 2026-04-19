@@ -83,4 +83,18 @@ public class OrderController {
         }
         return ResponseEntity.ok().body(shippingService.getShippingOrderStatus(dto,tokenValidationResponseDto));
     }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponseDto> getOrderById(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @PathVariable Integer orderId) {
+
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+                || !"user".equals(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        return ResponseEntity.ok(orderService.getOrderById(orderId, tokenValidationResponseDto.getUserId()));
+    }
 }

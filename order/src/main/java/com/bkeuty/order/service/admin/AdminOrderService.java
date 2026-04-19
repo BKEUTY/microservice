@@ -2,23 +2,19 @@ package com.bkeuty.order.service.admin;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.bkeuty.order.enums.OrderStatus;
+import com.bkeuty.order.enums.PaymentStatus;
+import com.bkeuty.order.enums.PaymentMethod;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -83,6 +79,16 @@ public class AdminOrderService {
                 .collect(Collectors.toList());
 
         return new PageImpl<>(adminOrderDtos, pageable, orderPage.getTotalElements());
+    }
+
+    public ResponseEntity<?> confirmOrder(Integer orderId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order != null) {
+            order.setStatus(OrderStatus.CONFIRMED);
+            orderRepository.save(order);
+            return ResponseEntity.ok("Order Confirmed");
+        }
+        return ResponseEntity.badRequest().body("Order not found");
     }
 
     public AdminOrderDto getOrderById(Integer orderId) {
@@ -173,10 +179,13 @@ public class AdminOrderService {
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
                 .shippingFee(order.getShippingFee())
                 .paymentMethod(order.getPaymentMethod().toString())
+                .paymentStatus(order.getPaymentStatus().name())
+                .shippingStatus(order.getShippingStatus())
                 .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
                 .address(order.getAddress())
                 .status(order.getStatus() != null ? order.getStatus().name() : OrderStatus.NOT_CONFIRMED.name())
                 .items(itemDtos)
+                .availableStatuses(Arrays.stream(OrderStatus.values()).map(Enum::name).collect(Collectors.toList()))
                 .build();
     }
 

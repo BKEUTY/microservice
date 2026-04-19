@@ -35,13 +35,14 @@ public class KafkaService {
                 decreaseFailed = true;
                 continue;
             }
-            int remainQuantity = productVariant.getStockQuantity() - item.getQuantity();
-            if (remainQuantity < 0) {
+            int updatedRows = productVariantRepository.decreaseStockAndIncreaseSold(
+                    item.getProductVariantId(),
+                    item.getQuantity()
+            );
+            if (updatedRows == 0) {
                 decreaseFailed = true;
                 failDecreaseStockItem.add(DecreaseStockResponseDto.builder().productVariantId(item.getProductVariantId()).build());
-                continue;
             }
-            productVariant.setStockQuantity(remainQuantity);
         }
         if(decreaseFailed){
             kafkaTemplate.send("decrease-stock-status-topic", DecreaseStockStatusDto.builder().isSuccess(Boolean.FALSE).orderId(message.getOrderId()).failDecreaseStockItems(failDecreaseStockItem).build());

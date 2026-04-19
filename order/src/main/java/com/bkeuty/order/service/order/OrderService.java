@@ -9,6 +9,7 @@ import com.bkeuty.order.entity.CartItem;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.enums.OrderStatus;
+import com.bkeuty.order.enums.PaymentMethod;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.exception.CartItemNotFound;
 import com.bkeuty.order.microservicecommunication.GHNCommunication;
@@ -28,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -80,6 +82,7 @@ public class OrderService {
                 .address(addressDtoToAddress(request.getAddress()))
                 .paymentMethod(request.getPaymentMethod())
                 .userId(userInfo.getUserId())
+                .userName(userInfo.getFirstName() + " " + userInfo.getLastName())
                 .shippingFee(BigDecimal.valueOf(shippingFee))
                 .estimatedShippingDate(shippingDate)
                 .buyerName(request.getName())
@@ -111,6 +114,9 @@ public class OrderService {
                 if(buyProductVariantMap!=null && buyProductVariantMap.containsKey(variants.getProductVariantId()) && buyProductVariantMap.get(variants.getProductVariantId()) != null) {
                     System.out.println("Create Order Item");
                     ProductVariantDto dto = buyProductVariantMap.get(variants.getProductVariantId());
+                    if (dto.getStockQuantity() < variants.getQuantity()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product '" + dto.getProductVariantName() + "' only has " + dto.getStockQuantity() + " in stock.");
+                    }
                     AddToCartResponseDto addToCartResponseDTO = AddToCartResponseDto.builder()
                             .price(dto.getPrice())
                             .productVariantId(dto.getId())
@@ -144,7 +150,9 @@ public class OrderService {
                 }
 
             }
-        }catch (WebClientResponseException e) {
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (WebClientResponseException e) {
             throw new RuntimeException("Failed to communicate with inventory service: " + e.getResponseBodyAsString());
         } catch (Exception e) {
             throw new RuntimeException("Internal error processing stock: " + e.getMessage());
@@ -166,6 +174,7 @@ public class OrderService {
         placeOrderResponseDTO.setBuyerName(request.getName());
         placeOrderResponseDTO.setBuyerPhoneNumber(request.getPhoneNumber());
         placeOrderResponseDTO.setBuyerNote(request.getNote());
+        placeOrderResponseDTO.setUserName(orderSave.getUserName());
         kafkaTemplate.send("decrease-stock-topic",new DecreaseStockRequestDto(orderSave.getId(),decreaseVariants));
 
         return ResponseEntity.ok(placeOrderResponseDTO);
@@ -229,7 +238,7 @@ public class OrderService {
                 try {
                     predicates.add(criteriaBuilder.equal(root.get("status"), OrderStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus + ". Allowed values: " + java.util.Arrays.toString(OrderStatus.values()));
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus);
                 }
             }
             if (startDate != null) {
@@ -270,6 +279,7 @@ public class OrderService {
                 .buyerName(order.getBuyerName())
                 .buyerPhoneNumber(order.getBuyerNumber())
                 .buyerNote(order.getBuyerNote())
+                .qrCodeLink(order.getPaymentMethod() == PaymentMethod.BANK ? generateQrCode(order.getTotal().add(order.getShippingFee() != null ? order.getShippingFee() : BigDecimal.ZERO), order.getId()) : null)
                 .build();
 
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
@@ -413,6 +423,17 @@ public class OrderService {
                 .district(new DistrictDto(Integer.valueOf(codeArray[1]), districtName))
                 .province(new ProvinceDto(Integer.valueOf(codeArray[2]), provinceName))
                 .build();
+    }
+
+    public OrderResponseDto getOrderById(Integer orderId, String userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        if (!order.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this order");
+        }
+
+        return toOrderResponseDto(order);
     }
 
 }

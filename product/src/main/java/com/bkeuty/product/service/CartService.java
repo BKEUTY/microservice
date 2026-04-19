@@ -50,6 +50,7 @@ public class CartService {
                 .productVariantName(productVariant.getProductVariantName())
                 .productVariantDescription(productVariant.getDescription())
                 .promotionPrice(promotionPriceDto.getNewPrice())
+                .stockQuantity(productVariant.getStockQuantity())
                 .build();
 
 
@@ -62,6 +63,7 @@ public class CartService {
                 .productVariantName(productVariant.getProductVariantName())
                 .productVariantDescription(productVariant.getDescription())
                 .promotionPrice(promotionPriceDto.getNewPrice())
+                .stockQuantity(productVariant.getStockQuantity())
                 .build();
     }
 

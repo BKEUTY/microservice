@@ -67,7 +67,7 @@ public class KafkaService {
             orderRepository.save(order);
         }
         else  {
-            order.setStatus(OrderStatus.CANCELED);
+            order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
             List<DecreaseStockResponseDto> decreaseStockFailedItem = message.getFailDecreaseStockItems();
             for (DecreaseStockResponseDto item : decreaseStockFailedItem) {

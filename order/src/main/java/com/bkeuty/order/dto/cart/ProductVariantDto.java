@@ -16,4 +16,5 @@ public class ProductVariantDto {
     private String productImageUrl;
     private String productVariantName;
     private String productVariantDescription;
+    private Integer stockQuantity;
 }

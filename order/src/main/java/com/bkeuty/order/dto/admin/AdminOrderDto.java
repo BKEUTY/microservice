@@ -22,5 +22,8 @@ public class AdminOrderDto {
     private LocalDate orderDate;
     private String address;
     private String status;
+    private String paymentStatus;
+    private String shippingStatus;
     private List<AddToCartResponseDto> items;
+    private List<String> availableStatuses;
 }

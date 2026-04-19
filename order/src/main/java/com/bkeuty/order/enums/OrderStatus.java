@@ -4,5 +4,5 @@ public enum OrderStatus {
     NOT_CONFIRMED,
     CONFIRMED,
     SUCCEEDED,
-    CANCELED,
+    CANCELLED,
 }
