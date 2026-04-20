@@ -3,7 +3,7 @@ package com.bkeuty.order.entity;
 import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentMethod;
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import com.bkeuty.order.enums.PaymentStatus;
 import jakarta.persistence.CascadeType;
@@ -35,7 +35,8 @@ public class Order {
     private Integer id;
     private BigDecimal total;
     private PaymentMethod paymentMethod;
-    private LocalDate orderDate;
+    @Column(name = "order_date", columnDefinition = "TIMESTAMP")
+    private LocalDateTime orderDate;
     private String address;
     private BigDecimal shippingFee;
     private String estimatedShippingDate;

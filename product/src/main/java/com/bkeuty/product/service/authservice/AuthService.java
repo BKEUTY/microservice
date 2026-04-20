@@ -14,16 +14,34 @@ public class AuthService {
     }
 
     public TokenValidationResponseDto validateToken(String authorizationHeader) {
-        if (authorizationHeader == null) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             return null;
         }
         String token = authorizationHeader.substring(7);
-        TokenValidationResponseDto tokenValidationResponseDto = authWebClient.post()
-                .uri("/api/auth/internal/validate-token")
-                .bodyValue(new TokenValidationRequestDto(token)).retrieve().bodyToMono(TokenValidationResponseDto.class)
-                .onErrorReturn(new TokenValidationResponseDto()).block();
+        try {
+            return authWebClient.post()
+                    .uri("/api/auth/internal/validate-token")
+                    .bodyValue(new TokenValidationRequestDto(token))
+                    .retrieve()
+                    .bodyToMono(TokenValidationResponseDto.class)
+                    .onErrorReturn(new TokenValidationResponseDto())
+                    .block();
+        } catch (Exception e) {
+            return new TokenValidationResponseDto();
+        }
+    }
 
-        return tokenValidationResponseDto;
+    public boolean isAuthenticated(String tokenHeader) {
+        TokenValidationResponseDto response = validateToken(tokenHeader);
+        if (response == null || response.getUserId() == null) {
+            return false;
+        }
+        String role = response.getUserRole();
+        return "ADMIN".equalsIgnoreCase(role) || "USER".equalsIgnoreCase(role);
+    }
 
+    public boolean isAdmin(String tokenHeader) {
+        TokenValidationResponseDto response = validateToken(tokenHeader);
+        return response != null && "ADMIN".equalsIgnoreCase(response.getUserRole());
     }
 }

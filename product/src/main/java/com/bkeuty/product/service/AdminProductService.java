@@ -84,13 +84,22 @@ public class AdminProductService {
     }
 
     public Page<AdminProductVariantDto> getAllVariantsPaginated(String pattern, Integer categoryId, Pageable pageable) {
-        if (pattern != null && !pattern.isEmpty()) {
-            pattern = "%" + pattern.toLowerCase() + "%";
-        } else {
-            pattern = null;
-        }
-        Page<ProductVariant> variants = productVariantRepository.findWithFilters(pattern, categoryId, null, pageable);
-        return variants.map(this::toAdminProductVariantDto);
+        org.springframework.data.jpa.domain.Specification<ProductVariant> spec = (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            
+            if (pattern != null && !pattern.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("productVariantName")), "%" + pattern.toLowerCase() + "%"));
+            }
+            
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.join("product").join("categories").get("id"), categoryId));
+            }
+            
+            query.distinct(true);
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        return productVariantRepository.findAll(spec, pageable).map(this::toAdminProductVariantDto);
     }
 
     private AdminProductVariantDto toAdminProductVariantDto(ProductVariant productVariant) {

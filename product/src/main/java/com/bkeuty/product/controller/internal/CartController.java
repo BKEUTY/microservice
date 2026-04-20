@@ -21,16 +21,12 @@ public class CartController {
     @PostMapping("/variants/batch")
     public ResponseEntity<Map<Integer, CartProductVariantDto>> getVariantsByProductIds(
             @RequestBody List<Integer> requestedProductIds) {
-
-        // 1. Fetch existing variants from DB
-
-
         return ResponseEntity.ok(cartService.findDtoByProductVariantIdIn(requestedProductIds));
     }
-    @GetMapping("/variant/{variantId}")
-    public ResponseEntity<CartProductVariantDto> getVariantById(@PathVariable("variantId") Integer variantId) {
 
+    @GetMapping("/variant/{variantId}")
+    public ResponseEntity<CartProductVariantDto> getVariantById(
+            @PathVariable("variantId") Integer variantId) {
         return ResponseEntity.ok(cartService.findDtoById(variantId));
     }
-
 }

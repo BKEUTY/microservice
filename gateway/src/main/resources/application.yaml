@@ -6,6 +6,13 @@ spring:
       server:
         webmvc:
           routes:
+            - id: block-internal
+              uri: no://op
+              predicates:
+                - Path= /api/*/internal/**
+              filters:
+                - SetStatus=403
+
             - id: product-service
               uri: lb://product
               predicates:
@@ -19,7 +26,7 @@ spring:
             - id: order-service
               uri: lb://order
               predicates:
-                - Path= /api/order/**,/api/cart/**, /api/admin/order/**, /api/admin/cart/**
+                - Path= /api/order/**,/api/cart/**, /api/admin/order/**, /api/admin/cart/**, /api/admin/dashboard/**, /api/admin/reports/**
               filters:
                 - RemoveResponseHeader=Access-Control-Allow-Origin
                 - RemoveResponseHeader=Access-Control-Allow-Methods

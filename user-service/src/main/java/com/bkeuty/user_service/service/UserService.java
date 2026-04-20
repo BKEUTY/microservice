@@ -1,6 +1,11 @@
 package com.bkeuty.user_service.service;
 
-import com.bkeuty.user_service.dto.*;
+import com.bkeuty.user_service.dto.AddressDto;
+import com.bkeuty.user_service.dto.DistrictDto;
+import com.bkeuty.user_service.dto.ProvinceDto;
+import com.bkeuty.user_service.dto.UpdateUserDto;
+import com.bkeuty.user_service.dto.UserDetailResponseDto;
+import com.bkeuty.user_service.dto.WardDto;
 import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
 import org.jboss.logging.Logger;
 import org.keycloak.admin.client.Keycloak;
@@ -232,5 +237,73 @@ public class UserService {
                 .map(this::toUserDetailResponseDto)
                 .filter(u -> role == null || (u.getUserRole() != null && u.getUserRole().equalsIgnoreCase(role)))
                 .toList();
+    }
+
+    public List<UserDetailResponseDto> getNewUsersByDateRange(Long startDate, Long endDate) {
+        return getFilteredUserRepresentations(startDate, endDate).stream()
+                .map(this::toUserDetailResponseDto)
+                .toList();
+    }
+
+    public long countUsersByDateRange(Long startDate, Long endDate) {
+        UsersResource usersResource = keycloak.realm(realmName).users();
+        int first = 0;
+        int max = 100;
+        long count = 0;
+
+        while (true) {
+            List<UserRepresentation> usersBatch = usersResource.list(first, max);
+            if (usersBatch.isEmpty()) {
+                break;
+            }
+
+            count += usersBatch.stream()
+                    .filter(u -> isUserInDateRangeAndRole(u, startDate, endDate, "USER"))
+                    .count();
+
+            if (usersBatch.size() < max) {
+                break;
+            }
+            first += usersBatch.size();
+        }
+        return count;
+    }
+
+    private boolean isUserInDateRangeAndRole(UserRepresentation u, Long startDate, Long endDate, String role) {
+        boolean inDateRange = u.getCreatedTimestamp() != null &&
+                (startDate == null || u.getCreatedTimestamp() >= startDate) &&
+                (endDate == null || u.getCreatedTimestamp() <= endDate);
+        
+        if (!inDateRange) return false;
+
+        if (u.getAttributes() == null || u.getAttributes().get("userRole") == null || u.getAttributes().get("userRole").isEmpty()) {
+            return false;
+        }
+        
+        return u.getAttributes().get("userRole").get(0).equalsIgnoreCase(role);
+    }
+
+    private List<UserRepresentation> getFilteredUserRepresentations(Long startDate, Long endDate) {
+        UsersResource usersResource = keycloak.realm(realmName).users();
+        int first = 0;
+        int max = 100;
+        List<UserRepresentation> result = new ArrayList<>();
+
+        while (true) {
+            List<UserRepresentation> usersBatch = usersResource.list(first, max);
+            if (usersBatch.isEmpty()) {
+                break;
+            }
+
+            usersBatch.stream()
+                    .filter(u -> isUserInDateRangeAndRole(u, startDate, endDate, "USER"))
+                    .forEach(result::add);
+
+            if (usersBatch.size() < max) {
+                break;
+            }
+            first += usersBatch.size();
+        }
+        return result;
     }
 }

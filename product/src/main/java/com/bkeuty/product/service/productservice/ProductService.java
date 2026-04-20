@@ -48,9 +48,30 @@ public class ProductService {
 
     @org.springframework.transaction.annotation.Transactional
     public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String name, Integer categoryId, String status) {
-        String pattern = StringUtils.hasText(name) ? "%" + name.toLowerCase() + "%" : null;
-        ProductStatus enumStatus = (status != null && !status.trim().isEmpty()) ? ProductStatus.valueOf(status) : null;
-        Page<ProductVariant> productRes = productVariantRepository.findWithFilters(pattern, categoryId, enumStatus, pageable);
+        org.springframework.data.jpa.domain.Specification<ProductVariant> spec = (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            
+            if (StringUtils.hasText(name)) {
+                predicates.add(cb.like(cb.lower(root.get("productVariantName")), "%" + name.toLowerCase() + "%"));
+            }
+            
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.join("product").join("categories").get("id"), categoryId));
+            }
+            
+            if (status != null && !status.trim().isEmpty()) {
+                try {
+                    predicates.add(cb.equal(root.get("status"), ProductStatus.valueOf(status.toUpperCase())));
+                } catch (IllegalArgumentException e) {
+                    throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid product status: " + status);
+                }
+            }
+            
+            query.distinct(true);
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        Page<ProductVariant> productRes = productVariantRepository.findAll(spec, pageable);
         Map<Integer, PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes);
 
         productRes.forEach(pv -> {

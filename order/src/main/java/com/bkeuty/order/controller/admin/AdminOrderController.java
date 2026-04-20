@@ -43,10 +43,7 @@ public class AdminOrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
             
-        TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
-        if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+        if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
         Sort sortObj = OrderSortUtils.parseSort(sort);
         
@@ -54,7 +51,8 @@ public class AdminOrderController {
                 PageRequest.of(page - 1, size, sortObj), 
                 status, 
                 startDate, 
-                endDate));
+                endDate,
+                bearerToken));
     }
 
     @GetMapping("/{orderId}")
@@ -62,12 +60,9 @@ public class AdminOrderController {
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @PathVariable Integer orderId) {
             
-        TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
-        if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+        if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         
-        return ResponseEntity.ok(adminOrderService.getOrderById(orderId));
+        return ResponseEntity.ok(adminOrderService.getOrderById(orderId, bearerToken));
     }
 
     @PutMapping("/{orderId}/status")
@@ -76,11 +71,18 @@ public class AdminOrderController {
             @PathVariable Integer orderId,
             @RequestBody AdminUpdateOrderStatusRequestDto request) {
             
-        TokenValidationResponseDto tokenValidation = authService.validateToken(bearerToken);
-        if (tokenValidation.getUserId() == null || !"admin".equals(tokenValidation.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+        if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         
-        return ResponseEntity.ok(adminOrderService.updateOrderStatus(orderId, request.getStatus()));
+        return ResponseEntity.ok(adminOrderService.updateOrderStatus(orderId, request.getStatus(), bearerToken));
+    }
+
+    private boolean isAdmin(String token) {
+        if (token == null || !token.startsWith("Bearer ")) return false;
+        try {
+            TokenValidationResponseDto tokenValidation = authService.validateToken(token);
+            return tokenValidation != null && tokenValidation.getUserId() != null && "admin".equalsIgnoreCase(tokenValidation.getUserRole());
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -25,7 +25,7 @@ public class CartService {
         if (productVariantIds == null || productVariantIds.isEmpty()) {
             return new HashMap<>(); 
         }
-        List<ProductVariant> productVariantsInCart = productVariantRepository.findDtoByProductVariantIdIn(productVariantIds);
+        List<ProductVariant> productVariantsInCart = productVariantRepository.findAllByIdIn(productVariantIds);
         Map<Integer, PromotionPriceDto> promotionPrices = promotionService.getListOfPromotionPrice(productVariantsInCart);
 
         Map<Integer, CartProductVariantDto> responseMap = new HashMap<>();

@@ -78,7 +78,7 @@ public class OrderService {
         String shippingDate = shippingService.calShippingTime(CalShippingTimeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
                 .toDistrictId(request.getAddress().getDistrict().getDistrictID()).serviceTypeId(2).build()).block().getData().getLeaderTimeOrder().getToEstimateTime();
         Order order = Order.builder()
-                .orderDate(LocalDate.now())
+                .orderDate(java.time.LocalDateTime.now())
                 .address(addressDtoToAddress(request.getAddress()))
                 .paymentMethod(request.getPaymentMethod())
                 .userId(userInfo.getUserId())
@@ -242,10 +242,10 @@ public class OrderService {
                 }
             }
             if (startDate != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDate));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDate.atStartOfDay()));
             }
             if (endDate != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("orderDate"), endDate));
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("orderDate"), endDate.atTime(23, 59, 59, 999999999)));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
@@ -267,7 +267,7 @@ public class OrderService {
         OrderResponseDto response = OrderResponseDto.builder()
                 .orderId(order.getId() != null ? order.getId().toString() : "")
                 .userName(order.getUserName())
-                .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
+                .orderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now())
                 .address(toAddressDto(order.getAddress()))
                 .paymentMethod(order.getPaymentMethod())
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
@@ -354,7 +354,7 @@ public class OrderService {
     public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
         OrderResponseDto orderResponseDTO = new OrderResponseDto();
         orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
-        orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDate.now());
+        orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now());
         orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
         orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
         orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);

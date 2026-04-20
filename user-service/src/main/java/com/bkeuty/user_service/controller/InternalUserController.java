@@ -26,4 +26,18 @@ public class InternalUserController {
     public ResponseEntity<Map<String, String>> getUserNames(@RequestBody List<String> userIds) {
         return ResponseEntity.ok(userService.getUserNames(userIds));
     }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> countUsers(
+            @RequestParam(required = false) Long startDate,
+            @RequestParam(required = false) Long endDate) {
+        return ResponseEntity.ok(userService.countUsersByDateRange(startDate, endDate));
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<UserDetailResponseDto>> listNewUsers(
+            @RequestParam(required = false) Long startDate,
+            @RequestParam(required = false) Long endDate) {
+        return ResponseEntity.ok(userService.getNewUsersByDateRange(startDate, endDate));
+    }
 }

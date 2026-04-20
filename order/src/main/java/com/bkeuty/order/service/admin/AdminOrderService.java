@@ -1,13 +1,13 @@
 package com.bkeuty.order.service.admin;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import com.bkeuty.order.dto.admin.AdminOrderDto;
+import com.bkeuty.order.dto.cart.AddToCartResponseDto;
+import com.bkeuty.order.dto.cart.ProductVariantDto;
+import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.enums.OrderStatus;
-import com.bkeuty.order.enums.PaymentStatus;
-import com.bkeuty.order.enums.PaymentMethod;
+import com.bkeuty.order.repository.OrderRepository;
+import jakarta.persistence.criteria.Predicate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -20,14 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.bkeuty.order.dto.admin.AdminOrderDto;
-import com.bkeuty.order.dto.cart.AddToCartResponseDto;
-import com.bkeuty.order.dto.cart.ProductVariantDto;
-import com.bkeuty.order.entity.Order;
-import com.bkeuty.order.repository.OrderRepository;
-
-import jakarta.persistence.criteria.Predicate;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -42,89 +38,67 @@ public class AdminOrderService {
         this.productWebClient = productWebClient;
     }
 
-    public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, LocalDate startDate, LocalDate endDate) {
-        Specification<Order> spec = (root, query, criteriaBuilder) -> {
+    public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, LocalDate startDate, LocalDate endDate, String token) {
+        Specification<Order> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (status != null && !status.isBlank()) {
-                String trimmedStatus = status.trim();
+                String trimmed = status.trim().toUpperCase(Locale.ROOT);
                 try {
-                    predicates.add(criteriaBuilder.equal(root.get("status"), 
-                        OrderStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
+                    predicates.add(cb.equal(root.get("status"), OrderStatus.valueOf(trimmed)));
                 } catch (IllegalArgumentException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                        "Invalid order status: " + trimmedStatus + ". Allowed values: " + 
-                        java.util.Arrays.toString(OrderStatus.values()));
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Invalid order status: " + trimmed + ". Allowed: " + Arrays.toString(OrderStatus.values()));
                 }
             }
-
             if (startDate != null) {
-                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("orderDate"), startDate));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("orderDate"), startDate.atStartOfDay()));
             }
-
             if (endDate != null) {
-                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("orderDate"), endDate));
+                predicates.add(cb.lessThanOrEqualTo(root.get("orderDate"), endDate.atTime(23, 59, 59, 999999999)));
             }
-
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         Page<Order> orderPage = orderRepository.findAll(spec, pageable);
-        if (orderPage.isEmpty()) {
-            return Page.empty(pageable);
-        }
+        if (orderPage.isEmpty()) return Page.empty(pageable);
 
-        List<AdminOrderDto> adminOrderDtos = orderPage.getContent().stream()
-                .map(this::toAdminOrderDto)
+        List<AdminOrderDto> dtos = orderPage.getContent().stream()
+                .map(o -> toAdminOrderDto(o, token))
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(adminOrderDtos, pageable, orderPage.getTotalElements());
+        return new PageImpl<>(dtos, pageable, orderPage.getTotalElements());
     }
 
-    public ResponseEntity<?> confirmOrder(Integer orderId) {
-        Order order = orderRepository.findById(orderId).orElse(null);
-        if (order != null) {
-            order.setStatus(OrderStatus.CONFIRMED);
-            orderRepository.save(order);
-            return ResponseEntity.ok("Order Confirmed");
-        }
-        return ResponseEntity.badRequest().body("Order not found");
-    }
-
-    public AdminOrderDto getOrderById(Integer orderId) {
+    public AdminOrderDto getOrderById(Integer orderId, String token) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                    "Order not found with ID: " + orderId));
-        return toAdminOrderDto(order);
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + orderId));
+        return toAdminOrderDto(order, token);
     }
 
-    public AdminOrderDto updateOrderStatus(Integer orderId, String status) {
+    public AdminOrderDto updateOrderStatus(Integer orderId, String status, String token) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
-                    "Order not found with ID: " + orderId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + orderId));
 
         if (status == null || status.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be null or blank");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be blank");
         }
-
         try {
             order.setStatus(OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT)));
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Invalid order status: " + status + ". Allowed values: " + 
-                java.util.Arrays.toString(OrderStatus.values()));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Invalid order status: " + status + ". Allowed: " + Arrays.toString(OrderStatus.values()));
         }
 
-        Order savedOrder = orderRepository.save(order);
-        return toAdminOrderDto(savedOrder);
+        return toAdminOrderDto(orderRepository.save(order), token);
     }
 
-    private AdminOrderDto toAdminOrderDto(Order order) {
+    private AdminOrderDto toAdminOrderDto(Order order, String token) {
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
-        
+
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
             Set<Integer> missingVariantIds = new HashSet<>();
-            
+
             itemDtos = order.getOrderItems().stream()
                     .map(item -> {
                         if (item.getProductVariantName() != null && !item.getProductVariantName().isBlank()) {
@@ -137,38 +111,31 @@ public class AdminOrderService {
                                     .quantity(item.getQuantity())
                                     .build();
                         } else {
-                            if (item.getProductVariantId() != null) {
-                                missingVariantIds.add(item.getProductVariantId());
-                            }
+                            if (item.getProductVariantId() != null) missingVariantIds.add(item.getProductVariantId());
                             return null;
                         }
                     })
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            
+
             if (!missingVariantIds.isEmpty()) {
-                Map<Integer, ProductVariantDto> variants = fetchVariantMap(new ArrayList<>(missingVariantIds));
-                
-                List<AddToCartResponseDto> fallbackItems = order.getOrderItems().stream()
+                Map<Integer, ProductVariantDto> variants = fetchVariantMap(new ArrayList<>(missingVariantIds), token);
+                order.getOrderItems().stream()
                         .filter(item -> item.getProductVariantName() == null || item.getProductVariantName().isBlank())
                         .map(item -> {
-                            ProductVariantDto variantDto = variants.get(item.getProductVariantId());
-                            if (variantDto != null) {
-                                return AddToCartResponseDto.builder()
-                                        .productVariantId(variantDto.getId())
-                                        .productVariantName(variantDto.getProductVariantName())
-                                        .productVariantImage(variantDto.getProductImageUrl())
-                                        .price(variantDto.getPrice())
-                                        .promotionPrice(variantDto.getPromotionPrice())
-                                        .quantity(item.getQuantity())
-                                        .build();
-                            }
-                            return null;
+                            ProductVariantDto dto = variants.get(item.getProductVariantId());
+                            if (dto == null) return null;
+                            return AddToCartResponseDto.builder()
+                                    .productVariantId(dto.getId())
+                                    .productVariantName(dto.getProductVariantName())
+                                    .productVariantImage(dto.getProductImageUrl())
+                                    .price(dto.getPrice())
+                                    .promotionPrice(dto.getPromotionPrice())
+                                    .quantity(item.getQuantity())
+                                    .build();
                         })
                         .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-                
-                itemDtos.addAll(fallbackItems);
+                        .forEach(itemDtos::add);
             }
         }
 
@@ -176,12 +143,12 @@ public class AdminOrderService {
                 .id(order.getId())
                 .userId(order.getUserId())
                 .userName(order.getUserName())
-                .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
+                .total(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO)
                 .shippingFee(order.getShippingFee())
-                .paymentMethod(order.getPaymentMethod().toString())
-                .paymentStatus(order.getPaymentStatus().name())
+                .paymentMethod(order.getPaymentMethod() != null ? order.getPaymentMethod().toString() : null)
+                .paymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null)
                 .shippingStatus(order.getShippingStatus())
-                .orderDate(emptyIfNull(order.getOrderDate(), LocalDate.now()))
+                .orderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now())
                 .address(order.getAddress())
                 .status(order.getStatus() != null ? order.getStatus().name() : OrderStatus.NOT_CONFIRMED.name())
                 .items(itemDtos)
@@ -189,23 +156,20 @@ public class AdminOrderService {
                 .build();
     }
 
-    private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds) {
+    private Map<Integer, ProductVariantDto> fetchVariantMap(List<Integer> variantIds, String token) {
         if (variantIds == null || variantIds.isEmpty()) return Collections.emptyMap();
         try {
             Map<Integer, ProductVariantDto> result = productWebClient.post()
                     .uri("/api/product/internal/variants/batch")
                     .bodyValue(variantIds)
+                    .header("Authorization", token)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {})
                     .block();
             return result != null ? result : Collections.emptyMap();
         } catch (Exception e) {
-            log.error("Failed to fetch product variants from product-service for IDs: {}", variantIds, e);
+            log.error("Failed to fetch product variants for IDs: {}", variantIds, e);
             return Collections.emptyMap();
         }
-    }
-
-    private <T> T emptyIfNull(T value, T defaultValue) {
-        return value != null ? value : defaultValue;
     }
 }
