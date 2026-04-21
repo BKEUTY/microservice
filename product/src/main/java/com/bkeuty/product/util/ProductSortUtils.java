@@ -11,6 +11,7 @@ public final class ProductSortUtils {
     private static final Set<String> VARIANT_ALLOWED = Set.of("id", "price", "promotionPrice", "stockQuantity", "productVariantName", "averageRating", "reviewCount", "status", "sold");
     private static final Set<String> PRODUCT_ALLOWED = Set.of("id", "name", "description");
     private static final Set<String> BRAND_ALLOWED = Set.of("id", "brandName", "brandStatus", "category");
+    private static final Set<String> CATEGORY_ALLOWED = Set.of("id", "categoryName");
 
     private static final Map<String, String> VARIANT_MAPPINGS = Map.of(
             "price", "promotionPrice",
@@ -31,6 +32,10 @@ public final class ProductSortUtils {
 
     public static Sort parseBrandSort(String[] sort, String defaultField) {
         return parseSort(sort, defaultField, BRAND_ALLOWED, Map.of("name", "brandName", "status", "brandStatus"));
+    }
+
+    public static Sort parseCategorySort(String[] sort, String defaultField) {
+        return parseSort(sort, defaultField, CATEGORY_ALLOWED, Map.of("name", "categoryName"));
     }
 
     private static Sort parseSort(String[] sort, String defaultField, Set<String> allowedFields, Map<String, String> mappings) {

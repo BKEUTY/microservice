@@ -38,7 +38,7 @@ public class AdminOrderService {
         this.productWebClient = productWebClient;
     }
 
-    public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, LocalDate startDate, LocalDate endDate, String token) {
+    public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, String search, LocalDate startDate, LocalDate endDate, String token) {
         Specification<Order> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -49,6 +49,25 @@ public class AdminOrderService {
                 } catch (IllegalArgumentException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Invalid order status: " + trimmed + ". Allowed: " + Arrays.toString(OrderStatus.values()));
+                }
+            }
+            if (search != null && !search.isBlank()) {
+                String keyword = search.trim();
+                List<Predicate> searchPredicates = new ArrayList<>();
+
+                if (keyword.matches("^\\d+$")) {
+                    try {
+                        Integer id = Integer.parseInt(keyword);
+                        searchPredicates.add(cb.equal(root.get("id"), id));
+                    } catch (NumberFormatException ignored) {}
+                } else {
+                    String likePattern = "%" + keyword.toLowerCase() + "%";
+                    searchPredicates.add(cb.like(cb.lower(cb.coalesce(root.get("userName"), "")), likePattern));
+                    searchPredicates.add(cb.like(cb.lower(cb.coalesce(root.get("address"), "")), likePattern));
+                }
+
+                if (!searchPredicates.isEmpty()) {
+                    predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
                 }
             }
             if (startDate != null) {

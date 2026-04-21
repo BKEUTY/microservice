@@ -1,5 +1,13 @@
 package com.bkeuty.product.service.admin;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
 import com.bkeuty.product.dto.admin.branddto.createbranddto.CreateBrandDtoRequest;
 import com.bkeuty.product.dto.admin.branddto.createbranddto.CreateBrandDtoResponse;
 import com.bkeuty.product.dto.admin.branddto.getbranddto.BrandDetailDto;
@@ -8,11 +16,8 @@ import com.bkeuty.product.dto.admin.branddto.updatebranddto.UpdateProductBrandRe
 import com.bkeuty.product.dto.admin.branddto.updatebranddto.UpdateProductBrandResponseDto;
 import com.bkeuty.product.entity.ProductBrand;
 import com.bkeuty.product.repository.ProductBrandRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 public class BrandService {
@@ -70,8 +75,26 @@ public class BrandService {
             throw new RuntimeException("delete brand fail id:"+brandId);
         }
     }
-    public Page<BrandDto>  getBrands(Pageable pageable) {
-        return productBrandRepository.findAll(pageable).map(this::toBrandDto);
+    public Page<BrandDto>  getBrands(String search, Pageable pageable) {
+        Specification<ProductBrand> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isBlank()) {
+                String keyword = search.trim().toLowerCase();
+                String searchTerm = "%" + keyword + "%";
+                List<Predicate> searchPredicates = new ArrayList<>();
+                try {
+                    Integer id = Integer.parseInt(keyword);
+                    searchPredicates.add(cb.equal(root.get("id"), id));
+                } catch (NumberFormatException e) {}
+                searchPredicates.add(cb.like(cb.lower(root.get("brandName")), searchTerm));
+                predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
+            }
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return productBrandRepository.findAll(spec, pageable).map(this::toBrandDto);
     }
     private BrandDto toBrandDto(ProductBrand productBrand) {
         return BrandDto.builder()

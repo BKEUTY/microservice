@@ -35,6 +35,7 @@ public class BrandController {
     @GetMapping
     public ResponseEntity<Page<BrandDto>> getAllBrands(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
             @RequestParam(required = false) String[] sort) {
@@ -45,7 +46,7 @@ public class BrandController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseBrandSort(sort, "id"));
-        return ResponseEntity.ok(brandService.getBrands(pageable));
+        return ResponseEntity.ok(brandService.getBrands(search, pageable));
     }
     @PostMapping
     public ResponseEntity<CreateBrandDtoResponse> addBrand(

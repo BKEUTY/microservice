@@ -1,6 +1,29 @@
 package com.bkeuty.product.service.productservice;
 
-import com.bkeuty.product.dto.user.product.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.criteria.Predicate;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.bkeuty.product.dto.user.product.CategoryDto;
+import com.bkeuty.product.dto.user.product.DisplayProductDto;
+import com.bkeuty.product.dto.user.product.ProductDetailDto;
+import com.bkeuty.product.dto.user.product.ProductDto;
+import com.bkeuty.product.dto.user.product.ProductOptionDto;
+import com.bkeuty.product.dto.user.product.ProductVariantDto;
+import com.bkeuty.product.dto.user.product.PromotionPriceDto;
 import com.bkeuty.product.entity.Product;
 import com.bkeuty.product.entity.ProductCategory;
 import com.bkeuty.product.entity.ProductOptionValue;
@@ -12,15 +35,6 @@ import com.bkeuty.product.repository.ProductCategoryRepository;
 import com.bkeuty.product.repository.ProductOptionValueRepository;
 import com.bkeuty.product.repository.ProductRepository;
 import com.bkeuty.product.repository.ProductVariantRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -46,29 +60,44 @@ public class ProductService {
         return productRepository.findAll(pageable).map(this::toProductDto);
     }
 
-    @org.springframework.transaction.annotation.Transactional
-    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String name, Integer categoryId, String status) {
-        org.springframework.data.jpa.domain.Specification<ProductVariant> spec = (root, query, cb) -> {
-            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+    @Transactional
+    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String search, Integer categoryId, String status) {
+        Specification<ProductVariant> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
             
-            if (StringUtils.hasText(name)) {
-                predicates.add(cb.like(cb.lower(root.get("productVariantName")), "%" + name.toLowerCase() + "%"));
+            if (StringUtils.hasText(search)) {
+                String keyword = search.trim().toLowerCase();
+                String searchTerm = "%" + keyword + "%";
+                
+                List<Predicate> searchPredicates = new ArrayList<>();
+                try {
+                    Integer id = Integer.parseInt(keyword);
+                    searchPredicates.add(cb.equal(root.get("id"), id));
+                } catch (NumberFormatException e) {}
+                
+                searchPredicates.add(cb.like(cb.lower(root.get("productVariantName")), searchTerm));
+                searchPredicates.add(cb.like(cb.lower(root.join("product").get("name")), searchTerm));
+                
+                predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
             }
             
             if (categoryId != null) {
                 predicates.add(cb.equal(root.join("product").join("categories").get("id"), categoryId));
             }
             
-            if (status != null && !status.trim().isEmpty()) {
+            if (status != null && StringUtils.hasText(status)) {
                 try {
-                    predicates.add(cb.equal(root.get("status"), ProductStatus.valueOf(status.toUpperCase())));
+                    predicates.add(cb.equal(root.get("status"), ProductStatus.valueOf(status.trim().toUpperCase())));
                 } catch (IllegalArgumentException e) {
-                    throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid product status: " + status);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid product status: " + status);
                 }
             }
             
             query.distinct(true);
-            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         Page<ProductVariant> productRes = productVariantRepository.findAll(spec, pageable);
@@ -108,7 +137,7 @@ public class ProductService {
     }
 
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public ProductDetailDto getProductVariantById(Integer id) {
         ProductVariant productVariant=  productVariantRepository.findById(id).orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with id: " + id));
         PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
@@ -125,7 +154,7 @@ public class ProductService {
         return toDetailDto(productVariant.getProduct(),promotionPriceDto,productVariant);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public ProductDetailDto getProductVariantByName(String variantName) {
         ProductVariant productVariant = productVariantRepository.findFirstByProductVariantName(variantName)
                 .orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with name: " + variantName));

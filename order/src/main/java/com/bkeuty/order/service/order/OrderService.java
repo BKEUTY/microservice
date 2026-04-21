@@ -229,7 +229,7 @@ public class OrderService {
         return "https://qr.sepay.vn/img?acc=" + accountNumber + "&bank=" + bank + "&amount=" + intTotal + "&des=DH" + orderId + "&template=" + template + "&download=false";
     }
 
-    public Page<OrderResponseDto> getListOrders(String userId, Pageable pageable, String status, LocalDate startDate, LocalDate endDate) {
+    public Page<OrderResponseDto> getListOrders(String userId, Pageable pageable, String status, String search, LocalDate startDate, LocalDate endDate) {
         Specification<Order> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(criteriaBuilder.equal(root.get("userId"), userId));
@@ -239,6 +239,25 @@ public class OrderService {
                     predicates.add(criteriaBuilder.equal(root.get("status"), OrderStatus.valueOf(trimmedStatus.toUpperCase(Locale.ROOT))));
                 } catch (IllegalArgumentException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order status: " + trimmedStatus);
+                }
+            }
+            if (search != null && !search.isBlank()) {
+                String keyword = search.trim();
+                List<Predicate> searchPredicates = new ArrayList<>();
+
+                if (keyword.matches("^\\d+$")) {
+                    try {
+                        Integer id = Integer.parseInt(keyword);
+                        searchPredicates.add(criteriaBuilder.equal(root.get("id"), id));
+                    } catch (NumberFormatException ignored) {}
+                } else {
+                    String likePattern = "%" + keyword.toLowerCase() + "%";
+                    searchPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(criteriaBuilder.coalesce(root.get("userName"), "")), likePattern));
+                    searchPredicates.add(criteriaBuilder.like(criteriaBuilder.lower(criteriaBuilder.coalesce(root.get("address"), "")), likePattern));
+                }
+
+                if (!searchPredicates.isEmpty()) {
+                    predicates.add(criteriaBuilder.or(searchPredicates.toArray(new Predicate[0])));
                 }
             }
             if (startDate != null) {

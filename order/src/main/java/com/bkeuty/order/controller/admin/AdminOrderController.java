@@ -39,6 +39,7 @@ public class AdminOrderController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
@@ -50,6 +51,7 @@ public class AdminOrderController {
         return ResponseEntity.ok(adminOrderService.getAllOrders(
                 PageRequest.of(page - 1, size, sortObj), 
                 status, 
+                search,
                 startDate, 
                 endDate,
                 bearerToken));

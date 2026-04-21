@@ -1,5 +1,22 @@
 package com.bkeuty.product.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bkeuty.product.dto.admin.AdminProductDto;
 import com.bkeuty.product.dto.admin.AdminProductVariantDto;
 import com.bkeuty.product.dto.admin.CreateProductDto.CreateProductOptionDto;
@@ -10,17 +27,22 @@ import com.bkeuty.product.dto.admin.UpdateProductDto.UpdateProductRequestDto;
 import com.bkeuty.product.dto.admin.UpdateProductDto.UpdateProductResponseDto;
 import com.bkeuty.product.dto.admin.UpdateProductVariantDto.UpdateProductVariantRequestDto;
 import com.bkeuty.product.dto.admin.UpdateProductVariantDto.UpdateProductVariantResponseDto;
-import com.bkeuty.product.entity.*;
+import com.bkeuty.product.entity.Product;
+import com.bkeuty.product.entity.ProductBrand;
+import com.bkeuty.product.entity.ProductCategory;
+import com.bkeuty.product.entity.ProductOption;
+import com.bkeuty.product.entity.ProductOptionValue;
+import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.exception.ProductNotFoundException;
 import com.bkeuty.product.exception.ProductVariantNotFoundException;
-import com.bkeuty.product.repository.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.bkeuty.product.repository.ProductBrandRepository;
+import com.bkeuty.product.repository.ProductCategoryRepository;
+import com.bkeuty.product.repository.ProductOptionRepository;
+import com.bkeuty.product.repository.ProductOptionValueRepository;
+import com.bkeuty.product.repository.ProductRepository;
+import com.bkeuty.product.repository.ProductVariantRepository;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 @Transactional
@@ -63,8 +85,26 @@ public class AdminProductService {
         return result;
     }
 
-    public Page<AdminProductDto> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable).map(this::toAdminProductDto);
+    public Page<AdminProductDto> getAllProducts(String search, Pageable pageable) {
+        Specification<Product> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (search != null && !search.isBlank()) {
+                String keyword = search.trim().toLowerCase();
+                String searchTerm = "%" + keyword + "%";
+                List<Predicate> searchPredicates = new ArrayList<>();
+                try {
+                    Integer id = Integer.parseInt(keyword);
+                    searchPredicates.add(cb.equal(root.get("id"), id));
+                } catch (NumberFormatException e) {}
+                searchPredicates.add(cb.like(cb.lower(root.get("name")), searchTerm));
+                predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
+            }
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return productRepository.findAll(spec, pageable).map(this::toAdminProductDto);
     }
 
     private AdminProductDto toAdminProductDto(Product product) {
@@ -83,12 +123,24 @@ public class AdminProductService {
                 .toList();
     }
 
-    public Page<AdminProductVariantDto> getAllVariantsPaginated(String pattern, Integer categoryId, Pageable pageable) {
-        org.springframework.data.jpa.domain.Specification<ProductVariant> spec = (root, query, cb) -> {
-            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+    public Page<AdminProductVariantDto> getAllVariantsPaginated(String search, Integer categoryId, Pageable pageable) {
+        Specification<ProductVariant> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
             
-            if (pattern != null && !pattern.isBlank()) {
-                predicates.add(cb.like(cb.lower(root.get("productVariantName")), "%" + pattern.toLowerCase() + "%"));
+            if (search != null && !search.isBlank()) {
+                String keyword = search.trim().toLowerCase();
+                String searchTerm = "%" + keyword + "%";
+                List<Predicate> searchPredicates = new ArrayList<>();
+                
+                try {
+                    Integer id = Integer.parseInt(keyword);
+                    searchPredicates.add(cb.equal(root.get("id"), id));
+                } catch (NumberFormatException e) {}
+                
+                searchPredicates.add(cb.like(cb.lower(root.get("productVariantName")), searchTerm));
+                searchPredicates.add(cb.like(cb.lower(root.join("product").get("name")), searchTerm));
+                
+                predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
             }
             
             if (categoryId != null) {
@@ -96,7 +148,10 @@ public class AdminProductService {
             }
             
             query.distinct(true);
-            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+            if (predicates.isEmpty()) {
+                return cb.conjunction();
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         return productVariantRepository.findAll(spec, pageable).map(this::toAdminProductVariantDto);

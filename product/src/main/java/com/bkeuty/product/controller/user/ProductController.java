@@ -31,13 +31,13 @@ public class ProductController {
     public ResponseEntity<Page<DisplayProductDto>> getProducts(
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) String status) {
 
         Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"));
-        return ResponseEntity.ok(productService.getListProductVariants(pageable, name, categoryId, status));
+        return ResponseEntity.ok(productService.getListProductVariants(pageable, search, categoryId, status));
     }
 
     @GetMapping("/categories")

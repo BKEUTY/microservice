@@ -1,14 +1,19 @@
 package com.bkeuty.product.controller.admin;
 
 import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
+import com.bkeuty.product.service.authservice.AuthService;
 import com.bkeuty.product.entity.ProductCategory;
 import com.bkeuty.product.repository.ProductCategoryRepository;
-import com.bkeuty.product.service.authservice.AuthService;
+import com.bkeuty.product.util.ProductSortUtils;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -23,13 +28,33 @@ public class AdminCategoryController {
 
     @GetMapping
     public ResponseEntity<List<ProductCategory>> getAllCategories(
-            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String[] sort) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        return ResponseEntity.ok(categoryRepository.findAll());
+        
+        Sort sortObj = ProductSortUtils.parseCategorySort(sort, "id");
+        
+        if (search != null && !search.isBlank()) {
+            String keyword = search.trim().toLowerCase();
+            String searchTerm = "%" + keyword + "%";
+            Specification<ProductCategory> spec = (root, query, cb) -> {
+                List<Predicate> searchPredicates = new ArrayList<>();
+                try {
+                    Integer id = Integer.parseInt(keyword);
+                    searchPredicates.add(cb.equal(root.get("id"), id));
+                } catch (NumberFormatException e) {}
+                searchPredicates.add(cb.like(cb.lower(root.get("categoryName")), searchTerm));
+                return cb.or(searchPredicates.toArray(new Predicate[0]));
+            };
+            return ResponseEntity.ok(categoryRepository.findAll(spec, sortObj));
+        }
+        
+        return ResponseEntity.ok(categoryRepository.findAll(sortObj));
     }
 
     @PostMapping

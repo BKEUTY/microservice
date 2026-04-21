@@ -44,6 +44,7 @@ public class OrderController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
             @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
@@ -61,6 +62,7 @@ public class OrderController {
                 tokenValidationResponseDto.getUserId(),
                 pageable,
                 status,
+                search,
                 startDate,
                 endDate));
     }

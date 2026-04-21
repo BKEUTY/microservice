@@ -36,6 +36,7 @@ public class ProductController {
     @GetMapping()
     public ResponseEntity<Page<AdminProductDto>> getAllProducts(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
             @RequestParam(required = false) String[] sort) {
@@ -45,7 +46,7 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllProducts(PageRequest.of(page - 1, size, ProductSortUtils.parseProductSort(sort, "id"))));
+                .body(adminProductService.getAllProducts(search, PageRequest.of(page - 1, size, ProductSortUtils.parseProductSort(sort, "id"))));
     }
 
     @GetMapping("/{productId}/variants")
