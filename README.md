@@ -1,106 +1,132 @@
-# Hướng dẫn cài đặt hệ thống Microservices Bkeuty
+# BKEUTY Microservices - Kiến trúc & Hướng dẫn Vận hành / Architecture & Operations Guide
 
-Tài liệu này hướng dẫn các bước chi tiết để thiết lập và chạy hệ thống microservices của Bkeuty lần đầu tiên.
+[English](#english) | [Tiếng Việt](#tiếng-việt)
 
-## 1. Yêu cầu hệ thống (Prerequisites)
+---
 
-Trước khi bắt đầu, hãy đảm bảo máy tính của bạn đã cài đặt:
-- **Java JDK 21** (Yêu cầu bắt buộc cho các project Spring Boot 4.x)
-- **Maven 3.9+**
-- **PostgreSQL**
-- **Git**
+<a name="english"></a>
+## English - Technical Documentation
 
-## 2. Thiết lập Cơ sở dữ liệu (Database Setup)
+### 🌟 Project Overview
+BKEUTY is an advanced e-commerce ecosystem built on a high-performance **Microservices Architecture**. It focuses on modularity, high availability, and seamless cross-service communication to support a luxury beauty shopping experience.
 
-Hệ thống sử dụng PostgreSQL với các database riêng biệt cho từng service. Hãy tạo các database sau:
+### 🏗 Architecture & Design Patterns
+- **Microservices Design:** Independent services with specialized domains (Domain-Driven Design).
+- **Service Discovery:** Centralized registry using **Netflix Eureka**.
+- **API Gateway:** Unified entry point with **Spring Cloud Gateway** for routing and security.
+- **Event-Driven Architecture:** Asynchronous communication powered by **Apache Kafka**.
+- **Distributed Caching:** Optimized performance using **Redis**.
+- **Centralized Identity:** Managed by **Keycloak** (OAuth2/OIDC).
 
-```bash
-# Đăng nhập vào PostgreSQL và chạy các lệnh:
-CREATE DATABASE "bkeuty-product";
-CREATE DATABASE "bkeuty-order";
-CREATE DATABASE "bkeuty-promotion";
-CREATE DATABASE "bkeuty-review";
-CREATE DATABASE "bkeuty-keycloak";
+### 🚦 Detailed Startup Sequence & Instructions
+To ensure system stability, please follow the startup steps below in the exact order:
+
+#### Step 1: Discovery Server (Service Registry)
+*   **Path:** `/microservice/discoveryserver`
+*   **Port:** `8761`
+*   **Command:** `./mvnw spring-boot:run`
+*   **Role:** Manages the registry of all active microservices.
+
+#### Step 2: Keycloak (Identity Provider)
+*   **Path:** `/microservice/keycloak-26.2.5`
+*   **Port:** `8181`
+*   **Command (Windows):** `bin\kc.bat start-dev --http-port 8181`
+*   **Command (Linux/macOS):** `bin/kc.sh start-dev --http-port 8181`
+*   **Role:** Handles authentication and authorization. Requires realm `bkeuty` setup.
+
+#### Step 3: API Gateway
+*   **Path:** `/microservice/gateway`
+*   **Port:** `8080`
+*   **Command:** `./mvnw spring-boot:run`
+*   **Role:** The entry point for all client requests, handling routing and global security.
+
+#### Step 4: Auth Service
+*   **Path:** `/microservice/auth-service`
+*   **Port:** `8083`
+*   **Command:** `./mvnw spring-boot:run`
+*   **Role:** Manages token validation and internal authentication logic.
+
+#### Step 5: Business Microservices (Core Operations)
+Run these services after the infrastructure (Steps 1-4) is online:
+1.  **Product Service** (Port `8081`): `/microservice/product` - Catalog management.
+2.  **Order Service** (Port `8082`): `/microservice/order` - Transaction processing.
+3.  **Promotion Service** (Port `8084`): `/microservice/promotion-service` - Discount logic.
+4.  **Review Service** (Port `8085`): `/microservice/review-service` - Customer feedback.
+5.  **User Service** (Port `8086`): `/microservice/user-service` - Profile management.
+6.  **Shipping Service** (Port `8087`): `/microservice/shipping-service` - Logistics integration.
+7.  **Payment Service** (Port `8088`): `/microservice/payment-service` - Financial gateway.
+
+### ⚙️ Database Configuration
+Create the following databases in PostgreSQL (Default Port `5433`):
+```sql
+CREATE DATABASE "bkeuty-product"; CREATE DATABASE "bkeuty-order";
+CREATE DATABASE "bkeuty-promotion"; CREATE DATABASE "bkeuty-review";
+CREATE DATABASE "bkeuty-user"; CREATE DATABASE "bkeuty-shipping";
+CREATE DATABASE "bkeuty-payment"; CREATE DATABASE "bkeuty-keycloak";
 ```
 
-**Lưu ý:** Nếu bạn sử dụng port khác của PostgreSQL, hãy cập nhật trong file `application.yaml` của từng service hoặc cấu hình biến môi trường `DATABASE_URL`.
+---
 
-## 3. Cấu hình Biến môi trường (Environment Variables)
+<a name="tiếng-việt"></a>
+## Tiếng Việt - Tài liệu Kỹ thuật
 
-Một số service yêu cầu các thông tin cấu hình từ môi trường. Bạn có thể thiết lập các biến này trong hệ thống hoặc file cấu hình IDE:
+### 🌟 Tổng quan Dự án
+BKEUTY là một hệ sinh thái thương mại điện tử tiên tiến được xây dựng trên nền tảng **Kiến trúc Microservices** hiệu suất cao. Dự án tập trung vào tính module hóa, khả năng sẵn sàng cao và giao tiếp liền mạch giữa các dịch vụ để hỗ trợ trải nghiệm mua sắm mỹ phẩm xa xỉ.
 
-- **Cloudinary (Dành cho Product Service):**
-  - `CLOUDINARY_NAME`
-  - `CLOUDINARY_API_KEY`
-  - `CLOUDINARY_API_SECRET`
-- **Database:**
-  - `DATABASE_USERNAME`
-  - `DATABASE_PASSWORD`
+### 🏗 Kiến trúc & Mô hình Thiết kế
+- **Microservices Design:** Các dịch vụ độc lập theo từng miền nghiệp vụ (Domain-Driven Design).
+- **Service Discovery:** Đăng ký và quản lý dịch vụ tập trung sử dụng **Netflix Eureka**.
+- **API Gateway:** Điểm đầu nhận yêu cầu duy nhất với **Spring Cloud Gateway** để điều phối và bảo mật.
+- **Event-Driven Architecture:** Giao tiếp bất đồng bộ thông qua **Apache Kafka**.
+- **Distributed Caching:** Tối ưu hiệu năng bằng **Redis**.
+- **Centralized Identity:** Quản lý bởi **Keycloak** (OAuth2/OIDC).
 
-## 4. Thứ tự khởi chạy (Starting Order)
+### 🚦 Quy trình Khởi chạy & Hướng dẫn Chi tiết
+Để đảm bảo hệ thống hoạt động ổn định, vui lòng tuân thủ các bước khởi chạy sau theo đúng thứ tự:
 
-Để hệ thống hoạt động chính xác, hãy khởi chạy theo thứ tự sau:
+#### Bước 1: Discovery Server (Service Registry)
+*   **Thư mục:** `/microservice/discoveryserver`
+*   **Port:** `8761`
+*   **Lệnh chạy:** `./mvnw spring-boot:run`
+*   **Vai trò:** Quản lý danh sách các microservices đang hoạt động trong hệ thống.
 
-### Bước 1: Discovery Server (Service Registry)
-- **Thư mục:** `/microservice/discoveryserver`
-- **Port:** `8761`
-- **Lệnh chạy:** `./mvnw spring-boot:run`
-- **Vai trò:** Quản lý danh sách các microservices đang chạy.
+#### Bước 2: Keycloak (Identity Provider)
+*   **Thư mục:** `/microservice/keycloak-26.2.5`
+*   **Port:** `8181`
+*   **Lệnh chạy (Windows):** `bin\kc.bat start-dev --http-port 8181`
+*   **Lệnh chạy (Linux/macOS):** `bin/kc.sh start-dev --http-port 8181`
+*   **Vai trò:** Xử lý xác thực và phân quyền. Cần cấu hình realm `bkeuty` và các client ID.
 
-### Bước 2: Keycloak (Identity Provider)
-- **Thư mục:** `/microservice/keycloak-26.2.5`
-- **Port:** `8181`
-- **Lệnh chạy (Windows):** `bin\kc.bat start-dev --http-port 8181`
-- **Lệnh chạy (Linux/macOS):** `bin/kc.sh start-dev --http-port 8181`
-- **Vai trò:** Quản lý Authentication và Authorization. 
-- **Setup:** Sau khi chạy, truy cập `http://localhost:8181` để tạo realm `bkeuty` và các client cần thiết.
+#### Bước 3: API Gateway
+*   **Thư mục:** `/microservice/gateway`
+*   **Port:** `8080`
+*   **Lệnh chạy:** `./mvnw spring-boot:run`
+*   **Vai trò:** Cổng vào duy nhất cho mọi request từ Client, điều phối routing và bảo mật biên.
 
-### Bước 3: API Gateway
-- **Thư mục:** `/microservice/gateway`
-- **Port:** `8080`
-- **Lệnh chạy:** `./mvnw spring-boot:run`
-- **Vai trò:** Điểm đầu nhận mọi request từ Client và điều hướng (routing).
+#### Bước 4: Auth Service
+*   **Thư mục:** `/microservice/auth-service`
+*   **Port:** `8083`
+*   **Lệnh chạy:** `./mvnw spring-boot:run`
+*   **Vai trò:** Xử lý xác thực Token và logic định danh nội bộ.
 
-### Bước 4: Auth Service
-- **Thư mục:** `/microservice/auth-service`
-- **Port:** `8083`
-- **Lệnh chạy:** `./mvnw spring-boot:run`
-- **Vai trò:** Xử lý Đăng ký/Đăng nhập và cấp phát JWT.
+#### Bước 5: Các Business Microservices (Dịch vụ Nghiệp vụ)
+Khởi chạy sau khi hạ tầng (Bước 1-4) đã sẵn sàng:
+1.  **Product Service** (Port `8081`): `/microservice/product` - Quản lý sản phẩm & tồn kho.
+2.  **Order Service** (Port `8082`): `/microservice/order` - Xử lý đơn hàng.
+3.  **Promotion Service** (Port `8084`): `/microservice/promotion-service` - Logic khuyến mãi.
+4.  **Review Service** (Port `8085`): `/microservice/review-service` - Đánh giá từ khách hàng.
+5.  **User Service** (Port `8086`): `/microservice/user-service` - Quản lý hồ sơ người dùng.
+6.  **Shipping Service** (Port `8087`): `/microservice/shipping-service` - Tích hợp vận chuyển.
+7.  **Payment Service** (Port `8088`): `/microservice/payment-service` - Cổng thanh toán.
 
-### Bước 5: Các Business Services (Chạy đồng thời)
-- **Product Service:** Port `8081` (Thư mục: `/microservice/product`)
-- **Order Service:** Port `8082` (Thư mục: `/microservice/order`)
-- **Promotion Service:** Port `8084` (Thư mục: `/microservice/promotion-service`)
-- **Review Service:** Port `8085` (Thư mục: `/microservice/review-service`)
-- **User Service:** Port `8086` (Thư mục: `/microservice/user-service`)
+### ⚙️ Cấu hình Cơ sở dữ liệu
+Khởi tạo các database sau trong PostgreSQL (Mặc định Port `5433`):
+```sql
+CREATE DATABASE "bkeuty-product"; CREATE DATABASE "bkeuty-order";
+CREATE DATABASE "bkeuty-promotion"; CREATE DATABASE "bkeuty-review";
+CREATE DATABASE "bkeuty-user"; CREATE DATABASE "bkeuty-shipping";
+CREATE DATABASE "bkeuty-payment"; CREATE DATABASE "bkeuty-keycloak";
+```
 
-## 5. Tổng kết danh sách Port
-
-| Service | Port | Database |
-| :--- | :--- | :--- |
-| API Gateway | 8080 | - |
-| Product Service | 8081 | bkeuty-product |
-| Order Service | 8082 | bkeuty-order |
-| Auth Service | 8083 | - |
-| Promotion Service | 8084 | bkeuty-promotion |
-| Review Service | 8085 | bkeuty-review |
-| User Service | 8086 | - |
-| Keycloak | 8181 | bkeuty-keycloak |
-| Discovery Server | 8761 | - |
-
-## 6. Lưu ý quan trọng
-- Kiểm tra file `pom.xml` của từng service để đảm bảo các dependency được tải đủ.
-- Nếu gặp lỗi kết nối Database, hãy kiểm tra lại port `5433` và password trong `application.yaml`.
-- Các service sử dụng Eureka nên sẽ tự động đăng ký với Discovery Server sau khi khởi chạy hoàn tất.
-
-## 7. Tài liệu API (Swagger UI)
-
-Hệ thống đã được tích hợp Swagger UI tập trung tại API Gateway. Bạn có thể xem tài liệu API của tất cả các services tại một nơi duy nhất.
-
-- **Địa chỉ truy cập:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-- **Cách sử dụng:** 
-    1. Truy cập vào link trên.
-    2. Ở góc trên bên phải, tìm menu thả xuống **"Select a definition"**.
-    3. Chọn service bạn muốn xem tài liệu (ví dụ: `Product Service`, `Order Service`, ...).
-
-**Lưu ý:** Gateway phải đang chạy để có thể truy cập được bảng điều khiển tập trung này.
+---
+© 2026 BKEUTY Project. Documentation for Thesis and Academic Research.
