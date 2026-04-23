@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class UserController {
     public ResponseEntity<UserDetailResponseDto> getUser(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null){
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session");
         }
         return ResponseEntity.ok(userService.getUserProfile(tokenValidationResponseDto));
     }
@@ -34,7 +35,7 @@ public class UserController {
     public ResponseEntity<UpdateUserDto> updateUser(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,@RequestBody UpdateUserDto updateUserDto) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null){
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session");
         }
         return ResponseEntity.ok(userService.updateUserProfile(updateUserDto,tokenValidationResponseDto));
     }
@@ -42,7 +43,7 @@ public class UserController {
     public ResponseEntity<List<AddressDto>> getAddress(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null){
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired session");
         }
         return ResponseEntity.ok(userService.getAddresses(tokenValidationResponseDto));
     }
@@ -59,7 +60,7 @@ public class UserController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null
                 || !"user".equals(tokenValidationResponseDto.getUserRole())){
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not have permission to perform this action");
         }
         return ResponseEntity.ok(userService.deleteAddress(deleteAddressDto,tokenValidationResponseDto));
     }

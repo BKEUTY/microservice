@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import com.bkeuty.product.util.ProductSortUtils;
 
 @RestController
@@ -43,7 +44,7 @@ public class BrandController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseBrandSort(sort, "id"));
         return ResponseEntity.ok(brandService.getBrands(search, pageable));
@@ -56,7 +57,7 @@ public class BrandController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(brandService.createBrand(request));
     }
@@ -70,7 +71,7 @@ public class BrandController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         return ResponseEntity.status(HttpStatus.OK).body(brandService.updateBrand(brandId, requestDto));
     }
@@ -82,7 +83,7 @@ public class BrandController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         brandService.deleteBrand(brandId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

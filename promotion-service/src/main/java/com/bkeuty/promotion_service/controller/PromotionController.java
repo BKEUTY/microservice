@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import com.bkeuty.promotion_service.util.PromotionSortUtils;
 
@@ -44,12 +45,10 @@ public class PromotionController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         CreatePromotionResponse response = promotionFactory.executeCreation(request);
-
-        // Return 201 Created status code along with the response body
-        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -59,10 +58,10 @@ public class PromotionController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         CreatePromotionResponse response = promotionFactory.executeUpdate(id, request);
-        return ResponseEntity.status(org.springframework.http.HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping
@@ -79,10 +78,9 @@ public class PromotionController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
-        return ResponseEntity.status(org.springframework.http.HttpStatus.OK)
-                .body(promotionService.findAll(title, status, startAt, endAt, pageable));
+        return ResponseEntity.status(HttpStatus.OK).body(promotionService.findAll(title, status, startAt, endAt, pageable));
     }
 }

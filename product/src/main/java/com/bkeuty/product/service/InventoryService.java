@@ -50,7 +50,7 @@ public class InventoryService {
             
             if (updatedRows == 0) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, 
-                    "Insufficient stock for variant ID: " + productVariant.getId());
+                    "Insufficient stock for variant: " + productVariant.getProductVariantName());
             }
 
             decreaseStockResponseDtos.add(new DecreaseStockResponseDto(
