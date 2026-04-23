@@ -25,4 +25,17 @@ public class OrderServiceCommunication {
             return List.of();
         }
     }
+
+    public List<Map<String, Object>> getCartItems(String userId) {
+        try {
+            return orderWebClient.get()
+                    .uri("/api/order/internal/cart/" + userId)
+                    .retrieve()
+                    .bodyToFlux(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+                    .collectList()
+                    .block();
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
 }

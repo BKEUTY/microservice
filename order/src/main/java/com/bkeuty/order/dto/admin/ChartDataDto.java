@@ -18,24 +18,27 @@ import java.util.Date;
 public class ChartDataDto {
     private LocalDate date;
     private BigDecimal revenue;
+    private BigDecimal shippingFee;
     private Long orders;
     private BigDecimal profit;
 
-    public ChartDataDto(LocalDate date, BigDecimal revenue, Long orders) {
+    public ChartDataDto(LocalDate date, BigDecimal revenue, BigDecimal shippingFee, Long orders) {
         this.date = date;
         this.revenue = revenue;
+        this.shippingFee = shippingFee;
         this.orders = orders;
         this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
     }
 
-    public ChartDataDto(LocalDateTime date, BigDecimal revenue, Long orders) {
+    public ChartDataDto(LocalDateTime date, BigDecimal revenue, BigDecimal shippingFee, Long orders) {
         this.date = date != null ? date.toLocalDate() : null;
         this.revenue = revenue;
+        this.shippingFee = shippingFee;
         this.orders = orders;
         this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
     }
 
-    public ChartDataDto(Date date, BigDecimal revenue, Long orders) {
+    public ChartDataDto(Date date, BigDecimal revenue, BigDecimal shippingFee, Long orders) {
         if (date != null) {
             if (date instanceof java.sql.Date sqlDate) {
                 this.date = sqlDate.toLocalDate();
@@ -44,6 +47,7 @@ public class ChartDataDto {
             }
         }
         this.revenue = revenue;
+        this.shippingFee = shippingFee;
         this.orders = orders;
         this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
     }

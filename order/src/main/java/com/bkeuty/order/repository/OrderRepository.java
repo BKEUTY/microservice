@@ -38,8 +38,14 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
         @Param("endDate") LocalDateTime endDate,
         @Param("statuses") Collection<OrderStatus> statuses);
 
-    @Query("SELECT SUM(COALESCE(o.total, 0) + COALESCE(o.shippingFee, 0)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    @Query("SELECT SUM(COALESCE(o.total, 0)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
     BigDecimal sumRevenueByDateRangeAndStatus(
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate,
+        @Param("statuses") Collection<OrderStatus> statuses);
+
+    @Query("SELECT SUM(COALESCE(o.shippingFee, 0)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    BigDecimal sumShippingFeeByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
         @Param("statuses") Collection<OrderStatus> statuses);
@@ -66,7 +72,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
 
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.ChartDataDto(
-            CAST(o.orderDate AS date), SUM(COALESCE(o.total, 0) + COALESCE(o.shippingFee, 0)), COUNT(o)
+            CAST(o.orderDate AS date), SUM(COALESCE(o.total, 0)), SUM(COALESCE(o.shippingFee, 0)), COUNT(o)
         ) FROM Order o
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
         GROUP BY CAST(o.orderDate AS date)
@@ -109,10 +115,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
 
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(
-            o.orderDate, i.productVariantId, i.productVariantName,
-            CAST(i.quantity AS long),
+            o.orderDate, i.productVariantId, i.productVariantName, CAST(i.quantity AS long),
             CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
-                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity
+                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity, i.productVariantPrice,i.promotionPrice
         ) FROM OrderItem i JOIN i.order o
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
         ORDER BY o.orderDate DESC""")

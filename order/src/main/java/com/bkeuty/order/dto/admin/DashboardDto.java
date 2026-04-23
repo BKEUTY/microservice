@@ -31,6 +31,7 @@ public class DashboardDto {
         private Long totalRegisteredCustomers;
         private Long totalOrders;
         private BigDecimal totalRevenue;
+        private BigDecimal totalShippingFee;
         private BigDecimal totalProfit;
     }
 }
