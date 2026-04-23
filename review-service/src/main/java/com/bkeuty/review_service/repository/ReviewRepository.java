@@ -35,4 +35,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false GROUP BY r.rating")
     List<Object[]> countRatingByVariantId(Long variantId);
+
+    List<Review> findByUserId(String userId);
 }

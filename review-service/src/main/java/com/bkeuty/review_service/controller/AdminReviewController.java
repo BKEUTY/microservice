@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/admin/reviews")
@@ -27,7 +28,7 @@ public class AdminReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"ADMIN".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         return ResponseEntity.ok(reviewService.replyToReview(tokenValidationResponseDto.getUserId(), reviewId, request));
     }
@@ -40,7 +41,7 @@ public class AdminReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"ADMIN".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         return ResponseEntity.ok(reviewService.updateReply(tokenValidationResponseDto.getUserId(), replyId, request));
     }
@@ -52,7 +53,7 @@ public class AdminReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"ADMIN".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         reviewService.deleteReply(tokenValidationResponseDto.getUserId(), replyId);
         return ResponseEntity.noContent().build();
@@ -65,7 +66,7 @@ public class AdminReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"ADMIN".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         reviewService.deleteReviewByAdmin(reviewId);
         return ResponseEntity.noContent().build();

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/user/reviews")
@@ -27,7 +28,7 @@ public class UserReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"USER".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please login to submit a review");
         }
         String pureToken = bearerToken != null && bearerToken.startsWith("Bearer ") ? bearerToken.substring(7) : bearerToken;
         return ResponseEntity.ok(reviewService.createReview(tokenValidationResponseDto.getUserId(), request, pureToken));
@@ -41,7 +42,7 @@ public class UserReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"USER".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please login to update your review");
         }
         return ResponseEntity.ok(reviewService.updateReview(tokenValidationResponseDto.getUserId(), reviewId, request));
     }
@@ -53,7 +54,7 @@ public class UserReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"USER".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please login to delete your review");
         }
         reviewService.deleteReview(tokenValidationResponseDto.getUserId(), reviewId);
         return ResponseEntity.noContent().build();
@@ -66,7 +67,7 @@ public class UserReviewController {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"USER".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please login to upload images");
         }
         return ResponseEntity.ok(reviewService.uploadImage(file));
     }
