@@ -16,6 +16,7 @@ import com.bkeuty.product.dto.user.product.PromotionPriceDto;
 import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.microservicecommunication.OrderServiceCommunication;
 import com.bkeuty.product.microservicecommunication.PromotionService;
+import com.bkeuty.product.microservicecommunication.ReviewServiceCommunication;
 import com.bkeuty.product.repository.ProductVariantRepository;
 
 @Service
@@ -24,15 +25,18 @@ public class RecommendationService {
     private final OrderServiceCommunication orderServiceCommunication;
     private final PromotionService promotionService;
     private final AIRankingService aiRankingService;
+    private final ReviewServiceCommunication reviewServiceCommunication;
 
     public RecommendationService(ProductVariantRepository productVariantRepository,
                                 OrderServiceCommunication orderServiceCommunication,
                                 PromotionService promotionService,
-                                AIRankingService aiRankingService) {
+                                AIRankingService aiRankingService,
+                                ReviewServiceCommunication reviewServiceCommunication) {
         this.productVariantRepository = productVariantRepository;
         this.orderServiceCommunication = orderServiceCommunication;
         this.promotionService = promotionService;
         this.aiRankingService = aiRankingService;
+        this.reviewServiceCommunication = reviewServiceCommunication;
     }
 
     public RecommendationResponse getPersonalizedRecommendations(String userId) {
@@ -44,21 +48,27 @@ public class RecommendationService {
         }
 
         List<Map<String, Object>> history = orderServiceCommunication.getOrderHistory(userId);
+        List<Map<String, Object>> cart = orderServiceCommunication.getCartItems(userId);
+        List<Map<String, Object>> reviews = reviewServiceCommunication.getUserReviews(userId);
         
-        if (history.isEmpty()) {
+        if (history.isEmpty() && cart.isEmpty() && reviews.isEmpty()) {
             AIRankingService.AIResult emptyHistoryResult = aiRankingService.getVariedRecommendations(candidates, "personalized:" + userId + ":new_user");
             return buildResponse(emptyHistoryResult);
         }
 
-        AIRankingService.AIResult aiResult = aiRankingService.getRankedAIResult("Personalized Feed", history, candidates, "personalized:" + userId);
+        AIRankingService.AIResult aiResult = aiRankingService.getRankedAIResult("Personalized Feed", history, cart, reviews, candidates, "personalized:" + userId);
         return buildResponse(aiResult);
     }
 
     public RecommendationResponse getRelatedProducts(String productName) {
-        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 100));
-        String context = String.format("Related to: %s", productName);
+        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 100))
+                .stream()
+                .filter(v -> !v.getProductVariantName().equalsIgnoreCase(productName))
+                .collect(Collectors.toList());
         
-        AIRankingService.AIResult aiResult = aiRankingService.getRankedAIResult(context, List.of(), candidates, "related:" + productName);
+        String context = String.format("Product Context: Currently viewing '%s'. Suggest related or complementary items.", productName);
+        
+        AIRankingService.AIResult aiResult = aiRankingService.getRankedAIResult(context, List.of(), List.of(), List.of(), candidates, "related:" + productName);
         return buildResponse(aiResult);
     }
 

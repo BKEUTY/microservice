@@ -37,21 +37,29 @@ public class AIRankingService {
     }
 
     @Cacheable(value = "recommendations", key = "#cacheKey", unless = "#result == null")
-    public AIResult getRankedAIResult(String profile, List<Map<String, Object>> history, List<ProductVariant> candidates, String cacheKey) {
-        String candidateJson = candidates.stream()
-                .filter(p -> p != null && p.getProduct() != null)
-                .map(p -> String.format("ID: %d, Name: %s, Category: %s, Brand: %s", 
-                    p.getId(), p.getProductVariantName(), 
-                    p.getProduct().getCategories() != null ? p.getProduct().getCategories().stream().map(ProductCategory::getCategoryName).collect(Collectors.joining(", ")) : "N/A",
-                    p.getProduct().getBrand() != null ? p.getProduct().getBrand().getBrandName() : "N/A"))
-                .collect(Collectors.joining("\n"));
-
-        String orderHistory = history.stream()
-                .map(item -> String.format("VariantID: %s, Qty: %s", item.get("productVariantId"), item.get("quantity")))
-                .collect(Collectors.joining("\n"));
-
+    public AIResult getRankedAIResult(String profile, List<Map<String, Object>> history, List<Map<String, Object>> cart, List<Map<String, Object>> reviews, List<ProductVariant> candidates, String cacheKey) {
         try {
-            String geminiResponse = geminiService.getRankedRecommendations(profile, orderHistory, candidateJson);
+            String candidateJson = candidates.stream()
+                    .filter(p -> p != null && p.getProduct() != null)
+                    .map(p -> String.format("ID: %d, Name: %s, Category: %s, Brand: %s", 
+                        p.getId(), p.getProductVariantName(), 
+                        p.getProduct().getCategories() != null ? p.getProduct().getCategories().stream().map(ProductCategory::getCategoryName).collect(Collectors.joining(", ")) : "N/A",
+                        p.getProduct().getBrand() != null ? p.getProduct().getBrand().getBrandName() : "N/A"))
+                    .collect(Collectors.joining("\n"));
+
+            String orderHistory = history.stream()
+                    .map(item -> String.format("VariantID: %s, Qty: %s", item.get("productVariantId"), item.get("quantity")))
+                    .collect(Collectors.joining("\n"));
+
+            String cartData = cart.stream()
+                    .map(item -> String.format("VariantID: %s, Qty: %s", item.get("productVariant"), item.get("quantity")))
+                    .collect(Collectors.joining("\n"));
+
+            String reviewData = reviews.stream()
+                    .map(item -> String.format("VariantID: %s, Rating: %s", item.get("variantId"), item.get("rating")))
+                    .collect(Collectors.joining("\n"));
+
+            String geminiResponse = geminiService.getRankedRecommendations(profile, orderHistory, cartData, reviewData, candidateJson);
             String cleanJson = cleanGeminiJson(geminiResponse);
             JsonNode rootNode = objectMapper.readTree(cleanJson);
             
