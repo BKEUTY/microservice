@@ -11,6 +11,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -48,16 +49,15 @@ public class AuthService {
                     (String) body.get("refresh_token"),
                     (Integer)  body.get("expires_in"),
                     (Integer)  body.get("refresh_expires_in")
-
             );
         } catch (HttpClientErrorException e) {
             // Specifically check for 401 Unauthorized
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                throw new RuntimeException("Wrong credentials");
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
             }
-            throw new RuntimeException("Authentication failed: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.valueOf(e.getStatusCode().value()), "Authentication failed: " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            throw new RuntimeException("Keycloak server is unreachable" + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Authentication server is unreachable: " + e.getMessage());
         }
     }
 
@@ -78,9 +78,7 @@ public class AuthService {
             Map<String, Object> body = response.getBody();
             return new RefreshTokenResponseDto((String) body.get("access_token"));
         } catch (Exception e) {
-            throw new RuntimeException("Cannot get refresh token" + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session expired, please login again");
         }
     }
-
-
 }

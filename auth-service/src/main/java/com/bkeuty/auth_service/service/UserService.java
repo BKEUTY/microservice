@@ -7,7 +7,9 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.List;
@@ -60,10 +62,14 @@ public class UserService {
                 System.out.println("User created successfully in realm: " + realmName);
                 return toRegisterResponseDto(dto);
             } else if (response.getStatus() == 409) {
-                throw new RuntimeException("User already exists!");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "User or Email already exists in the system");
             } else {
-                throw new RuntimeException("Keycloak error: " + response.getStatusInfo().getReasonPhrase());
+                throw new ResponseStatusException(HttpStatus.valueOf(response.getStatus()), "Registration error: " + response.getStatusInfo().getReasonPhrase());
             }
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "System error during registration: " + e.getMessage());
         }
     }
     private RegisterResponseDto toRegisterResponseDto(RegisterRequestDto dto) {
