@@ -42,6 +42,7 @@ public class AdminDashboardService {
 
         Long totalOrders = orderRepository.countOrdersByDateRangeAndStatus(start, end, COMPLETED_STATUSES);
         BigDecimal totalRevenue = orderRepository.sumRevenueByDateRangeAndStatus(start, end, COMPLETED_STATUSES);
+        BigDecimal totalShippingFee = orderRepository.sumShippingFeeByDateRangeAndStatus(start, end, COMPLETED_STATUSES);
         Long totalProductsSold = orderRepository.sumProductsSoldByDateRangeAndStatus(start, end, COMPLETED_STATUSES);
         Long totalUsers = fetchUserCount(start, end, token);
 
@@ -53,6 +54,7 @@ public class AdminDashboardService {
         DashboardDto.Overview overview = DashboardDto.Overview.builder()
                 .totalOrders(totalOrders != null ? totalOrders : 0L)
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
+                .totalShippingFee(totalShippingFee != null ? totalShippingFee : BigDecimal.ZERO)
                 .totalProfit(totalProfit)
                 .totalProductsSold(totalProductsSold != null ? totalProductsSold : 0L)
                 .totalRegisteredCustomers(totalUsers != null ? totalUsers : 0L)
@@ -60,6 +62,8 @@ public class AdminDashboardService {
 
         List<ChartDataDto> chartData = orderRepository.findRevenueChartDataByDateRange(start, end, COMPLETED_STATUSES);
         List<DailyProductPerformanceDto> productDetail = orderRepository.findDetailedItemPerformance(start, end, COMPLETED_STATUSES);
+        if (productDetail == null) productDetail = new ArrayList<>();
+
         List<TransactionalPerformanceDto> brandDetail = new ArrayList<>();
         List<TransactionalPerformanceDto> categoryDetail = new ArrayList<>();
 
@@ -75,19 +79,19 @@ public class AdminDashboardService {
                     brandDetail.add(new TransactionalPerformanceDto(
                         item.getDate(), mapping.getBrandId(), mapping.getBrandName(),
                         item.getVariantId(), mapping.getVariantName(),
-                        item.getQuantity(), item.getRevenue()));
+                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice()));
                 }
                 if (mapping.getCategoryId() != null) {
                     categoryDetail.add(new TransactionalPerformanceDto(
                         item.getDate(), mapping.getCategoryId(), mapping.getCategoryName(),
                         item.getVariantId(), mapping.getVariantName(),
-                        item.getQuantity(), item.getRevenue()));
+                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice()));
                 }
             });
         }
 
         List<TopCustomerDto> topCustomers = orderRepository.findTopCustomers(start, end, COMPLETED_STATUSES, PageRequest.of(0, 10));
-        List<DashboardOrderDto> recentOrders = orderRepository.findRecentOrders(PageRequest.of(0, 20));
+        List<DashboardOrderDto> recentOrders = orderRepository.findAllOrdersInDateRange(start, end, COMPLETED_STATUSES);
 
         return DashboardDto.builder()
                 .overview(overview)
