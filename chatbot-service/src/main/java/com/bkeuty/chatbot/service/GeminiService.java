@@ -28,6 +28,10 @@ public class GeminiService {
     private final RestTemplate restTemplate;
     private static final String GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
 
+    private String cachedCatalog = null;
+    private long lastCacheUpdate = 0;
+    private static final long CACHE_TTL_MS = 300_000;
+
     private static final String SYSTEM_PROMPT = 
         "You are 'Bkeuty AI Assistant', a professional beauty expert for the Bkeuty platform.\n\n" +
         "DATA CONTEXT:\n" +
@@ -59,7 +63,7 @@ public class GeminiService {
         String dynamicSystemPrompt = SYSTEM_PROMPT.replace("Your expert response in English here...", "Your expert response in " + targetLanguage + " here...")
                 .replace("Response must be professional and sophisticated (English language).", "Response must be professional and sophisticated in " + targetLanguage + ".");
 
-        String productCatalog = productClient.getProductContext();
+        String productCatalog = getCachedProductCatalog();
         String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", 
                 GEMINI_MODEL);
 
@@ -105,7 +109,7 @@ public class GeminiService {
             return objectMapper.readValue(aiJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
             String exceptionMessage = String.valueOf(e.getMessage());
-            log.error("Gemini API Error: {}", exceptionMessage);
+            log.error("Gemini API Error for user prompt '{}': ", userPrompt, e);
             String errorMsg = "We're sorry, an error occurred while connecting to our beauty expert AI.";
             if (exceptionMessage.contains("429")) {
                 errorMsg = "The AI system is currently overloaded (Rate limit). Please try again in a few moments.";
@@ -114,5 +118,20 @@ public class GeminiService {
             }
             return Map.of("text", errorMsg, "recommendedProductId", null);
         }
+    }
+
+    private synchronized String getCachedProductCatalog() {
+        long currentTime = System.currentTimeMillis();
+        if (cachedCatalog == null || (currentTime - lastCacheUpdate) > CACHE_TTL_MS) {
+            try {
+                cachedCatalog = productClient.getProductContext();
+                lastCacheUpdate = currentTime;
+                log.info("Product catalog cache updated.");
+            } catch (Exception e) {
+                log.error("Failed to update product catalog cache: {}", e.getMessage());
+                return cachedCatalog != null ? cachedCatalog : "[]";
+            }
+        }
+        return cachedCatalog;
     }
 }

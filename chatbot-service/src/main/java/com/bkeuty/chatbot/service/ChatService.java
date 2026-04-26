@@ -91,17 +91,19 @@ public class ChatService {
                     .messages(List.of(userMessage, aiMessage))
                     .build();
             
+            String status = "success";
             try {
-                kafkaTemplate.send("chat.persist", interaction);
+                kafkaTemplate.send("chat.persist", sessionId, interaction);
             } catch (Exception e) {
-                log.error("Error sending message to Kafka: {}", e.getMessage());
+                log.error("Error sending message to Kafka for session {}: {}", sessionId, e.getMessage());
+                status = "persistence_failed";
             }
 
             return ChatResponse.builder()
                     .sessionId(sessionId)
                     .response(aiResponseContent)
                     .recommendedProduct(productDetails != null ? List.of(productDetails) : List.of())
-                    .status("success")
+                    .status(status)
                     .timestamp(System.currentTimeMillis())
                     .build();
         } catch (Exception e) {
