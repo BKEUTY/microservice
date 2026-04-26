@@ -25,7 +25,7 @@ public class GeminiService {
 
     private final ProductClient productClient;
     private final ObjectMapper objectMapper;
-    private final RestTemplate restTemplate;
+    private final RestTemplate externalRestTemplate;
     private static final String GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
 
     private volatile String cachedCatalog = null;
@@ -87,7 +87,7 @@ public class GeminiService {
             headers.set("x-goog-api-key", geminiApiKey);
             
             HttpEntity<String> requestEntity = new HttpEntity<>(objectMapper.writeValueAsString(requestBody), headers);
-            String responseJson = restTemplate.postForObject(url, requestEntity, String.class);
+            String responseJson = externalRestTemplate.postForObject(url, requestEntity, String.class);
             if (responseJson == null || responseJson.isBlank()) {
                 return Map.of("text", "I'm having trouble processing your request. Could you please rephrase that?", "recommendedProductId", null);
             }

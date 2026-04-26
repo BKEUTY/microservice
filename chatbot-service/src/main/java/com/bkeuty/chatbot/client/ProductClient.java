@@ -4,7 +4,7 @@ import com.bkeuty.chatbot.dto.ProductDetailDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 
@@ -12,17 +12,11 @@ import java.time.Duration;
 @Component
 @RequiredArgsConstructor
 public class ProductClient {
-    private final WebClient.Builder webClientBuilder;
+    private final RestTemplate internalRestTemplate;
 
     public String getProductContext() {
         try {
-            return webClientBuilder.build()
-                    .get()
-                    .uri("http://product/api/product?size=50&status=ACTIVE&minStock=1")
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .timeout(Duration.ofSeconds(5))
-                    .block();
+            return internalRestTemplate.getForObject("http://product/api/product?size=50&status=ACTIVE&minStock=1", String.class);
         } catch (Exception e) {
             log.error("Error fetching product context: {}", e.getMessage());
             return "[]";
@@ -31,13 +25,7 @@ public class ProductClient {
 
     public ProductDetailDto getProductById(Integer id) {
         try {
-            return webClientBuilder.build()
-                    .get()
-                    .uri("http://product/api/product/{productId}", id)
-                    .retrieve()
-                    .bodyToMono(ProductDetailDto.class)
-                    .timeout(Duration.ofSeconds(5))
-                    .block();
+            return internalRestTemplate.getForObject("http://product/api/product/{productId}", ProductDetailDto.class, id);
         } catch (Exception e) {
             log.error("Error fetching product detail data for ID {}: {}", id, e.getMessage());
             return null;
