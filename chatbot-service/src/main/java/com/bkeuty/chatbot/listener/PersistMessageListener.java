@@ -1,5 +1,6 @@
 package com.bkeuty.chatbot.listener;
 
+import com.bkeuty.chatbot.config.KafkaTopicConfig;
 import com.bkeuty.chatbot.dto.ChatInteraction;
 import com.bkeuty.chatbot.entity.ChatBucket;
 import com.bkeuty.chatbot.repository.ChatBucketRepository;
@@ -18,7 +19,7 @@ public class PersistMessageListener {
 
     private final ConcurrentHashMap<String, Object> sessionLocks = new ConcurrentHashMap<>();
 
-    @KafkaListener(topics = "chat.persist", groupId = "chatbot-group")
+    @KafkaListener(topics = KafkaTopicConfig.CHAT_PERSIST_TOPIC, groupId = "chatbot-group")
     public void handlePersistMessage(ChatInteraction interaction) {
         String sessionId = interaction.getSessionId();
         Object sessionLock = sessionLocks.computeIfAbsent(sessionId, key -> new Object());

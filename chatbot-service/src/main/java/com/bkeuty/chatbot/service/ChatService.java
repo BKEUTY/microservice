@@ -9,6 +9,7 @@ import com.bkeuty.chatbot.entity.ChatMessage;
 import com.bkeuty.chatbot.repository.ChatBucketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.bkeuty.chatbot.config.KafkaTopicConfig;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -99,7 +100,7 @@ public class ChatService {
             
             String status = "success";
             try {
-                kafkaTemplate.send("chat.persist", sessionId, interaction);
+                kafkaTemplate.send(KafkaTopicConfig.CHAT_PERSIST_TOPIC, sessionId, interaction);
             } catch (Exception e) {
                 log.error("Error sending message to Kafka for session {}: {}", sessionId, e.getMessage());
                 status = "persistence_failed";
