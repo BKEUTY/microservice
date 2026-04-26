@@ -6,6 +6,7 @@ import com.bkeuty.chatbot.dto.ChatRequest;
 import com.bkeuty.chatbot.dto.ChatResponse;
 import com.bkeuty.chatbot.dto.ProductDetailDto;
 import com.bkeuty.chatbot.entity.ChatMessage;
+import com.bkeuty.chatbot.repository.ChatBucketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -22,7 +23,7 @@ public class ChatService {
     private final GeminiService geminiService;
     private final ChatContextService contextService;
     private final ProductClient productClient;
-    private final com.bkeuty.chatbot.repository.ChatBucketRepository bucketRepository;
+    private final ChatBucketRepository bucketRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public List<ChatMessage> getChatHistory(String sessionId) {

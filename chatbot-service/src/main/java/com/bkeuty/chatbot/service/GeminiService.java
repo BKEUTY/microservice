@@ -60,8 +60,8 @@ public class GeminiService {
                 .replace("Response must be professional and sophisticated (English language).", "Response must be professional and sophisticated in " + targetLanguage + ".");
 
         String productCatalog = productClient.getProductContext();
-        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", 
-                GEMINI_MODEL, geminiApiKey);
+        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", 
+                GEMINI_MODEL);
 
         try {
             Map<String, Object> requestBody = new HashMap<>();
@@ -80,6 +80,7 @@ public class GeminiService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("x-goog-api-key", geminiApiKey);
             
             HttpEntity<String> requestEntity = new HttpEntity<>(objectMapper.writeValueAsString(requestBody), headers);
             String responseJson = restTemplate.postForObject(url, requestEntity, String.class);
