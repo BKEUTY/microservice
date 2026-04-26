@@ -103,10 +103,17 @@ public class GeminiService {
                 return Map.of("text", "I'm having trouble processing your request. Could you please rephrase that?", "recommendedProductId", null);
             }
             
-            String aiJson = textNode.asText();
-            aiJson = aiJson.replaceAll("(?s)^.*?\\{", "{").replaceAll("\\}.*?$", "}");
+            String aiOutput = textNode.asText();
+            int jsonStart = aiOutput.indexOf('{');
+            int jsonEnd = aiOutput.lastIndexOf('}');
             
-            return objectMapper.readValue(aiJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+            if (jsonStart < 0 || jsonEnd < jsonStart) {
+                log.error("Invalid AI response format: No JSON object found in output");
+                return Map.of("text", "I'm having trouble formatting my response. Could you please try again?", "recommendedProductId", null);
+            }
+            
+            String extractedJson = aiOutput.substring(jsonStart, jsonEnd + 1);
+            return objectMapper.readValue(extractedJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
             String exceptionMessage = String.valueOf(e.getMessage());
             log.error("Gemini API Error for user prompt '{}': ", userPrompt, e);

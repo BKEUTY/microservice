@@ -61,6 +61,12 @@ public class ChatService {
             
             if (productIdObj instanceof Number) {
                 recommendedProductId = ((Number) productIdObj).intValue();
+            } else if (productIdObj instanceof String) {
+                try {
+                    recommendedProductId = Integer.parseInt((String) productIdObj);
+                } catch (NumberFormatException e) {
+                    log.warn("Failed to parse recommendedProductId from string: {}", productIdObj);
+                }
             }
             
             ProductDetailDto productDetails = null;
