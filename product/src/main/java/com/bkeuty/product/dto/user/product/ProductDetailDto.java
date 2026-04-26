@@ -27,4 +27,5 @@ public class ProductDetailDto {
     private Double averageRating;
     private Integer reviewCount;
     private Integer sold;
+    private Integer stockQuantity;
 }
