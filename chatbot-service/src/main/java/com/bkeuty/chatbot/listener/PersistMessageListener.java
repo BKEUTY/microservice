@@ -24,20 +24,24 @@ public class PersistMessageListener {
         Object sessionLock = sessionLocks.computeIfAbsent(sessionId, key -> new Object());
 
         synchronized (sessionLock) {
-            int incomingMessageCount = interaction.getMessages() == null ? 0 : interaction.getMessages().size();
-            ChatBucket bucket = bucketRepository.findTopBySessionIdOrderByBucketIndexDesc(sessionId)
-                    .filter(b -> (b.getMessageCount() == null ? 0 : b.getMessageCount()) + incomingMessageCount <= MAX_MESSAGES_PER_BUCKET)
-                    .orElseGet(() -> createNewBucket(sessionId));
+            try {
+                int incomingMessageCount = interaction.getMessages() == null ? 0 : interaction.getMessages().size();
+                ChatBucket bucket = bucketRepository.findTopBySessionIdOrderByBucketIndexDesc(sessionId)
+                        .filter(b -> (b.getMessageCount() == null ? 0 : b.getMessageCount()) + incomingMessageCount <= MAX_MESSAGES_PER_BUCKET)
+                        .orElseGet(() -> createNewBucket(sessionId));
 
-            if (bucket.getMessages() == null) {
-                bucket.setMessages(new ArrayList<>());
-            }
-            if (interaction.getMessages() != null) {
-                bucket.getMessages().addAll(interaction.getMessages());
-            }
-            bucket.setMessageCount(bucket.getMessages().size());
+                if (bucket.getMessages() == null) {
+                    bucket.setMessages(new ArrayList<>());
+                }
+                if (interaction.getMessages() != null) {
+                    bucket.getMessages().addAll(interaction.getMessages());
+                }
+                bucket.setMessageCount(bucket.getMessages().size());
 
-            bucketRepository.save(bucket);
+                bucketRepository.save(bucket);
+            } finally {
+                sessionLocks.remove(sessionId, sessionLock);
+            }
         }
     }
 
