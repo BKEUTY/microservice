@@ -30,7 +30,7 @@ public class ChatService {
     private final ChatBucketRepository bucketRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public List<ChatMessage> getChatHistory(String sessionId, int page, int size) {
+    public List<ChatMessage> getChatHistory(String sessionId) {
         List<ChatMessage> allMessages = bucketRepository.findAllBySessionIdOrderByBucketIndexAsc(sessionId)
                 .stream()
                 .flatMap(bucket -> Optional.ofNullable(bucket.getMessages())
@@ -38,11 +38,10 @@ public class ChatService {
                         .stream())
                 .collect(Collectors.toList());
 
-        if (size <= 0) return Collections.emptyList();
         int total = allMessages.size();
-        int fromIndex = Math.max(0, total - (page + 1) * size);
-        int toIndex = Math.min(total, Math.max(0, total - page * size));
-        return allMessages.subList(fromIndex, toIndex);
+        int maxHistory = 50;
+        if (total <= maxHistory) return allMessages;
+        return allMessages.subList(total - maxHistory, total);
     }
 
     public ChatResponse processChatMessage(ChatRequest request) {

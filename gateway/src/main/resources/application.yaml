@@ -3,6 +3,9 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 10000
+        response-timeout: 180s
       server:
         webmvc:
           routes:
@@ -86,6 +89,15 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Methods
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
+            - id: chatbot-service
+              uri: lb://chatbot-service
+              predicates:
+                - Path= /api/chatbot/**
+              filters:
+                - RemoveResponseHeader=Access-Control-Allow-Origin
+                - RemoveResponseHeader=Access-Control-Allow-Methods
+                - RemoveResponseHeader=Access-Control-Allow-Headers
+                - RemoveResponseHeader=Access-Control-Allow-Credentials
 eureka:
   client:
     service-url:
@@ -111,6 +123,8 @@ springdoc:
         url: /api/payment/v3/api-docs
       - name: Shipping Service
         url: /api/shipping/v3/api-docs
+      - name: Chatbot Service
+        url: /api/chatbot/v3/api-docs
 logging:
   level:
     root: INFO

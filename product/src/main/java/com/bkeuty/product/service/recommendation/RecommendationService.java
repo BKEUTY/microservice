@@ -40,7 +40,7 @@ public class RecommendationService {
     }
 
     public RecommendationResponse getPersonalizedRecommendations(String userId) {
-        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 100));
+        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 30));
 
         if (userId == null) {
             AIRankingService.AIResult guestResult = aiRankingService.getVariedRecommendations(candidates, "personalized:guest");
@@ -61,7 +61,7 @@ public class RecommendationService {
     }
 
     public RecommendationResponse getRelatedProducts(String productName) {
-        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 100))
+        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 30))
                 .stream()
                 .filter(v -> !v.getProductVariantName().equalsIgnoreCase(productName))
                 .collect(Collectors.toList());

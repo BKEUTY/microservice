@@ -23,15 +23,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     @LoadBalanced
-    public RestTemplate internalRestTemplate() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(3000);
-        factory.setReadTimeout(5000);
-        return new RestTemplate(factory);
-    }
-
-    @Bean
-    @LoadBalanced
     public WebClient.Builder webClientBuilder() {
         return WebClient.builder();
     }

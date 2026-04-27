@@ -47,18 +47,22 @@ public class GeminiService {
         "4. Always ask for 'Skin Type' if not provided for skincare requests.\n\n" +
         "OUTPUT FORMAT (STRICT JSON):\n" +
         "{\n" +
-        "  \"text\": \"Your expert response in English here...\",\n" +
-        "  \"recommendedProductId\": number or null\n" +
-        "}\n\n" +
+        "- Response Format: STRICT JSON ONLY. Do not include any text outside the JSON object.\n" +
+        "- JSON structure: {\"text\": \"...\", \"recommendedProductId\": number or null}\n" +
+        "- CRITICAL RULE: The 'recommendedProductId' MUST perfectly match the specific product mentioned in your response text. Double-check the ID from the catalog before responding.\n\n" +
+        "MISSION:\n" +
         "RULES:\n" +
         "- Use ONLY the products provided in the catalog context.\n" +
         "- If no suitable product is found, set 'recommendedProductId' to null and guide the user in the 'text' field.\n" +
+        "- DO NOT offer ordering, payment, or shipping services. The chatbot only provides recommendations.\n" +
+        "- NEVER say phrases like 'Bạn có muốn đặt hàng không?' or 'Tôi sẽ hỗ trợ bạn đặt hàng'.\n" +
+        "- If the user asks about ordering, tell them to click on the product card to view details and buy on the website.\n" +
         "- Response must be professional and sophisticated (English language).\n" +
         "- IMPORTANT: Output ONLY the JSON object. Do not use ```json markdown blocks.";
 
     public Map<String, Object> generateStructuredResponse(String chatHistory, String userPrompt, String language) {
         if (geminiApiKey == null || geminiApiKey.trim().isEmpty()) {
-            return Map.of("text", "Sorry, the AI system is currently not configured. Please try again later.", "recommendedProductId", null);
+            return createResponseMap("Sorry, the AI system is currently not configured. Please try again later.", null);
         }
 
         String targetLanguage = (language != null && language.equalsIgnoreCase("vi")) ? "Vietnamese" : "English";
@@ -76,13 +80,24 @@ public class GeminiService {
             systemInstruction.put("parts", List.of(Map.of("text", dynamicSystemPrompt)));
             requestBody.put("system_instruction", systemInstruction);
 
+            String prunedHistory = chatHistory;
+            if (chatHistory != null && chatHistory.length() > 2000) {
+                prunedHistory = "..." + chatHistory.substring(chatHistory.length() - 2000);
+            }
+
             String fullPrompt = String.format(
-                "PRODUCT CATALOG:\n%s\n\nCHAT HISTORY:\n%s\n\nUSER MESSAGE: %s", 
-                productCatalog, chatHistory, userPrompt);
+                "PRODUCT CATALOG (Condensed):\n%s\n\nCHAT HISTORY (Recent):\n%s\n\nUSER MESSAGE: %s", 
+                productCatalog, prunedHistory, userPrompt);
             
             Map<String, Object> content = new HashMap<>();
             content.put("parts", List.of(Map.of("text", fullPrompt)));
             requestBody.put("contents", List.of(content));
+
+            Map<String, Object> generationConfig = new HashMap<>();
+            generationConfig.put("temperature", 0.1);
+            generationConfig.put("topP", 0.95);
+            generationConfig.put("maxOutputTokens", 1024);
+            requestBody.put("generationConfig", generationConfig);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -91,18 +106,18 @@ public class GeminiService {
             HttpEntity<String> requestEntity = new HttpEntity<>(objectMapper.writeValueAsString(requestBody), headers);
             String responseJson = externalRestTemplate.postForObject(url, requestEntity, String.class);
             if (responseJson == null || responseJson.isBlank()) {
-                return Map.of("text", "I'm having trouble processing your request. Could you please rephrase that?", "recommendedProductId", null);
+                return createResponseMap("I'm having trouble processing your request. Could you please rephrase that?", null);
             }
 
             JsonNode rootNode = objectMapper.readTree(responseJson);
             JsonNode candidates = rootNode.path("candidates");
             if (candidates.isMissingNode() || candidates.size() == 0) {
-                return Map.of("text", "I'm having trouble processing your request. Could you please rephrase that?", "recommendedProductId", null);
+                return createResponseMap("I'm having trouble processing your request. Could you please rephrase that?", null);
             }
 
             JsonNode textNode = candidates.path(0).path("content").path("parts").path(0).path("text");
             if (textNode.isMissingNode() || textNode.isNull()) {
-                return Map.of("text", "I'm having trouble processing your request. Could you please rephrase that?", "recommendedProductId", null);
+                return createResponseMap("I'm having trouble processing your request. Could you please rephrase that?", null);
             }
             
             String aiOutput = textNode.asText();
@@ -111,7 +126,7 @@ public class GeminiService {
             
             if (jsonStart < 0 || jsonEnd < jsonStart) {
                 log.error("Invalid AI response format: No JSON object found in output");
-                return Map.of("text", "I'm having trouble formatting my response. Could you please try again?", "recommendedProductId", null);
+                return createResponseMap("I'm having trouble formatting my response. Could you please try again?", null);
             }
             
             String extractedJson = aiOutput.substring(jsonStart, jsonEnd + 1);
@@ -122,11 +137,20 @@ public class GeminiService {
             String errorMsg = "We're sorry, an error occurred while connecting to our beauty expert AI.";
             if (exceptionMessage.contains("429")) {
                 errorMsg = "The AI system is currently overloaded (Rate limit). Please try again in a few moments.";
+            } else if (exceptionMessage.contains("503")) {
+                errorMsg = "Gemini AI is currently experiencing high demand. Please try again later.";
             } else if (exceptionMessage.contains("403") || exceptionMessage.contains("401")) {
                 errorMsg = "AI API Key authentication failure. Please check the system configuration.";
             }
-            return Map.of("text", errorMsg, "recommendedProductId", null);
+            return createResponseMap(errorMsg, null);
         }
+    }
+
+    private Map<String, Object> createResponseMap(String text, Object productId) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("text", text);
+        response.put("recommendedProductId", productId);
+        return response;
     }
 
     private String getCachedProductCatalog() {
@@ -136,10 +160,28 @@ public class GeminiService {
                 if (cachedCatalog == null || (System.currentTimeMillis() - lastCacheUpdate) > CACHE_TTL_MS) {
                     try {
                         String freshCatalog = productClient.getProductContext();
-                        String normalizedCatalog = (freshCatalog == null || freshCatalog.isBlank()) ? "[]" : freshCatalog;
-                        cachedCatalog = normalizedCatalog;
+                        if (freshCatalog == null || freshCatalog.isBlank() || freshCatalog.equals("[]")) {
+                            cachedCatalog = "[]";
+                        } else {
+                            JsonNode rootNode = objectMapper.readTree(freshCatalog);
+                            JsonNode contentNode = rootNode.path("content");
+                            JsonNode products = contentNode.isArray() ? contentNode : rootNode;
+                            
+                            List<Map<String, Object>> prunedList = new java.util.ArrayList<>();
+                            if (products.isArray()) {
+                                for (JsonNode p : products) {
+                                    Map<String, Object> pruned = new HashMap<>();
+                                    pruned.put("id", p.path("productId").asLong());
+                                    pruned.put("name", p.path("variantName").asText());
+                                    pruned.put("price", p.path("discountPrice").asDouble());
+                                    pruned.put("skin", p.path("targetSkinType").asText());
+                                    prunedList.add(pruned);
+                                }
+                            }
+                            cachedCatalog = objectMapper.writeValueAsString(prunedList);
+                        }
                         lastCacheUpdate = System.currentTimeMillis();
-                        log.info("Product catalog cache updated.");
+                        log.info("Optimized product catalog cache updated.");
                     } catch (Exception e) {
                         log.error("Failed to update product catalog cache: {}", e.getMessage());
                     }

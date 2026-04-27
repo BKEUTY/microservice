@@ -78,7 +78,9 @@ public class AIRankingService {
 
     @Cacheable(value = "recommendations", key = "#cacheKey")
     public AIResult getVariedRecommendations(List<ProductVariant> candidates, String cacheKey) {
-        List<ProductVariant> pool = candidates.stream().limit(5).collect(Collectors.toList());
+        List<ProductVariant> shuffled = new ArrayList<>(candidates);
+        Collections.shuffle(shuffled);
+        List<ProductVariant> pool = shuffled.stream().limit(5).collect(Collectors.toList());
         List<Integer> selectedIds = pool.stream().map(ProductVariant::getId).collect(Collectors.toList());
         
         String reasoning = cacheKey.contains("guest") 
