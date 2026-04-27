@@ -38,9 +38,10 @@ public class ChatService {
                         .stream())
                 .collect(Collectors.toList());
 
+        if (size <= 0) return Collections.emptyList();
         int total = allMessages.size();
         int fromIndex = Math.max(0, total - (page + 1) * size);
-        int toIndex = Math.max(0, total - page * size);
+        int toIndex = Math.min(total, Math.max(0, total - page * size));
         return allMessages.subList(fromIndex, toIndex);
     }
 

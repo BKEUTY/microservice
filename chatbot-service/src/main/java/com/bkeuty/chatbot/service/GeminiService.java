@@ -136,11 +136,10 @@ public class GeminiService {
                 if (cachedCatalog == null || (System.currentTimeMillis() - lastCacheUpdate) > CACHE_TTL_MS) {
                     try {
                         String freshCatalog = productClient.getProductContext();
-                        if (freshCatalog != null) {
-                            cachedCatalog = freshCatalog;
-                            lastCacheUpdate = System.currentTimeMillis();
-                            log.info("Product catalog cache updated.");
-                        }
+                        String normalizedCatalog = (freshCatalog == null || freshCatalog.isBlank()) ? "[]" : freshCatalog;
+                        cachedCatalog = normalizedCatalog;
+                        lastCacheUpdate = System.currentTimeMillis();
+                        log.info("Product catalog cache updated.");
                     } catch (Exception e) {
                         log.error("Failed to update product catalog cache: {}", e.getMessage());
                     }
