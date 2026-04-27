@@ -24,8 +24,8 @@ public class PersistMessageListener {
         String sessionId = interaction.getSessionId();
         Object sessionLock = sessionLocks.computeIfAbsent(sessionId, key -> new Object());
 
-        synchronized (sessionLock) {
-            try {
+        try {
+            synchronized (sessionLock) {
                 int incomingMessageCount = interaction.getMessages() == null ? 0 : interaction.getMessages().size();             
                 ChatBucket lastBucket = bucketRepository.findTopBySessionIdOrderByBucketIndexDesc(sessionId).orElse(null);
                 ChatBucket bucket;
@@ -46,9 +46,9 @@ public class PersistMessageListener {
                 bucket.setMessageCount(bucket.getMessages().size());
 
                 bucketRepository.save(bucket);
-            } finally {
-                sessionLocks.remove(sessionId, sessionLock);
             }
+        } finally {
+            sessionLocks.remove(sessionId, sessionLock);
         }
     }
 
