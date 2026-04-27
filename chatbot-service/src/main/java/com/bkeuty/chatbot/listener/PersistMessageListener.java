@@ -26,10 +26,16 @@ public class PersistMessageListener {
 
         synchronized (sessionLock) {
             try {
-                int incomingMessageCount = interaction.getMessages() == null ? 0 : interaction.getMessages().size();
-                ChatBucket bucket = bucketRepository.findTopBySessionIdOrderByBucketIndexDesc(sessionId)
-                        .filter(b -> (b.getMessageCount() == null ? 0 : b.getMessageCount()) + incomingMessageCount <= MAX_MESSAGES_PER_BUCKET)
-                        .orElseGet(() -> createNewBucket(sessionId));
+                int incomingMessageCount = interaction.getMessages() == null ? 0 : interaction.getMessages().size();             
+                ChatBucket lastBucket = bucketRepository.findTopBySessionIdOrderByBucketIndexDesc(sessionId).orElse(null);
+                ChatBucket bucket;
+
+                if (lastBucket != null && (lastBucket.getMessageCount() == null ? 0 : lastBucket.getMessageCount()) + incomingMessageCount <= MAX_MESSAGES_PER_BUCKET) {
+                    bucket = lastBucket;
+                } else {
+                    int nextIndex = (lastBucket == null) ? 0 : lastBucket.getBucketIndex() + 1;
+                    bucket = createNewBucket(sessionId, nextIndex);
+                }
 
                 if (bucket.getMessages() == null) {
                     bucket.setMessages(new ArrayList<>());
@@ -46,14 +52,10 @@ public class PersistMessageListener {
         }
     }
 
-    private ChatBucket createNewBucket(String sessionId) {
-        Integer lastIndex = bucketRepository.findTopBySessionIdOrderByBucketIndexDesc(sessionId)
-                .map(ChatBucket::getBucketIndex)
-                .orElse(-1);
-
+    private ChatBucket createNewBucket(String sessionId, int bucketIndex) {
         return ChatBucket.builder()
                 .sessionId(sessionId)
-                .bucketIndex(lastIndex + 1)
+                .bucketIndex(bucketIndex)
                 .messageCount(0)
                 .messages(new ArrayList<>())
                 .build();

@@ -131,7 +131,6 @@ public class GeminiService {
         long currentTime = System.currentTimeMillis();
         if (cachedCatalog == null || (currentTime - lastCacheUpdate) > CACHE_TTL_MS) {
             synchronized (this) {
-                // Double-checked locking
                 if (cachedCatalog == null || (System.currentTimeMillis() - lastCacheUpdate) > CACHE_TTL_MS) {
                     try {
                         String freshCatalog = productClient.getProductContext();

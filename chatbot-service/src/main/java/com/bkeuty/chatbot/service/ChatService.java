@@ -47,12 +47,7 @@ public class ChatService {
                     .timestamp(LocalDateTime.now())
                     .build();
 
-            String context = "";
-            try {
-                context = contextService.getFormattedContext(sessionId);
-            } catch (Exception e) {
-                log.error("Error retrieving chat context from Redis: {}", e.getMessage());
-            }
+            String context = contextService.getFormattedContext(sessionId);
 
             Map<String, Object> aiResult = geminiService.generateStructuredResponse(context, userMessageContent, request.getLanguage());
             

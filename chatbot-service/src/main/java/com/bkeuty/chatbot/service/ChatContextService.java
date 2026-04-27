@@ -23,8 +23,16 @@ public class ChatContextService {
     private static final int TTL_HOURS = 2;
 
     public void appendMessage(String sessionId, ChatMessage message) {
+        if (message == null) return;
+        
         String key = REDIS_KEY_PREFIX + sessionId;
-        redisTemplate.opsForList().rightPush(key, message);
+        
+        ChatMessage contextMessage = ChatMessage.builder()
+                .sender(message.getSender())
+                .content(message.getContent())
+                .build();
+                
+        redisTemplate.opsForList().rightPush(key, contextMessage);
         redisTemplate.opsForList().trim(key, -MAX_CONTEXT_MESSAGES, -1);
         redisTemplate.expire(key, TTL_HOURS, TimeUnit.HOURS);
     }
