@@ -1,0 +1,22 @@
+package com.bkeuty.shipping_service.dto;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class GhnWebhookDto {
+    @JsonProperty("CODAmount")
+    private Integer amount;
+
+    @JsonProperty("OrderCode")
+    private String orderCode;
+
+    @JsonProperty("Status")
+    private String status;
+}

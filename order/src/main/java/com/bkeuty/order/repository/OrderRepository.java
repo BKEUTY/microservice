@@ -31,7 +31,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     List<Order> findByUserId(String userId);
 
     Order findByIdAndUserId(Integer orderId,String userId);
-
+    Order findByShippingCode(String shippingCode);
     @Query("SELECT COUNT(o) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
     Long countOrdersByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate,

@@ -86,11 +86,21 @@ public class KafkaService {
         Order order = orderRepository.findById(message.getOrderId()).orElse(null);
         if(order!=null){
             order.setShippingCode(message.getShippingResponse().getData().getOrderCode());
-            order.setShippingStatus(message.getShippingResponse().getMessage());
             orderRepository.save(order);
         }
         else {
             logger.error("listenToCreateShippingOrderTopic: order is null");
+        }
+    }
+    @KafkaListener(topics = "update-shipping-status-topic")
+    public void listenToUpdateShippingStatusTopic(GhnWebhookMessage message){
+        Order order = orderRepository.findByShippingCode(message.getOrderCode());
+        if(order !=null){
+            order.setShippingStatus(message.getStatus());
+            orderRepository.save(order);
+        }
+        else {
+            logger.error("listenToUpdateShippingStatusTopic: order is null");
         }
     }
     private ShippingItemDto toShippingItemDto(OrderItem dto) {
