@@ -23,7 +23,10 @@ public class ChatController {
     }
 
     @GetMapping("/history/{sessionId}")
-    public ResponseEntity<List<ChatMessage>> getChatHistory(@PathVariable String sessionId) {
-        return ResponseEntity.ok(chatService.getChatHistory(sessionId));
+    public ResponseEntity<List<ChatMessage>> getChatHistory(
+            @PathVariable String sessionId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(chatService.getChatHistory(sessionId, page, size));
     }
 }

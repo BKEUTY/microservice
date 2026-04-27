@@ -14,8 +14,11 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,13 +30,18 @@ public class ChatService {
     private final ChatBucketRepository bucketRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public List<ChatMessage> getChatHistory(String sessionId) {
-        return bucketRepository.findAllBySessionIdOrderByBucketIndexAsc(sessionId)
+    public List<ChatMessage> getChatHistory(String sessionId, int page, int size) {
+        List<ChatMessage> allMessages = bucketRepository.findAllBySessionIdOrderByBucketIndexAsc(sessionId)
                 .stream()
-                .flatMap(bucket -> java.util.Optional.ofNullable(bucket.getMessages())
-                        .orElseGet(java.util.Collections::emptyList)
+                .flatMap(bucket -> Optional.ofNullable(bucket.getMessages())
+                        .orElseGet(Collections::emptyList)
                         .stream())
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
+
+        int total = allMessages.size();
+        int fromIndex = Math.max(0, total - (page + 1) * size);
+        int toIndex = Math.max(0, total - page * size);
+        return allMessages.subList(fromIndex, toIndex);
     }
 
     public ChatResponse processChatMessage(ChatRequest request) {

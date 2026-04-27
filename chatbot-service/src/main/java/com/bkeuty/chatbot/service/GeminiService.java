@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +26,7 @@ public class GeminiService {
 
     private final ProductClient productClient;
     private final ObjectMapper objectMapper;
+    @Qualifier("externalRestTemplate")
     private final RestTemplate externalRestTemplate;
     private static final String GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
 

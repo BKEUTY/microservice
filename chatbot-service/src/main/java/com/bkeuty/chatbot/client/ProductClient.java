@@ -3,6 +3,7 @@ package com.bkeuty.chatbot.client;
 import com.bkeuty.chatbot.dto.ProductDetailDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -10,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @RequiredArgsConstructor
 public class ProductClient {
+    @Qualifier("internalRestTemplate")
     private final RestTemplate internalRestTemplate;
 
     public String getProductContext() {
