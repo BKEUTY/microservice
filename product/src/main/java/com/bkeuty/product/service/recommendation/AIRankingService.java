@@ -76,7 +76,6 @@ public class AIRankingService {
         }
     }
 
-    @Cacheable(value = "recommendations", key = "#cacheKey")
     public AIResult getVariedRecommendations(List<ProductVariant> candidates, String cacheKey) {
         List<ProductVariant> shuffled = new ArrayList<>(candidates);
         Collections.shuffle(shuffled);

@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,7 @@ public class RecommendationService {
         this.reviewServiceCommunication = reviewServiceCommunication;
     }
 
+    @Cacheable(value = "recommendations", key = "'guest'", condition = "#userId == null")
     public RecommendationResponse getPersonalizedRecommendations(String userId) {
         List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 30));
 

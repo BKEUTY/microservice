@@ -3,11 +3,11 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      httpclient:
-        connect-timeout: 10000
-        response-timeout: 180s
       server:
         webmvc:
+          httpclient:
+            connect-timeout: 10000
+            response-timeout: 180s
           routes:
             - id: block-internal
               uri: no://op

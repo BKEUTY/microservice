@@ -45,20 +45,17 @@ public class GeminiService {
         "2. Identify the exact 'productId' of the matching variant from the provided catalog.\n" +
         "3. PROACTIVE CLARIFICATION: If the user request is vague or matches multiple products, DO NOT guess. Instead, ask clarifying questions with specific options (e.g., 'Which brand do you prefer: CeraVe or La Roche-Posay?' or 'Are you looking for a Cleanser or a Serum?').\n" +
         "4. Always ask for 'Skin Type' if not provided for skincare requests.\n\n" +
-        "OUTPUT FORMAT (STRICT JSON):\n" +
-        "{\n" +
-        "- Response Format: STRICT JSON ONLY. Do not include any text outside the JSON object.\n" +
-        "- JSON structure: {\"text\": \"...\", \"recommendedProductId\": number or null}\n" +
-        "- CRITICAL RULE: The 'recommendedProductId' MUST perfectly match the specific product mentioned in your response text. Double-check the ID from the catalog before responding.\n\n" +
-        "MISSION:\n" +
+        "OUTPUT FORMAT (STRICT JSON ONLY):\n" +
+        "Return a JSON object with this structure:\n" +
+        "{\"text\": \"your_consultation_response\", \"recommendedProductId\": productId_or_null}\n\n" +
         "RULES:\n" +
         "- Use ONLY the products provided in the catalog context.\n" +
         "- If no suitable product is found, set 'recommendedProductId' to null and guide the user in the 'text' field.\n" +
         "- DO NOT offer ordering, payment, or shipping services. The chatbot only provides recommendations.\n" +
         "- NEVER say phrases like 'Bạn có muốn đặt hàng không?' or 'Tôi sẽ hỗ trợ bạn đặt hàng'.\n" +
         "- If the user asks about ordering, tell them to click on the product card to view details and buy on the website.\n" +
-        "- Response must be professional and sophisticated (English language).\n" +
-        "- IMPORTANT: Output ONLY the JSON object. Do not use ```json markdown blocks.";
+        "- CRITICAL: The 'recommendedProductId' MUST match the specific product mentioned in your response text.\n" +
+        "- IMPORTANT: Output ONLY the JSON object. Do not use markdown blocks.";
 
     public Map<String, Object> generateStructuredResponse(String chatHistory, String userPrompt, String language) {
         if (geminiApiKey == null || geminiApiKey.trim().isEmpty()) {
@@ -66,8 +63,7 @@ public class GeminiService {
         }
 
         String targetLanguage = (language != null && language.equalsIgnoreCase("vi")) ? "Vietnamese" : "English";
-        String dynamicSystemPrompt = SYSTEM_PROMPT.replace("Your expert response in English here...", "Your expert response in " + targetLanguage + " here...")
-                .replace("Response must be professional and sophisticated (English language).", "Response must be professional and sophisticated in " + targetLanguage + ".");
+        String dynamicSystemPrompt = SYSTEM_PROMPT + "\n- Response must be professional and sophisticated in " + targetLanguage + ".";
 
         String productCatalog = getCachedProductCatalog();
         String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", 
@@ -169,14 +165,13 @@ public class GeminiService {
                             
                             List<Map<String, Object>> prunedList = new java.util.ArrayList<>();
                             if (products.isArray()) {
-                                for (JsonNode p : products) {
-                                    Map<String, Object> pruned = new HashMap<>();
-                                    pruned.put("id", p.path("productId").asLong());
-                                    pruned.put("name", p.path("variantName").asText());
-                                    pruned.put("price", p.path("discountPrice").asDouble());
-                                    pruned.put("skin", p.path("targetSkinType").asText());
-                                    prunedList.add(pruned);
-                                }
+                                    for (JsonNode p : products) {
+                                        Map<String, Object> pruned = new HashMap<>();
+                                        pruned.put("id", p.path("productId").asLong());
+                                        pruned.put("name", p.path("variantName").asText());
+                                        pruned.put("price", p.path("discountPrice").asDouble());
+                                        prunedList.add(pruned);
+                                    }
                             }
                             cachedCatalog = objectMapper.writeValueAsString(prunedList);
                         }
