@@ -35,7 +35,7 @@ public class ProductController {
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) Integer minStock) {
+            @RequestParam(required = false) @Min(0) Integer minStock) {
 
         Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"));
         return ResponseEntity.ok(productService.getListProductVariants(pageable, search, categoryId, status, minStock));

@@ -40,9 +40,12 @@ public class AuthController {
             
             return ResponseEntity.ok(loginResponse);
         } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+            String message = (e.getStatusCode() == HttpStatus.UNAUTHORIZED) 
+                             ? "Invalid username or password" 
+                             : "Authentication service error";
+            return ResponseEntity.status(e.getStatusCode()).body(message);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred during login");
         }
     }
 
