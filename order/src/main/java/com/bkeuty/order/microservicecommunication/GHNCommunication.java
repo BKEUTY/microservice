@@ -52,11 +52,11 @@ public class GHNCommunication {
                 .retrieve().bodyToMono(CreateShippingOrderResponseDto.class);
     }
 
-    public Mono<GetShippingOrderStatusResponseDto> getShippingStatus(OrderCodeDto orderCodeDto) {
+    public Mono<GHNShippingDetailDto> getShippingStatus(OrderCodeDto orderCodeDto) {
         return GHNWebClient.post().uri(uriBuilder -> uriBuilder.path("shiip/public-api/v2/shipping-order/detail").build()).bodyValue(orderCodeDto)
                 .header("Token",apiToken)
                 .header("ShopId",shopId)
-                .retrieve().bodyToMono(GetShippingOrderStatusResponseDto.class);
+                .retrieve().bodyToMono(GHNShippingDetailDto.class);
     }
 
 }

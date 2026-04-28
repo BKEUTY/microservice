@@ -36,12 +36,12 @@ public class ShippingService {
             if (order == null) {
                 throw new BadRequestException("Order Not Found");
             }
-            GetShippingOrderStatusResponseDto  getShippingOrderStatusResponseDto = ghnCommunication.getShippingStatus(getShippingOrderStatusRequest.getOrderCode()).block();
+            GHNShippingDetailDto  GHNShippingDetailDto = ghnCommunication.getShippingStatus(new OrderCodeDto(order.getShippingCode())).block();
 //            if(getShippingOrderStatusResponseDto!=null && getShippingOrderStatusResponseDto.getStatus()!=null) {
 //                    order.setShippingStatus(getShippingOrderStatusResponseDto.getStatus());
 //                    orderRepository.save(order);
 //            }
-            return getShippingOrderStatusResponseDto;
+            return GHNShippingDetailDto.getData();
 
         } catch (Exception e) {
             System.out.println(e.getMessage());

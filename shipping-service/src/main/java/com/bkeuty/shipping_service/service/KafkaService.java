@@ -10,10 +10,12 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class KafkaService {
     private final ShippingService shippingService;
     private final KafkaTemplate<String, CreateShippingResponseMessage>  kafkaTemplate;
-    public KafkaService(ShippingService shippingService,  KafkaTemplate<String, CreateShippingResponseMessage> kafkaTemplate)
+    private final KafkaTemplate<String, GhnWebhookDto> updateShippingStatusKafkaTemplate;
+    public KafkaService(ShippingService shippingService,  KafkaTemplate<String, CreateShippingResponseMessage> kafkaTemplate, KafkaTemplate<String, GhnWebhookDto> updateShippingStatusKafkaTemplate)
     {
         this.shippingService = shippingService;
         this.kafkaTemplate = kafkaTemplate;
+        this.updateShippingStatusKafkaTemplate = updateShippingStatusKafkaTemplate;
     }
     @KafkaListener(topics = "create-shipping-order-topic")
     public void listenCreateShippingOrderTopic(CreateShippingOrderMessage message
@@ -25,6 +27,10 @@ public class KafkaService {
             kafkaTemplate.send("create-shipping-response-topic", responseMessage);
 
         }
+    }
+
+    public void sendUpdateShippingOrder(GhnWebhookDto ghnWebhookDto) {
+        updateShippingStatusKafkaTemplate.send("update-shipping-status-topic", ghnWebhookDto);
     }
 
 }

@@ -10,4 +10,11 @@ public class KafkaConfig {
     NewTopic createShippingResponseTopic() {
         return new NewTopic("create-shipping-response-topic", 1, (short) 1);
     }
+
+    @Bean
+    NewTopic updateShippingStatusTopic() {
+        return new NewTopic("update-shipping-status-topic", 1, (short) 1);
+    }
+
+
 }
