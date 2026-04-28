@@ -37,6 +37,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -162,7 +163,7 @@ public class OrderService {
 
         OrderResponseDto placeOrderResponseDTO = new OrderResponseDto();
         placeOrderResponseDTO.setOrderId(orderSave.getId().toString());
-        placeOrderResponseDTO.setOrderDate(LocalDate.now());
+        placeOrderResponseDTO.setOrderDate(orderSave.getOrderDate());
         placeOrderResponseDTO.setShippingFee(BigDecimal.valueOf(shippingFee));
         placeOrderResponseDTO.setEstShippingDate(shippingDate);
         placeOrderResponseDTO.setAddress(request.getAddress());
@@ -286,7 +287,7 @@ public class OrderService {
         OrderResponseDto response = OrderResponseDto.builder()
                 .orderId(order.getId() != null ? order.getId().toString() : "")
                 .userName(order.getUserName())
-                .orderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now())
+                .orderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDateTime.now())
                 .address(toAddressDto(order.getAddress()))
                 .paymentMethod(order.getPaymentMethod())
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
@@ -369,21 +370,6 @@ public class OrderService {
             log.error("Failed to fetch product variants from product-service for IDs: {}", variantIds, e);
             return Collections.emptyMap();
         }
-    }
-    public OrderResponseDto toOrderResponseDto(Order order, List<OrderItem> items) {
-        OrderResponseDto orderResponseDTO = new OrderResponseDto();
-        orderResponseDTO.setOrderId(order.getId() != null ? order.getId().toString() : "");
-        orderResponseDTO.setOrderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now());
-        orderResponseDTO.setAddress(toAddressDto(order.getAddress()));
-        orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
-        orderResponseDTO.setTotal(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO);
-        orderResponseDTO.setStatus(order.getStatus());
-        orderResponseDTO.setShippingFee(order.getShippingFee());
-        orderResponseDTO.setPaymentMethod(order.getPaymentMethod());
-        orderResponseDTO.setPaymentStatus(order.getPaymentStatus());
-        orderResponseDTO.setShippingStatus(order.getShippingStatus());
-        orderResponseDTO.setItems(getAddToCartResponseDTOS(items));
-        return orderResponseDTO;
     }
 
     private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items) {

@@ -11,7 +11,10 @@ INSERT INTO reviews (id, user_id, variant_id, rating, comment, is_hidden, is_rep
 (6, 'user-5', 1, 5, 'Sản phẩm chính hãng, check mã vạch ok.', false, false, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
 (7, 'user-2', 1, 4, 'Khá tốt, sẽ ủng hộ shop tiếp.', false, false, NOW() - INTERVAL '36 hours', NOW() - INTERVAL '36 hours'),
 (8, 'user-3', 1, 4, 'Đáng đồng tiền bát gạo.', false, false, NOW() - INTERVAL '24 hours', NOW() - INTERVAL '24 hours'),
-(9, 'user-4', 2, 4, 'Giao hàng hơi lâu nhưng sản phẩm rất tốt.', false, false, NOW() - INTERVAL '12 hours', NOW() - INTERVAL '12 hours');
+(9, 'user-4', 2, 4, 'Giao hàng hơi lâu nhưng sản phẩm rất tốt.', false, false, NOW() - INTERVAL '12 hours', NOW() - INTERVAL '12 hours'),
+(10, 'user-1', 3, 5, 'Tuyệt vời, sẽ quay lại!', false, false, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+(11, 'user-2', 4, 4, 'Dùng ổn, đáng mua.', false, false, NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
+(12, 'user-3', 5, 5, 'Rất hài lòng với sản phẩm này.', false, false, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days');
 
 INSERT INTO review_images (review_id, image_url) VALUES 
 (1, 'https://picsum.photos/400/400?random=1'),

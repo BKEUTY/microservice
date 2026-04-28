@@ -10,6 +10,7 @@ import com.bkeuty.order.dto.shipping.AddressDto;
 import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentMethod;
 import com.bkeuty.order.enums.PaymentStatus;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,7 +27,7 @@ public class OrderResponseDto {
     private BigDecimal shippingFee;
     private String estShippingDate;
     private PaymentMethod paymentMethod;
-    private LocalDate orderDate;
+    private LocalDateTime orderDate;
     private AddressDto address;
     private String buyerName;
     private String buyerPhoneNumber;
