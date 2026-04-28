@@ -49,9 +49,9 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   cloudinary:
-    cloud-name: ${CLOUDINARY_NAME}
-    api-key: ${CLOUDINARY_API_KEY}
-    api-secret: ${CLOUDINARY_API_SECRET}
+    cloud-name: ${CLOUDINARY_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
   #  cloud-name: dyzcl7cbe
   #  api-key: 643964737283187
   #  api-secret: W4zCsQq3qscuxqFWUpW3es4rQMs
@@ -64,7 +64,7 @@ spring:
 
 # Gemini API configuration
 gemini:
-  api-key: ${GEMINI_API_KEY:AIzaSyCetyI5NhqsPomJr6QbFDON7u_Os1qcnvw}
+  api-key: ${GEMINI_API_KEY:}
 
 server:
   port: 8081

@@ -1,0 +1,34 @@
+package com.bkeuty.chatbot.client;
+
+import com.bkeuty.chatbot.dto.ProductDetailDto;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class ProductClient {
+    @Qualifier("internalRestTemplate")
+    private final RestTemplate internalRestTemplate;
+
+    public String getProductContext() {
+        try {
+            return internalRestTemplate.getForObject("http://product/api/product?size=50&status=ACTIVE&minStock=1", String.class);
+        } catch (Exception e) {
+            log.error("Error fetching product context: {}", e.getMessage());
+            return "[]";
+        }
+    }
+
+    public ProductDetailDto getProductById(Integer id) {
+        try {
+            return internalRestTemplate.getForObject("http://product/api/product/{productId}", ProductDetailDto.class, id);
+        } catch (Exception e) {
+            log.error("Error fetching product detail data for ID {}: {}", id, e.getMessage());
+            return null;
+        }
+    }
+}
