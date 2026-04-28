@@ -165,13 +165,13 @@ public class GeminiService {
                             
                             List<Map<String, Object>> prunedList = new java.util.ArrayList<>();
                             if (products.isArray()) {
-                                    for (JsonNode p : products) {
-                                        Map<String, Object> pruned = new HashMap<>();
-                                        pruned.put("id", p.path("productId").asLong());
-                                        pruned.put("name", p.path("variantName").asText());
-                                        pruned.put("price", p.path("discountPrice").asDouble());
-                                        prunedList.add(pruned);
-                                    }
+                                for (JsonNode p : products) {
+                                    Map<String, Object> pruned = new HashMap<>();
+                                    pruned.put("id", p.path("productId").asLong());
+                                    pruned.put("name", p.path("variantName").asText());
+                                    pruned.put("price", p.path("discountPrice").asDouble());
+                                    prunedList.add(pruned);
+                                }
                             }
                             cachedCatalog = objectMapper.writeValueAsString(prunedList);
                         }
@@ -179,6 +179,10 @@ public class GeminiService {
                         log.info("Optimized product catalog cache updated.");
                     } catch (Exception e) {
                         log.error("Failed to update product catalog cache: {}", e.getMessage());
+                        lastCacheUpdate = System.currentTimeMillis();
+                        if (cachedCatalog == null) {
+                            cachedCatalog = "[]";
+                        }
                     }
                 }
             }
