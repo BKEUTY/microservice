@@ -13,6 +13,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import java.math.BigDecimal;
+import org.springframework.web.server.ResponseStatusException;
 import com.bkeuty.product.util.ProductSortUtils;
 
 import java.util.List;
@@ -35,10 +37,16 @@ public class ProductController {
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) String[] sort,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) @Min(0) Integer minStock) {
+            @RequestParam(required = false) @Min(0) Integer minStock,
+            @RequestParam(required = false) @Min(0) BigDecimal minPrice,
+            @RequestParam(required = false) @Min(0) BigDecimal maxPrice) {
+
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
+        }
 
         Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"));
-        return ResponseEntity.ok(productService.getListProductVariants(pageable, search, categoryId, status, minStock));
+        return ResponseEntity.ok(productService.getListProductVariants(pageable, search, categoryId, status, minStock, minPrice, maxPrice));
     }
 
     @GetMapping("/categories")

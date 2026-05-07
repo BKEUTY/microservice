@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Min;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import java.math.BigDecimal;
 import com.bkeuty.product.util.ProductSortUtils;
 
 import java.util.List;
@@ -69,14 +70,19 @@ public class ProductController {
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
-            @RequestParam(required = false) String[] sort) {
+            @RequestParam(required = false) String[] sort,
+            @RequestParam(required = false) @Min(0) BigDecimal minPrice,
+            @RequestParam(required = false) @Min(0) BigDecimal maxPrice) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
+        }
         return ResponseEntity.status(HttpStatus.OK)
-                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"))));
+                .body(adminProductService.getAllVariantsPaginated(search, categoryId, PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id")), minPrice, maxPrice));
     }
 
     @PostMapping()

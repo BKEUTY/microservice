@@ -61,7 +61,7 @@ public class ProductService {
     }
 
     @Transactional
-    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String search, Integer categoryId, String status, Integer minStock) {
+    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String search, Integer categoryId, String status, Integer minStock, BigDecimal minPrice, BigDecimal maxPrice) {
         Specification<ProductVariant> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             
@@ -95,6 +95,12 @@ public class ProductService {
 
             if (minStock != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("stockQuantity"), minStock));
+            }
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
             }
             
             query.distinct(true);
