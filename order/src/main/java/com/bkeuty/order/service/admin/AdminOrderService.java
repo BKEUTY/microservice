@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -159,7 +160,7 @@ public class AdminOrderService {
         }
 
         return AdminOrderDto.builder()
-                .id(order.getId())
+                .orderId(order.getId())
                 .userId(order.getUserId())
                 .userName(order.getUserName())
                 .total(order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO)
@@ -167,9 +168,13 @@ public class AdminOrderService {
                 .paymentMethod(order.getPaymentMethod() != null ? order.getPaymentMethod().toString() : null)
                 .paymentStatus(order.getPaymentStatus() != null ? order.getPaymentStatus().name() : null)
                 .shippingStatus(order.getShippingStatus())
-                .orderDate(order.getOrderDate() != null ? order.getOrderDate().toLocalDate() : LocalDate.now())
+                .estShippingDate(order.getEstimatedShippingDate())
+                .orderDate(order.getOrderDate() != null ? order.getOrderDate() : LocalDateTime.now())
                 .address(order.getAddress())
                 .status(order.getStatus() != null ? order.getStatus().name() : OrderStatus.NOT_CONFIRMED.name())
+                .buyerName(order.getBuyerName())
+                .buyerPhoneNumber(order.getBuyerNumber())
+                .buyerNote(order.getBuyerNote())
                 .items(itemDtos)
                 .availableStatuses(Arrays.stream(OrderStatus.values()).map(Enum::name).collect(Collectors.toList()))
                 .build();

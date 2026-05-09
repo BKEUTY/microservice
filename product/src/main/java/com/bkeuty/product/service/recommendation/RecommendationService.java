@@ -1,4 +1,5 @@
 package com.bkeuty.product.service.recommendation;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -6,6 +7,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -39,11 +41,12 @@ public class RecommendationService {
         this.reviewServiceCommunication = reviewServiceCommunication;
     }
 
+    @Cacheable(value = "recommendations", key = "'guest:' + T(java.time.LocalDateTime).now().getHour()", condition = "#userId == null")
     public RecommendationResponse getPersonalizedRecommendations(String userId) {
-        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 100));
+        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 30));
 
         if (userId == null) {
-            AIRankingService.AIResult guestResult = aiRankingService.getVariedRecommendations(candidates, "personalized:guest");
+            AIRankingService.AIResult guestResult = aiRankingService.getVariedRecommendations(candidates, "personalized:guest:" + LocalDateTime.now().getHour());
             return buildResponse(guestResult);
         }
 
@@ -61,7 +64,7 @@ public class RecommendationService {
     }
 
     public RecommendationResponse getRelatedProducts(String productName) {
-        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 100))
+        List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 30))
                 .stream()
                 .filter(v -> !v.getProductVariantName().equalsIgnoreCase(productName))
                 .collect(Collectors.toList());

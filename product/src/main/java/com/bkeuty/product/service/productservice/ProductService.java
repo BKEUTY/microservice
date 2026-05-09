@@ -61,7 +61,7 @@ public class ProductService {
     }
 
     @Transactional
-    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String search, Integer categoryId, String status) {
+    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String search, Integer categoryId, String status, Integer minStock, BigDecimal minPrice, BigDecimal maxPrice) {
         Specification<ProductVariant> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             
@@ -91,6 +91,16 @@ public class ProductService {
                 } catch (IllegalArgumentException e) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid product status: " + status);
                 }
+            }
+
+            if (minStock != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("stockQuantity"), minStock));
+            }
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
             }
             
             query.distinct(true);
@@ -222,6 +232,7 @@ public class ProductService {
                 .averageRating(productVariant.getAverageRating())
                 .reviewCount(productVariant.getReviewCount())
                 .sold(productVariant.getSold())
+                .stockQuantity(productVariant.getStockQuantity())
                 .build();
     }
 

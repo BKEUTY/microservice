@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class GeminiService {
     private static final Logger logger = LoggerFactory.getLogger(GeminiService.class);
     private static final String GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
@@ -27,11 +29,6 @@ public class GeminiService {
     
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-
-    public GeminiService() {
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
-    }
 
     public String getProductRecommendations(String prompt) {
         String systemPrompt = "You are a professional skincare and beauty consultant. Provide personalized advice in Vietnamese.";
@@ -91,7 +88,7 @@ public class GeminiService {
             requestBody.put("contents", List.of(content));
 
             Map<String, Object> generationConfig = new HashMap<>();
-            generationConfig.put("temperature", 0.0); // Strict determinism
+            generationConfig.put("temperature", 0.7); // Allow more variety
             generationConfig.put("topP", 1.0);
             generationConfig.put("maxOutputTokens", 1024);
             requestBody.put("generationConfig", generationConfig);

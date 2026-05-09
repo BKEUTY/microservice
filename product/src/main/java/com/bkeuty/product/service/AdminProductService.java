@@ -1,5 +1,6 @@
 package com.bkeuty.product.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -123,7 +124,7 @@ public class AdminProductService {
                 .toList();
     }
 
-    public Page<AdminProductVariantDto> getAllVariantsPaginated(String search, Integer categoryId, Pageable pageable) {
+    public Page<AdminProductVariantDto> getAllVariantsPaginated(String search, Integer categoryId, Pageable pageable, BigDecimal minPrice, BigDecimal maxPrice) {
         Specification<ProductVariant> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             
@@ -145,6 +146,12 @@ public class AdminProductService {
             
             if (categoryId != null) {
                 predicates.add(cb.equal(root.join("product").join("categories").get("id"), categoryId));
+            }
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
             }
             
             query.distinct(true);
