@@ -16,12 +16,12 @@ spring:
         format_sql: true
   kafka:
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: "shipping-service-group"
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -36,6 +36,7 @@ server:
 
 eureka:
   client:
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
 
@@ -43,7 +44,7 @@ springdoc:
   api-docs:
     path: /api/shipping/v3/api-docs
 ghn:
-  api-token: "7e4ff493-2f3f-11f1-a973-aee5264794df"
+  api-token: ${GHN_API_TOKEN:7e4ff493-2f3f-11f1-a973-aee5264794df}
   return-phone: "0898680945"
   return-address: "4/21, đường 15, khu phố 3"
   from-district-id: 3695

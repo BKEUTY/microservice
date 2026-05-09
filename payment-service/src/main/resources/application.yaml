@@ -16,7 +16,7 @@ spring:
         format_sql: true
   kafka:
     consumer:
-      bootstrap-servers: http://localhost:9092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       # Wrap the JsonDeserializer inside the ErrorHandlingDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
@@ -26,7 +26,7 @@ spring:
         sping.json.type.mapping: ""
       group-id: "payment-service-group"
     producer:
-      bootstrap-servers: http://localhost:9092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 server:
@@ -34,6 +34,7 @@ server:
 
 eureka:
   client:
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
 
@@ -41,7 +42,7 @@ springdoc:
   api-docs:
     path: /api/payment/v3/api-docs
 sepay:
-  api-key: 9DKDHVTKR4JGQFNIFXLO2NEZMHMSTVKDNIQTTQJ9DRQ0BLPUM4HPEEYHXVIVP5G5
+  api-key: ${SEPAY_API_KEY:9DKDHVTKR4JGQFNIFXLO2NEZMHMSTVKDNIQTTQJ9DRQ0BLPUM4HPEEYHXVIVP5G5}
   account-number: SEPQUANG210804
   bank: OCB
   template: compact

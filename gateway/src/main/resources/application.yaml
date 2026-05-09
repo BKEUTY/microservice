@@ -14,7 +14,8 @@ spring:
                 - SetStatus=403
 
             - id: product-service
-              uri: lb://product
+#              uri: lb://product
+              uri: ${PRODUCT_SERVICE_URL:http://localhost:8081}
               predicates:
                 - Path= /api/product/**, /api/category/**, /api/brand/**, /api/admin/product/**, /api/admin/category/**, /api/admin/brand/**
               filters:
@@ -24,7 +25,8 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
 
             - id: order-service
-              uri: lb://order
+#              uri: lb://order
+              uri: ${ORDER_SERVICE_URL:http://localhost:8082}
               predicates:
                 - Path= /api/order/**,/api/cart/**, /api/admin/order/**, /api/admin/cart/**, /api/admin/dashboard/**, /api/admin/reports/**
               filters:
@@ -33,7 +35,8 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: payment-service
-              uri: lb://payment-service
+#              uri: lb://payment-service
+              uri: ${PAYMENT_SERVICE_URL:http://localhost:8088}
               predicates:
                 - Path= /api/payment/**
               filters:
@@ -42,7 +45,8 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: shipping-service
-              uri: lb://shipping-service
+#              uri: lb://shipping-service
+              uri: ${SHIPPING_SERVICE_URL:http://localhost:8087}
               predicates:
                 - Path= /api/shipping/**, /api/address/**
               filters:
@@ -51,7 +55,8 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: auth-service
-              uri: lb://auth-service
+#              uri: lb://auth-service
+              uri: ${AUTH_SERVICE_URL:http://localhost:8083}
               predicates:
                 - Path= /api/auth/**
               filters:
@@ -60,7 +65,8 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: promotion-service
-              uri: lb://promotion-service
+#              uri: lb://promotion-service
+              uri: ${PROMOTION_SERVICE_URL:http://localhost:8084}
               predicates:
                 - Path= /api/promotion/**, /api/admin/promotion/**
               filters:
@@ -69,7 +75,8 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: review-service
-              uri: lb://review-service
+#              uri: lb://review-service
+              uri: ${REVIEW_SERVICE_URL:http://localhost:8085}
               predicates:
                 - Path= /api/review/**, /api/user/reviews/**, /api/admin/reviews/**, /api/reviews/**
               filters:
@@ -78,7 +85,8 @@ spring:
                 - RemoveResponseHeader=Access-Control-Allow-Headers
                 - RemoveResponseHeader=Access-Control-Allow-Credentials
             - id: user-service
-              uri: lb://user-service
+#              uri: lb://user-service
+              uri: ${USER_SERVICE_URL:http://localhost:8086}
               predicates:
                 - Path= /api/user/** , /api/admin/user/**
               filters:
@@ -89,6 +97,7 @@ spring:
 eureka:
   client:
     service-url:
+      enabled: ${EUREKA_ENABLED:false}
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
 
 springdoc:

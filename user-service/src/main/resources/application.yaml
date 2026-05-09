@@ -5,6 +5,7 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+    enabled: ${EUREKA_ENABLED:true}
 server:
   port: 8086
 
@@ -12,8 +13,8 @@ springdoc:
   api-docs:
     path: /api/user/v3/api-docs
 keycloak:
-  server-url: http://localhost:8181
-  issuer: http://localhost:8181/realms/bkeuty
-  realm: bkeuty
-  client-id: bkeuty-user-service
-  client-secret: BVTdsuPlcW7Y8hDvO1xfgEWf1s063FQ1
+  server-url: ${KEYCLOAK_BASE_URL:http://localhost:8181}
+  issuer: ${KEYCLOAK_ISSUER:http://localhost:8181/realms/bkeuty}
+  realm: ${REALM:bkeuty}
+  client-id: ${CLIENT_ID:bkeuty-user-service}
+  client-secret: ${CLIENT_SECRET:BVTdsuPlcW7Y8hDvO1xfgEWf1s063FQ1}

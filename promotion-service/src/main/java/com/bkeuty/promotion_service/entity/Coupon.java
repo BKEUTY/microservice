@@ -1,5 +1,6 @@
 package com.bkeuty.promotion_service.entity;
 
+import com.bkeuty.promotion_service.enums.CouponType;
 import com.bkeuty.promotion_service.enums.DiscountType;
 import com.bkeuty.promotion_service.enums.PromotionStatus;
 import jakarta.persistence.*;
@@ -24,8 +25,15 @@ public class Coupon {
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private PromotionStatus status;
+
+    @Enumerated(EnumType.STRING)
     private DiscountType discountType;
     private Integer discountValue;
     private Integer maxDiscount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "coupon_type", insertable = false, updatable = false)
+    protected CouponType couponType;
+
 
 }

@@ -35,7 +35,6 @@ spring:
 #      mode: always
   kafka:
     consumer:
-      bootstrap-servers: http://localhost:9092
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       # Wrap the JsonDeserializer inside the ErrorHandlingDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
@@ -45,9 +44,9 @@ spring:
         spring.json.type.mapping: "com.bkeuty.order.dto.order.DecreaseStockRequestDto:com.bkeuty.product.dto.user.order.DecreaseStockRequestDto"
       group-id: "product-service-group"
     producer:
-      bootstrap-servers: http://localhost:9092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   cloudinary:
     cloud-name: ${CLOUDINARY_NAME}
     api-key: ${CLOUDINARY_API_KEY}
@@ -71,6 +70,7 @@ server:
 
 eureka:
   client:
+    enabled: ${EUREKA_ENABLED:false}
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
 

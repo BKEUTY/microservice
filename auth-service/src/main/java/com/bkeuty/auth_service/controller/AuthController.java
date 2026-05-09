@@ -82,7 +82,10 @@ public class AuthController {
         }
         return ResponseEntity.ok("Logged out successfully");
     }
-
+    @GetMapping("/healthcheck")
+    public ResponseEntity<?> getHealthCheck() {
+        return ResponseEntity.ok("Healthcheck");
+    }
     private void setCookie(HttpServletResponse response, String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);

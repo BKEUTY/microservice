@@ -23,12 +23,12 @@ spring:
 #      mode: always
   kafka:
     producer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: "order-service-group"
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -56,19 +56,20 @@ eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+    enabled: ${EUREKA_ENABLED:false}
 
 springdoc:
   api-docs:
     path: /api/order/v3/api-docs
 
 sepay:
-  api-key: 9DKDHVTKR4JGQFNIFXLO2NEZMHMSTVKDNIQTTQJ9DRQ0BLPUM4HPEEYHXVIVP5G5
+  api-key: ${SEPAY_API_KEY:9DKDHVTKR4JGQFNIFXLO2NEZMHMSTVKDNIQTTQJ9DRQ0BLPUM4HPEEYHXVIVP5G5}
   account-number: SEPQUANG210804
   bank: OCB
   template: compact
 
 ghn:
-  api-token: "7e4ff493-2f3f-11f1-a973-aee5264794df"
+  api-token: ${GHN_API_TOKEN:7e4ff493-2f3f-11f1-a973-aee5264794df}
   return-phone: "0898680945"
   return-address: "4/21, đường 15, khu phố 3"
   from-district-id: 3695

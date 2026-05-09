@@ -26,7 +26,10 @@ public class ProductController {
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
-
+    @GetMapping("/healthcheck")
+    public ResponseEntity<?> getHealthCheck() {
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
     @GetMapping()
     public ResponseEntity<Page<DisplayProductDto>> getProducts(
             @RequestParam(defaultValue = "1") @Min(1) int page,
