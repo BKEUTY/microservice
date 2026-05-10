@@ -39,7 +39,7 @@ public class PromotionService {
     private final UserVoucherRepository userVoucherRepository;
     private final StringRedisTemplate redisTemplate;
 
-    public Page<PromotionResponseDto> findAll(String title, PromotionStatus status, LocalDateTime startAt, LocalDateTime endAt, Pageable pageable) {
+    public Page<PromotionResponseDto> findAll(String title, PromotionStatus status, LocalDateTime startAt, LocalDateTime endAt, String userId, Pageable pageable) {
         Specification<Promotion> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (title != null && !title.isEmpty()) {
@@ -56,10 +56,10 @@ public class PromotionService {
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
-        return promotionRepository.findAll(spec, pageable).map(this::toDto);
+        return promotionRepository.findAll(spec, pageable).map(p -> this.toDto(p, userId));
     }
 
-    private PromotionResponseDto toDto(Promotion promotion) {
+    private PromotionResponseDto toDto(Promotion promotion, String userId) {
         PromotionResponseDto.PromotionResponseDtoBuilder builder = PromotionResponseDto.builder()
                 .id(promotion.getId())
                 .title(promotion.getTitle())
@@ -84,6 +84,14 @@ public class PromotionService {
                 .remainingQuantity(voucherPromotion.getRemainingQuantity())
                 .minOrderValue(voucherPromotion.getMinOrderValue())
                 .usageLimitPerUser(voucherPromotion.getUsageLimitPerUser());
+                
+            if (userId != null) {
+                String usageKey = "voucher:" + voucherPromotion.getId() + ":user:" + userId + ":usage";
+                String usageStr = redisTemplate.opsForValue().get(usageKey);
+                int currentUsage = usageStr != null ? Integer.parseInt(usageStr) : 0;
+                builder.currentUserUsage(currentUsage);
+                builder.remainingUsages(Math.max(0, (voucherPromotion.getUsageLimitPerUser() != null ? voucherPromotion.getUsageLimitPerUser() : 1) - currentUsage));
+            }
         }
         return builder.build();
     }

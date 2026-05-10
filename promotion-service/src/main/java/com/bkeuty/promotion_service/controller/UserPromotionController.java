@@ -32,6 +32,7 @@ public class UserPromotionController {
             @RequestParam(required = false) PromotionStatus status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
+            @RequestParam(required = false) String userId,
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "id,asc") String[] sort) {
@@ -39,6 +40,6 @@ public class UserPromotionController {
         Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
         
         return ResponseEntity.status(HttpStatus.OK)
-                .body(promotionService.findAll(title, status, startAt, endAt, pageable));
+                .body(promotionService.findAll(title, status, startAt, endAt, userId, pageable));
     }
 }

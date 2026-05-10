@@ -15,7 +15,7 @@ public class VoucherController {
     private final PromotionService promotionService;
 
     @PostMapping("/{voucherId}/apply")
-    public ResponseEntity<BigDecimal> applyVoucher(
+    public ResponseEntity<?> applyVoucher(
             @PathVariable Integer voucherId,
             @RequestParam String userId,
             @RequestParam BigDecimal subtotal) {
@@ -23,7 +23,7 @@ public class VoucherController {
             BigDecimal discountAmount = promotionService.applyVoucher(userId, voucherId, subtotal);
             return ResponseEntity.ok(discountAmount);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(BigDecimal.ZERO);
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 }

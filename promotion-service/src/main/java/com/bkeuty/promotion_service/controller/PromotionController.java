@@ -81,6 +81,6 @@ public class PromotionController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
-        return ResponseEntity.status(HttpStatus.OK).body(promotionService.findAll(title, status, startAt, endAt, pageable));
+        return ResponseEntity.status(HttpStatus.OK).body(promotionService.findAll(title, status, startAt, endAt, null, pageable));
     }
 }

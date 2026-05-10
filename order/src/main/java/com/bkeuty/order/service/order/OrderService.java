@@ -33,9 +33,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -187,7 +187,7 @@ public class OrderService {
                             item.setVoucherDiscountAmount(remainder);
                         } else {
                             BigDecimal itemShare = itemSubtotal.multiply(voucherDiscountAmount)
-                                    .divide(preVoucherTotal, 2, java.math.RoundingMode.HALF_UP);
+                                    .divide(preVoucherTotal, 2, RoundingMode.HALF_UP);
                             item.setVoucherDiscountAmount(itemShare);
                             totalApportioned = totalApportioned.add(itemShare);
                         }
@@ -199,6 +199,10 @@ public class OrderService {
                         totalAmount = BigDecimal.ZERO;
                     }
                 }
+            } catch (WebClientResponseException e) {
+                String body = e.getResponseBodyAsString();
+                String message = body.replaceAll(".*\"message\":\"([^\"]*)\".*", "$1");
+                throw new ResponseStatusException(e.getStatusCode(), message);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to apply voucher: " + e.getMessage());
             }

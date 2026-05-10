@@ -35,4 +35,6 @@ public class PromotionResponseDto {
     private Integer remainingQuantity;
     private BigDecimal minOrderValue;
     private Integer usageLimitPerUser;
+    private Integer currentUserUsage;
+    private Integer remainingUsages;
 }
