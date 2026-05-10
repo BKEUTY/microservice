@@ -49,6 +49,7 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
     private final WebClient productWebClient;
+    private final WebClient promotionWebClient;
     private final ShippingService  shippingService;
     @Value("${sepay.account-number:}")
     private String accountNumber;
@@ -57,11 +58,12 @@ public class OrderService {
     @Value("${sepay.template:}")
     private String template;
     private final KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate;
-    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient, GHNCommunication ghnCommunication, ShippingService shippingService, KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate) {
+    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient, WebClient promotionWebClient, GHNCommunication ghnCommunication, ShippingService shippingService, KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
         this.orderItemRepository = orderItemRepository;
         this.productWebClient = productWebClient;
+        this.promotionWebClient = promotionWebClient;
         this.shippingService = shippingService;
         this.kafkaTemplate = kafkaTemplate;
     }
@@ -96,6 +98,7 @@ public class OrderService {
         List<OrderItemDto> decreaseVariants = new ArrayList<>();
         List<AddToCartResponseDto> items = new ArrayList<>();
         List<Integer> buyVariants = new ArrayList<>();
+        List<OrderItem> savedOrderItems = new ArrayList<>(); // Track items for apportionment
         for (OrderCartItemDto orderCartItemDto : orderItemList) {
             CartItem cartItems = cartItemRepository.findById(orderCartItemDto.getCartItemId())
                     .orElseThrow(() -> new CartItemNotFound("Cart item not found", orderCartItemDto.getCartItemId()));
@@ -113,7 +116,6 @@ public class OrderService {
                     }).block();
             for (OrderItemDto variants : decreaseVariants) {
                 if(buyProductVariantMap!=null && buyProductVariantMap.containsKey(variants.getProductVariantId()) && buyProductVariantMap.get(variants.getProductVariantId()) != null) {
-                    System.out.println("Create Order Item");
                     ProductVariantDto dto = buyProductVariantMap.get(variants.getProductVariantId());
                     if (dto.getStockQuantity() < variants.getQuantity()) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product '" + dto.getProductVariantName() + "' only has " + dto.getStockQuantity() + " in stock.");
@@ -143,13 +145,10 @@ public class OrderService {
                     orderItem.setPromotionPrice(dto.getPromotionPrice());
                     orderItem.setProductImageUrl(dto.getProductImageUrl());
                     orderItem.setProductDescription(dto.getProductVariantDescription());
-                    orderItemRepository.save(orderItem);
+                    OrderItem savedItem = orderItemRepository.save(orderItem);
+                    savedOrderItems.add(savedItem);
                     items.add(addToCartResponseDTO);
                 }
-                else {
-                    System.out.println("Item is null");
-                }
-
             }
         } catch (ResponseStatusException e) {
             throw e;
@@ -158,6 +157,53 @@ public class OrderService {
         } catch (Exception e) {
             throw new RuntimeException("Internal error processing stock: " + e.getMessage());
         }
+
+        BigDecimal voucherDiscountAmount = BigDecimal.ZERO;
+        BigDecimal preVoucherTotal = totalAmount; 
+        if (request.getVoucherId() != null && !savedOrderItems.isEmpty()) {
+            try {
+                voucherDiscountAmount = promotionWebClient.post()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/api/promotion/internal/vouchers/{voucherId}/apply")
+                                .queryParam("userId", userInfo.getUserId())
+                                .queryParam("subtotal", preVoucherTotal)
+                                .build(request.getVoucherId()))
+                        .retrieve()
+                        .bodyToMono(BigDecimal.class)
+                        .block();
+                
+                if (voucherDiscountAmount != null && voucherDiscountAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    orderSave.setVoucherId(request.getVoucherId());
+                    orderSave.setVoucherDiscountAmount(voucherDiscountAmount);
+                    
+                    BigDecimal totalApportioned = BigDecimal.ZERO;
+                    for (int i = 0; i < savedOrderItems.size(); i++) {
+                        OrderItem item = savedOrderItems.get(i);
+                        BigDecimal itemPrice = item.getPromotionPrice() != null ? item.getPromotionPrice() : item.getProductVariantPrice();
+                        BigDecimal itemSubtotal = itemPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+                        
+                        if (i == savedOrderItems.size() - 1) {
+                            BigDecimal remainder = voucherDiscountAmount.subtract(totalApportioned);
+                            item.setVoucherDiscountAmount(remainder);
+                        } else {
+                            BigDecimal itemShare = itemSubtotal.multiply(voucherDiscountAmount)
+                                    .divide(preVoucherTotal, 2, java.math.RoundingMode.HALF_UP);
+                            item.setVoucherDiscountAmount(itemShare);
+                            totalApportioned = totalApportioned.add(itemShare);
+                        }
+                        orderItemRepository.save(item);
+                    }
+
+                    totalAmount = totalAmount.subtract(voucherDiscountAmount);
+                    if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
+                        totalAmount = BigDecimal.ZERO;
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to apply voucher: " + e.getMessage());
+            }
+        }
+
         orderSave.setTotal(totalAmount);
         orderRepository.save(orderSave);
 
@@ -294,12 +340,13 @@ public class OrderService {
                 .status(order.getStatus())
                 .paymentStatus(order.getPaymentStatus())
                 .shippingStatus(order.getShippingStatus())
-                .shippingFee(order.getShippingFee())
+                .shippingFee(emptyIfNull(order.getShippingFee(), BigDecimal.ZERO))
                 .estShippingDate(order.getEstimatedShippingDate())
                 .buyerName(order.getBuyerName())
                 .buyerPhoneNumber(order.getBuyerNumber())
                 .buyerNote(order.getBuyerNote())
                 .qrCodeLink(order.getPaymentMethod() == PaymentMethod.BANK ? generateQrCode(order.getTotal().add(order.getShippingFee() != null ? order.getShippingFee() : BigDecimal.ZERO), order.getId()) : null)
+                .voucherDiscountAmount(emptyIfNull(order.getVoucherDiscountAmount(), BigDecimal.ZERO))
                 .build();
 
         List<AddToCartResponseDto> itemDtos = new ArrayList<>();
@@ -316,6 +363,7 @@ public class OrderService {
                                     .price(item.getProductVariantPrice())
                                     .promotionPrice(item.getPromotionPrice())
                                     .quantity(item.getQuantity())
+                                    .voucherDiscountAmount(emptyIfNull(item.getVoucherDiscountAmount(), BigDecimal.ZERO))
                                     .build();
                         } else {
                             if (item.getProductVariantId() != null) {

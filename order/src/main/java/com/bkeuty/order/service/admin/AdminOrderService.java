@@ -129,6 +129,7 @@ public class AdminOrderService {
                                     .price(item.getProductVariantPrice())
                                     .promotionPrice(item.getPromotionPrice())
                                     .quantity(item.getQuantity())
+                                    .voucherDiscountAmount(item.getVoucherDiscountAmount() != null ? item.getVoucherDiscountAmount() : BigDecimal.ZERO)
                                     .build();
                         } else {
                             if (item.getProductVariantId() != null) missingVariantIds.add(item.getProductVariantId());
@@ -152,6 +153,7 @@ public class AdminOrderService {
                                     .price(dto.getPrice())
                                     .promotionPrice(dto.getPromotionPrice())
                                     .quantity(item.getQuantity())
+                                    .voucherDiscountAmount(item.getVoucherDiscountAmount() != null ? item.getVoucherDiscountAmount() : BigDecimal.ZERO)
                                     .build();
                         })
                         .filter(Objects::nonNull)

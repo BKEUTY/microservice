@@ -10,11 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+
 
 @Service
 @Transactional(readOnly = true)
@@ -46,6 +49,28 @@ public class AdminDashboardService {
         Long totalProductsSold = orderRepository.sumProductsSoldByDateRangeAndStatus(start, end, COMPLETED_STATUSES);
         Long totalUsers = fetchUserCount(start, end, token);
 
+        Double ordersGrowth = 0.0;
+        Double revenueGrowth = 0.0;
+        Double productsSoldGrowth = 0.0;
+        Double customersGrowth = 0.0;
+
+        if (startDate != null) {
+            long days = ChronoUnit.DAYS.between(start, end);
+
+            LocalDateTime prevStart = start.minusDays(days + 1);
+            LocalDateTime prevEnd = start.minusNanos(1);
+
+            Long prevOrders = orderRepository.countOrdersByDateRangeAndStatus(prevStart, prevEnd, COMPLETED_STATUSES);
+            BigDecimal prevRevenue = orderRepository.sumRevenueByDateRangeAndStatus(prevStart, prevEnd, COMPLETED_STATUSES);
+            Long prevProductsSold = orderRepository.sumProductsSoldByDateRangeAndStatus(prevStart, prevEnd, COMPLETED_STATUSES);
+            Long prevUsers = fetchUserCount(prevStart, prevEnd, token);
+
+            ordersGrowth = calculateGrowth(prevOrders, totalOrders);
+            revenueGrowth = calculateGrowth(prevRevenue, totalRevenue);
+            productsSoldGrowth = calculateGrowth(prevProductsSold, totalProductsSold);
+            customersGrowth = calculateGrowth(prevUsers, totalUsers);
+        }
+
         List<VariantPerformanceDto> variantPerformances = orderRepository.findVariantPerformanceByDateRangeAndStatus(start, end, COMPLETED_STATUSES);
         PerformanceAggregationResponseDto analytics = fetchTopPerformers(variantPerformances, token);
 
@@ -53,12 +78,17 @@ public class AdminDashboardService {
 
         DashboardDto.Overview overview = DashboardDto.Overview.builder()
                 .totalOrders(totalOrders != null ? totalOrders : 0L)
+                .ordersGrowth(ordersGrowth)
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
+                .revenueGrowth(revenueGrowth)
                 .totalShippingFee(totalShippingFee != null ? totalShippingFee : BigDecimal.ZERO)
                 .totalProfit(totalProfit)
                 .totalProductsSold(totalProductsSold != null ? totalProductsSold : 0L)
+                .productsSoldGrowth(productsSoldGrowth)
                 .totalRegisteredCustomers(totalUsers != null ? totalUsers : 0L)
+                .customersGrowth(customersGrowth)
                 .build();
+
 
         List<ChartDataDto> chartData = orderRepository.findRevenueChartDataByDateRange(start, end, COMPLETED_STATUSES);
         List<DailyProductPerformanceDto> productDetail = orderRepository.findDetailedItemPerformance(start, end, COMPLETED_STATUSES);
@@ -79,13 +109,13 @@ public class AdminDashboardService {
                     brandDetail.add(new TransactionalPerformanceDto(
                         item.getDate(), mapping.getBrandId(), mapping.getBrandName(),
                         item.getVariantId(), mapping.getVariantName(),
-                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice()));
+                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice(), item.getVoucherDiscount()));
                 }
                 if (mapping.getCategoryId() != null) {
                     categoryDetail.add(new TransactionalPerformanceDto(
                         item.getDate(), mapping.getCategoryId(), mapping.getCategoryName(),
                         item.getVariantId(), mapping.getVariantName(),
-                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice()));
+                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice(), item.getVoucherDiscount()));
                 }
             });
         }
@@ -185,6 +215,28 @@ public class AdminDashboardService {
             log.error("Failed to fetch analytics", e);
             return emptyPerformance();
         }
+    }
+
+    private Double calculateGrowth(Long previous, Long current) {
+        return calculateGrowth(
+            previous != null ? BigDecimal.valueOf(previous) : BigDecimal.ZERO,
+            current != null ? BigDecimal.valueOf(current) : BigDecimal.ZERO
+        );
+    }
+
+    private Double calculateGrowth(BigDecimal previous, BigDecimal current) {
+        BigDecimal prev = previous != null ? previous : BigDecimal.ZERO;
+        BigDecimal curr = current != null ? current : BigDecimal.ZERO;
+
+        if (prev.compareTo(BigDecimal.ZERO) == 0) {
+            return curr.compareTo(BigDecimal.ZERO) > 0 ? 100.0 : 0.0;
+        }
+
+        return curr.subtract(prev)
+                .divide(prev, 4, RoundingMode.HALF_UP)
+
+                .multiply(BigDecimal.valueOf(100))
+                .doubleValue();
     }
 
     private PerformanceAggregationResponseDto emptyPerformance() {

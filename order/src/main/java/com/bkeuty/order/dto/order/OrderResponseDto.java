@@ -36,5 +36,6 @@ public class OrderResponseDto {
     private PaymentStatus paymentStatus;
     private String shippingStatus;
     private String qrCodeLink;
+    private BigDecimal voucherDiscountAmount;
     private List<AddToCartResponseDto> items;
 }

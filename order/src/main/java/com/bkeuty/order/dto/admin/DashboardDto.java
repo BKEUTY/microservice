@@ -28,9 +28,13 @@ public class DashboardDto {
     @AllArgsConstructor
     public static class Overview {
         private Long totalProductsSold;
+        private Double productsSoldGrowth;
         private Long totalRegisteredCustomers;
+        private Double customersGrowth;
         private Long totalOrders;
+        private Double ordersGrowth;
         private BigDecimal totalRevenue;
+        private Double revenueGrowth;
         private BigDecimal totalShippingFee;
         private BigDecimal totalProfit;
     }

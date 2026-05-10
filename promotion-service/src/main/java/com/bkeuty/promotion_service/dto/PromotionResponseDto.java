@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.math.BigDecimal;
 
 @Data
 @AllArgsConstructor
@@ -29,4 +30,9 @@ public class PromotionResponseDto {
     private Set<Integer> categoryIds;
     private Set<Integer> brandIds;
     private Set<Integer> productIds;
+    private String code;
+    private Integer totalQuantity;
+    private Integer remainingQuantity;
+    private BigDecimal minOrderValue;
+    private Integer usageLimitPerUser;
 }

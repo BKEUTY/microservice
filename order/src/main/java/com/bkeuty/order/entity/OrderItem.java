@@ -13,7 +13,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 @Data
@@ -40,6 +40,10 @@ public class OrderItem {
     @Column(name = "product_description", columnDefinition = "TEXT")
     private String productDescription;
 
+    @Column(name = "voucher_discount_amount", precision = 19, scale = 2)
+    @Builder.Default
+    private BigDecimal voucherDiscountAmount = BigDecimal.ZERO;
+
     @Column
     private BigDecimal productVariantPrice;
     @ManyToOne
@@ -49,4 +53,15 @@ public class OrderItem {
     private boolean isReviewed = false;
     @Builder.Default
     private Boolean decreasedStockFailed = false;
+
+    public BigDecimal calculateUnitRefundAmount() {
+        BigDecimal effectivePrice = promotionPrice != null ? promotionPrice : productVariantPrice;
+        
+        if (voucherDiscountAmount.compareTo(BigDecimal.ZERO) == 0 || quantity == 0) {
+            return effectivePrice;
+        }
+
+        BigDecimal unitVoucherDiscount = voucherDiscountAmount.divide(BigDecimal.valueOf(quantity), 2, RoundingMode.HALF_UP);
+        return effectivePrice.subtract(unitVoucherDiscount).max(BigDecimal.ZERO);
+    }
 }

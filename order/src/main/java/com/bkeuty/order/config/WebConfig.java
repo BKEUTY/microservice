@@ -60,6 +60,11 @@ public class WebConfig implements WebMvcConfigurer {
     public WebClient GHNWebClient(@Qualifier("defaultWebClientBuilder") WebClient.Builder builder) {
         return builder.baseUrl("https://dev-online-gateway.ghn.vn").build();
     }
+    
+    @Bean
+    public WebClient promotionWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
+        return builder.baseUrl("http://promotion-service").build();
+    }
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";

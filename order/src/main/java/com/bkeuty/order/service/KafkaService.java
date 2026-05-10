@@ -2,6 +2,7 @@ package com.bkeuty.order.service;
 
 import com.bkeuty.order.dto.order.DecreaseStockResponseDto;
 import com.bkeuty.order.dto.order.DecreaseStockStatusDto;
+import com.bkeuty.order.dto.order.OrderEventDto;
 import com.bkeuty.order.dto.shipping.*;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
@@ -22,12 +23,14 @@ public class KafkaService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate;
+    KafkaTemplate<String, Object> kafkaEventTemplate;
     Logger logger = Logger.getLogger(KafkaService.class);
 
-    public KafkaService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,  KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate) {
+    public KafkaService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,  KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate, KafkaTemplate<String, Object> kafkaEventTemplate) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.kafkaCreateShippingOrderTemplate = kafkaCreateShippingOrderTemplate;
+        this.kafkaEventTemplate = kafkaEventTemplate;
     }
     @KafkaListener(topics = "payment-transaction-topic")
     public void listenPaymentTransactionTopic(String message){
@@ -48,6 +51,14 @@ public class KafkaService {
                     .items(orderItems!=null?orderItems.stream().map(this::toShippingItemDto).toList():null)
                     .build();
             kafkaCreateShippingOrderTemplate.send("create-shipping-order-topic", CreateShippingOrderMessage.builder().createShippingOrderDto(createShippingOrderDto).orderId(Integer.valueOf(message)).build());
+            
+            // Notify promotion service to commit voucher
+            if (order.getVoucherId() != null) {
+                OrderEventDto event = new OrderEventDto(
+                    order.getId(), order.getUserId(), order.getVoucherId(), "COMPLETED"
+                );
+                kafkaEventTemplate.send("order-completed-topic", event);
+            }
         }
     }
     @KafkaListener(topics = "decrease-stock-status-topic")
@@ -78,6 +89,13 @@ public class KafkaService {
                 }
             }
 
+            // Notify promotion service to refund voucher
+            if (order.getVoucherId() != null) {
+                OrderEventDto event = new OrderEventDto(
+                    order.getId(), order.getUserId(), order.getVoucherId(), "FAILED"
+                );
+                kafkaEventTemplate.send("order-failed-topic", event);
+            }
         }
 
     }

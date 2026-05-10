@@ -20,4 +20,5 @@ public class PlaceOrderRequestDto {
     private String note;
     private List<OrderCartItemDto> orderItems;
     private BigDecimal shippingFee;
+    private Integer voucherId;
 }

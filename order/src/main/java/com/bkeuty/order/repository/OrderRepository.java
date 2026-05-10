@@ -60,8 +60,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
         SELECT new com.bkeuty.order.dto.admin.VariantPerformanceDto(
             i.productVariantId,
             SUM(CAST(i.quantity AS long)),
-            SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
-                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity)
+            SUM((CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
+                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0))
         ) FROM OrderItem i JOIN i.order o
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
         GROUP BY i.productVariantId""")
@@ -116,8 +116,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(
             o.orderDate, i.productVariantId, i.productVariantName, CAST(i.quantity AS long),
-            CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
-                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity, i.productVariantPrice,i.promotionPrice
+            (CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
+                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0), i.productVariantPrice, i.promotionPrice, COALESCE(i.voucherDiscountAmount, 0)
         ) FROM OrderItem i JOIN i.order o
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
         ORDER BY o.orderDate DESC""")
