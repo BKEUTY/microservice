@@ -39,14 +39,16 @@ public class ProductController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @Min(0) Integer minStock,
             @RequestParam(required = false) @Min(0) BigDecimal minPrice,
-            @RequestParam(required = false) @Min(0) BigDecimal maxPrice) {
+            @RequestParam(required = false) @Min(0) BigDecimal maxPrice,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) Integer membershipLevel) {
 
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
         }
 
         Pageable pageable = PageRequest.of(page - 1, size, ProductSortUtils.parseVariantSort(sort, "id"));
-        return ResponseEntity.ok(productService.getListProductVariants(pageable, search, categoryId, status, minStock, minPrice, maxPrice));
+        return ResponseEntity.ok(productService.getListProductVariants(pageable, search, categoryId, status, minStock, minPrice, maxPrice, userId, membershipLevel));
     }
 
     @GetMapping("/categories")
@@ -55,8 +57,10 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<ProductDetailDto> getProductById(@PathVariable Integer productId) {
-        ProductDetailDto dto = productService.getProductVariantById(productId);
+    public ResponseEntity<ProductDetailDto> getProductById(@PathVariable Integer productId, 
+                                                           @RequestParam(required = false) String userId,
+                                                           @RequestParam(required = false) Integer membershipLevel) {
+        ProductDetailDto dto = productService.getProductVariantById(productId, userId, membershipLevel);
         if (dto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -64,8 +68,10 @@ public class ProductController {
     }
 
     @GetMapping("/name/{variantName}")
-    public ResponseEntity<ProductDetailDto> getProductByName(@PathVariable String variantName) {
-        ProductDetailDto dto = productService.getProductVariantByName(variantName);
+    public ResponseEntity<ProductDetailDto> getProductByName(@PathVariable String variantName,
+                                                             @RequestParam(required = false) String userId,
+                                                             @RequestParam(required = false) Integer membershipLevel) {
+        ProductDetailDto dto = productService.getProductVariantByName(variantName, userId, membershipLevel);
         if (dto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

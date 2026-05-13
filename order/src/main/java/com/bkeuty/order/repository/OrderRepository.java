@@ -97,21 +97,38 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
 
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.DashboardOrderDto(
-            cast(o.id as string), o.userName, o.orderDate, COALESCE(o.total, 0), COALESCE(o.shippingFee, 0), cast(o.status as string)
-        ) FROM Order o
+            cast(o.id as string), o.userName, o.orderDate, 
+            SUM(i.productVariantPrice * i.quantity),
+            SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity),
+            COALESCE(o.voucherDiscountAmount, 0),
+            COALESCE(o.shippingFee, 0),
+            COALESCE(o.total, 0),
+            cast(o.status as string)
+        ) FROM Order o JOIN o.orderItems i
+        GROUP BY o.id, o.userName, o.orderDate, o.total, o.shippingFee, o.status, o.voucherDiscountAmount
         ORDER BY o.id DESC""")
     List<DashboardOrderDto> findRecentOrders(Pageable pageable);
 
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.DashboardOrderDto(
-            cast(o.id as string), o.userName, o.orderDate, COALESCE(o.total, 0), COALESCE(o.shippingFee, 0), cast(o.status as string)
-        ) FROM Order o
+            cast(o.id as string), o.userName, o.orderDate,
+            SUM(i.productVariantPrice * i.quantity),
+            SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity),
+            COALESCE(o.voucherDiscountAmount, 0),
+            COALESCE(o.shippingFee, 0),
+            COALESCE(o.total, 0),
+            cast(o.status as string)
+        ) FROM Order o JOIN o.orderItems i
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+        GROUP BY o.id, o.userName, o.orderDate, o.total, o.shippingFee, o.status, o.voucherDiscountAmount
         ORDER BY o.orderDate DESC""")
     List<DashboardOrderDto> findAllOrdersInDateRange(
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
         @Param("statuses") Collection<OrderStatus> statuses);
+
+    @Query("SELECT COALESCE(SUM(o.total + o.shippingFee), 0) FROM Order o WHERE o.userId = :userId AND o.status IN :statuses")
+    BigDecimal sumTotalSpendingByUserId(@Param("userId") String userId, @Param("statuses") Collection<OrderStatus> statuses);
 
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(

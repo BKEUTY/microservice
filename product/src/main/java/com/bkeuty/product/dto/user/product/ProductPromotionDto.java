@@ -18,4 +18,6 @@ public class ProductPromotionDto {
     private List<Integer> categoryIds;
     private Integer brandId;
     private BigDecimal price;
+    private String userId;
+    private Integer membershipLevel;
 }

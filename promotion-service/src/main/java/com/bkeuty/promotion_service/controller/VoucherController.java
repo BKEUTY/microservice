@@ -18,9 +18,10 @@ public class VoucherController {
     public ResponseEntity<?> applyVoucher(
             @PathVariable Integer voucherId,
             @RequestParam String userId,
+            @RequestParam Integer membershipLevel,
             @RequestParam BigDecimal subtotal) {
         try {
-            BigDecimal discountAmount = promotionService.applyVoucher(userId, voucherId, subtotal);
+            BigDecimal discountAmount = promotionService.applyVoucher(userId, membershipLevel, voucherId, subtotal);
             return ResponseEntity.ok(discountAmount);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));

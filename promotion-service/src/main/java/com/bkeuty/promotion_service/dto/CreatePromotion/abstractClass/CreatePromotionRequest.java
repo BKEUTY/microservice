@@ -1,6 +1,8 @@
 package com.bkeuty.promotion_service.dto.CreatePromotion.abstractClass;
 
 import com.bkeuty.promotion_service.dto.CreatePromotion.CreateProductPromotionRequest;
+import com.bkeuty.promotion_service.dto.CreatePromotion.CreateVoucherPromotionRequest;
+import com.bkeuty.promotion_service.dto.CreatePromotion.CreateUserPromotionRequest;
 import com.bkeuty.promotion_service.enums.DiscountType;
 import com.bkeuty.promotion_service.enums.PromotionStatus;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -17,7 +19,9 @@ import java.time.LocalDateTime;
         visible = true // Keeps the "type" field accessible in the DTO
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = CreateProductPromotionRequest.class, name = "PRODUCT")
+        @JsonSubTypes.Type(value = CreateProductPromotionRequest.class, name = "PRODUCT"),
+        @JsonSubTypes.Type(value = CreateVoucherPromotionRequest.class, name = "VOUCHER"),
+        @JsonSubTypes.Type(value = CreateUserPromotionRequest.class, name = "USER")
 })
 public abstract class CreatePromotionRequest {
     private String title;
@@ -29,4 +33,5 @@ public abstract class CreatePromotionRequest {
     private PromotionStatus status;
     private Integer discountValue;
     private Integer maxDiscount;
+    private java.util.Set<Integer> membershipLevels;
 }

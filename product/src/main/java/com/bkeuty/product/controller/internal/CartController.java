@@ -20,13 +20,17 @@ public class CartController {
 
     @PostMapping("/variants/batch")
     public ResponseEntity<Map<Integer, CartProductVariantDto>> getVariantsByProductIds(
-            @RequestBody List<Integer> requestedProductIds) {
-        return ResponseEntity.ok(cartService.findDtoByProductVariantIdIn(requestedProductIds));
+            @RequestBody List<Integer> requestedProductIds,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) Integer membershipLevel) {
+        return ResponseEntity.ok(cartService.findDtoByProductVariantIdIn(requestedProductIds, userId, membershipLevel));
     }
 
     @GetMapping("/variant/{variantId}")
     public ResponseEntity<CartProductVariantDto> getVariantById(
-            @PathVariable("variantId") Integer variantId) {
-        return ResponseEntity.ok(cartService.findDtoById(variantId));
+            @PathVariable("variantId") Integer variantId,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) Integer membershipLevel) {
+        return ResponseEntity.ok(cartService.findDtoById(variantId, userId, membershipLevel));
     }
 }

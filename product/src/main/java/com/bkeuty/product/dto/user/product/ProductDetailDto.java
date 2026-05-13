@@ -19,6 +19,7 @@ public class ProductDetailDto {
     private String image;
     private BigDecimal originPrice;
     private BigDecimal promotionPrice;
+    private String appliedPromotionType;
     private String brand;
     private List<ProductVariantDto> variants;
     private List<ProductOptionDto> options;

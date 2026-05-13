@@ -57,7 +57,13 @@ public class ChatService {
 
             String context = contextService.getFormattedContext(sessionId);
 
-            Map<String, Object> aiResult = geminiService.generateStructuredResponse(context, userMessageContent, request.getLanguage());
+            Map<String, Object> aiResult = geminiService.generateStructuredResponse(
+                context, 
+                userMessageContent, 
+                request.getLanguage(),
+                request.getUserId(),
+                request.getMembershipLevel()
+            );
             
             String aiResponseContent = (String) aiResult.getOrDefault("text", "I'm sorry, I couldn't process that request.");
             Object productIdObj = aiResult.get("recommendedProductId");
@@ -76,7 +82,7 @@ public class ChatService {
             ProductDetailDto productDetails = null;
             if (recommendedProductId != null) {
                 try {
-                    productDetails = productClient.getProductById(recommendedProductId);
+                    productDetails = productClient.getProductById(recommendedProductId, request.getUserId(), request.getMembershipLevel());
                 } catch (Exception e) {
                     log.error("Error fetching product details: {}", e.getMessage());
                 }

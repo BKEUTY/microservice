@@ -1,11 +1,9 @@
-package com.bkeuty.user_service.dto;
+package com.bkeuty.order.dto.internal;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -16,7 +14,6 @@ public class UserDetailResponseDto {
     private String lastname;
     private String firstname;
     private String email;
-    private List<AddressDto> addresses;
     private String phoneNumber;
     private String dob;
     private String gender;

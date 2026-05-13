@@ -63,6 +63,8 @@ public class Order {
     @Column(name = "voucher_discount_amount")
     private BigDecimal voucherDiscountAmount;
 
+    @Column(name = "membership_level")
+    private Integer membershipLevel;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude

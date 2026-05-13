@@ -18,8 +18,6 @@ public class PromotionResponseDto {
     private Integer id;
     private String title;
     private String description;
-    private LocalDateTime createAt;
-    private LocalDateTime updateAt;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private PromotionStatus status;
@@ -37,4 +35,7 @@ public class PromotionResponseDto {
     private Integer usageLimitPerUser;
     private Integer currentUserUsage;
     private Integer remainingUsages;
+    private Set<Integer> birthdayMonth;
+    private Set<Integer> membershipLevels;
+    private Set<String> userIds;
 }

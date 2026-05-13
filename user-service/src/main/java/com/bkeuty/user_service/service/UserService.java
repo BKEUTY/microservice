@@ -7,7 +7,7 @@ import com.bkeuty.user_service.dto.UpdateUserDto;
 import com.bkeuty.user_service.dto.UserDetailResponseDto;
 import com.bkeuty.user_service.dto.WardDto;
 import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
-import org.jboss.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -23,9 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class UserService {
-    Logger logger = Logger.getLogger(UserService.class);
     private final Keycloak keycloak;
 
     @Value("${keycloak.realm}")
@@ -38,7 +38,7 @@ public class UserService {
         UserResource response = keycloak.realm(realmName).users().get(tokenValidationResponseDto.getUserId());
         if (response != null) {
             UserRepresentation userRepresentation =response.toRepresentation();
-            System.out.println("User username"+userRepresentation.getUsername());
+            log.info("User username: {}", userRepresentation.getUsername());
 
             return toUserDetailResponseDto(userRepresentation);
         }
@@ -75,7 +75,7 @@ public class UserService {
             usersResource.get(userInfo.getUserId()).update(user);
             return updateUserDto;
         } catch (Exception e){
-            logger.error("Exception in updateUserProfile " + e.getMessage());
+            log.error("Exception: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in updateUserProfile " + e.getMessage());
         }
 
@@ -83,7 +83,19 @@ public class UserService {
 
     }
     private UserDetailResponseDto toUserDetailResponseDto(UserRepresentation userRepresentation) {
-        return  UserDetailResponseDto.builder()
+        Integer membershipLevel = 0;
+        try {
+            String levelStr = userRepresentation.firstAttribute("membershipLevel");
+            if (levelStr != null) membershipLevel = Integer.parseInt(levelStr);
+        } catch (NumberFormatException ignored) {}
+
+        java.math.BigDecimal totalSpending = java.math.BigDecimal.ZERO;
+        try {
+            String spendingStr = userRepresentation.firstAttribute("totalSpending");
+            if (spendingStr != null) totalSpending = new java.math.BigDecimal(spendingStr);
+        } catch (Exception ignored) {}
+
+        return UserDetailResponseDto.builder()
                 .userId(userRepresentation.getId())
                 .email(userRepresentation.getEmail())
                 .firstname(userRepresentation.getFirstName())
@@ -93,6 +105,8 @@ public class UserService {
                 .dob(userRepresentation.firstAttribute("dob"))
                 .gender(userRepresentation.firstAttribute("gender"))
                 .userRole(userRepresentation.firstAttribute("userRole"))
+                .membershipLevel(membershipLevel)
+                .totalSpending(totalSpending)
                 .build();
     }
 
@@ -117,7 +131,7 @@ public class UserService {
             updateUser.update(user);
             return true;
         } catch (Exception e){
-            logger.error("Exception in updateUserProfile " + e.getMessage());
+            log.error("Exception in updateUserProfile " + e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in add new address " + e.getMessage());
         }
     }
@@ -138,7 +152,7 @@ public class UserService {
             for(String key : listAddress) {
                 AddressDto addressDto = addressToAddressDto(key);
                if(addressDto.equals(address)) {
-                   System.out.println("Found address");
+                   log.info("Found address to delete for user: {}", tokenValidationResponseDto.getUserId());
                    listAddress.remove(key);
                    deleted = true;
                    break;
@@ -149,7 +163,7 @@ public class UserService {
             updateUser.update(user);
             return deleted;
         } catch (Exception e){
-            logger.error("Exception in AddNewAddress " + e.getMessage());
+            log.error("Exception in deleteAddress: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in add new address " + e.getMessage());
         }
     }
@@ -162,7 +176,7 @@ public class UserService {
             }
             return listAddress.stream().map(this::addressToAddressDto).toList();
         }catch (Exception e){
-            logger.error("Exception in GetAddresses " + e.getMessage());
+            log.error("Exception in getAddresses: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Exception in GetAddresses " + e.getMessage());
         }
     }
@@ -206,13 +220,31 @@ public class UserService {
                 .build();
     }
     public UserDetailResponseDto getUserDetailById(String userId) {
-
         UserResource response = keycloak.realm(realmName).users().get(userId);
         if (response != null) {
             UserRepresentation userRepresentation = response.toRepresentation();
             return toUserDetailResponseDto(userRepresentation);
         }
         return null;
+    }
+
+    public void updateMembershipLevel(String userId, Integer level, java.math.BigDecimal totalSpending) {
+        try {
+            UsersResource usersResource = keycloak.realm(realmName).users();
+            UserResource userResource = usersResource.get(userId);
+            UserRepresentation user = userResource.toRepresentation();
+            Map<String, List<String>> attrs = user.getAttributes();
+            if (attrs == null) attrs = new HashMap<>();
+            attrs.put("membershipLevel", List.of(String.valueOf(level)));
+            if (totalSpending != null) {
+                attrs.put("totalSpending", List.of(totalSpending.toPlainString()));
+            }
+            user.setAttributes(attrs);
+            userResource.update(user);
+        } catch (Exception e) {
+            log.error("Failed to update membershipLevel for user " + userId + ": " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update membership level");
+        }
     }
 
     public Map<String, String> getUserNames(List<String> userIds) {

@@ -17,6 +17,7 @@ import com.bkeuty.order.repository.CartItemRepository;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
 import com.bkeuty.order.service.shipping.ShippingService;
+import com.bkeuty.order.util.OrderAddressUtils;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +59,8 @@ public class OrderService {
     @Value("${sepay.template:}")
     private String template;
     private final KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate;
-    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient, WebClient promotionWebClient, GHNCommunication ghnCommunication, ShippingService shippingService, KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate) {
+    private final WebClient userWebClient;
+    public OrderService(OrderRepository orderRepository, CartItemRepository cartItemRepository, OrderItemRepository orderItemRepository, WebClient productWebClient, WebClient promotionWebClient, GHNCommunication ghnCommunication, ShippingService shippingService, KafkaTemplate<String, DecreaseStockRequestDto> kafkaTemplate, WebClient userWebClient) {
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
         this.orderItemRepository = orderItemRepository;
@@ -66,6 +68,7 @@ public class OrderService {
         this.promotionWebClient = promotionWebClient;
         this.shippingService = shippingService;
         this.kafkaTemplate = kafkaTemplate;
+        this.userWebClient = userWebClient;
     }
 
     public ResponseEntity<?> placeOrder(TokenValidationResponseDto userInfo, PlaceOrderRequestDto request) {
@@ -73,13 +76,29 @@ public class OrderService {
         if (orderItemList == null || orderItemList.isEmpty()) {
             return ResponseEntity.badRequest().body("Order items cannot be empty");
         }
+        Integer trustedLevel = 0;
+        try {
+            Map<String, Object> userDetail = userWebClient.get()
+                    .uri("/api/user/internal/{userId}", userInfo.getUserId())
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+            if (userDetail != null && userDetail.get("membershipLevel") != null) {
+                trustedLevel = (Integer) userDetail.get("membershipLevel");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch trusted membership level for user {}, defaulting to 0", userInfo.getUserId());
+        }
+        final Integer finalLevel = trustedLevel;
+
         Integer shippingFee = shippingService.calShippingFee(CalShippingFeeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
-                                                                                                                               .toDistrictId(request.getAddress().getDistrict().getDistrictID())
+                                                                                                                                .toDistrictId(request.getAddress().getDistrict().getDistrictID())
                 .serviceTypeId(2).weight(100).build())
                 .block().getData().getServiceFee();
-
+ 
         String shippingDate = shippingService.calShippingTime(CalShippingTimeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
                 .toDistrictId(request.getAddress().getDistrict().getDistrictID()).serviceTypeId(2).build()).block().getData().getLeaderTimeOrder().getToEstimateTime();
+        
         Order order = Order.builder()
                 .orderDate(java.time.LocalDateTime.now())
                 .address(addressDtoToAddress(request.getAddress()))
@@ -91,27 +110,32 @@ public class OrderService {
                 .buyerName(request.getName())
                 .buyerNumber(request.getPhoneNumber())
                 .buyerNote(request.getNote())
+                .membershipLevel(trustedLevel)
                 .build();
-
+ 
         Order orderSave = orderRepository.save(order);
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItemDto> decreaseVariants = new ArrayList<>();
         List<AddToCartResponseDto> items = new ArrayList<>();
         List<Integer> buyVariants = new ArrayList<>();
-        List<OrderItem> savedOrderItems = new ArrayList<>(); // Track items for apportionment
+        List<OrderItem> savedOrderItems = new ArrayList<>(); 
+        List<CartItem> cartItemsToDelete = new ArrayList<>();
+
         for (OrderCartItemDto orderCartItemDto : orderItemList) {
             CartItem cartItems = cartItemRepository.findById(orderCartItemDto.getCartItemId())
                     .orElseThrow(() -> new CartItemNotFound("Cart item not found", orderCartItemDto.getCartItemId()));
-
+ 
             decreaseVariants.add(new OrderItemDto(cartItems.getProductVariant(), cartItems.getQuantity()));
-
-
             buyVariants.add(cartItems.getProductVariant());
-            cartItemRepository.delete(cartItems);
+            cartItemsToDelete.add(cartItems);
         }
         try {
             Map<Integer, ProductVariantDto> buyProductVariantMap = productWebClient.post()
-                    .uri("/api/product/internal/variants/batch")
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/product/internal/variants/batch")
+                            .queryParam("userId", userInfo.getUserId())
+                            .queryParam("membershipLevel", finalLevel)
+                            .build())
                     .bodyValue(buyVariants).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {
                     }).block();
             for (OrderItemDto variants : decreaseVariants) {
@@ -157,7 +181,7 @@ public class OrderService {
         } catch (Exception e) {
             throw new RuntimeException("Internal error processing stock: " + e.getMessage());
         }
-
+ 
         BigDecimal voucherDiscountAmount = BigDecimal.ZERO;
         BigDecimal preVoucherTotal = totalAmount; 
         if (request.getVoucherId() != null && !savedOrderItems.isEmpty()) {
@@ -166,6 +190,7 @@ public class OrderService {
                         .uri(uriBuilder -> uriBuilder
                                 .path("/api/promotion/internal/vouchers/{voucherId}/apply")
                                 .queryParam("userId", userInfo.getUserId())
+                                .queryParam("membershipLevel", finalLevel)
                                 .queryParam("subtotal", preVoucherTotal)
                                 .build(request.getVoucherId()))
                         .retrieve()
@@ -193,7 +218,7 @@ public class OrderService {
                         }
                         orderItemRepository.save(item);
                     }
-
+ 
                     totalAmount = totalAmount.subtract(voucherDiscountAmount);
                     if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
                         totalAmount = BigDecimal.ZERO;
@@ -207,10 +232,10 @@ public class OrderService {
                 throw new RuntimeException("Failed to apply voucher: " + e.getMessage());
             }
         }
-
+ 
         orderSave.setTotal(totalAmount);
         orderRepository.save(orderSave);
-
+ 
         OrderResponseDto placeOrderResponseDTO = new OrderResponseDto();
         placeOrderResponseDTO.setOrderId(orderSave.getId().toString());
         placeOrderResponseDTO.setOrderDate(orderSave.getOrderDate());
@@ -226,8 +251,9 @@ public class OrderService {
         placeOrderResponseDTO.setBuyerPhoneNumber(request.getPhoneNumber());
         placeOrderResponseDTO.setBuyerNote(request.getNote());
         placeOrderResponseDTO.setUserName(orderSave.getUserName());
+        cartItemRepository.deleteAll(cartItemsToDelete);
         kafkaTemplate.send("decrease-stock-topic",new DecreaseStockRequestDto(orderSave.getId(),decreaseVariants));
-
+ 
         return ResponseEntity.ok(placeOrderResponseDTO);
 //        try {
 //            List<DecreaseStockResponseDto> decreaseStockResponseDtos = productWebClient.post()
@@ -343,6 +369,7 @@ public class OrderService {
                 .total(emptyIfNull(order.getTotal(), BigDecimal.ZERO))
                 .status(order.getStatus())
                 .paymentStatus(order.getPaymentStatus())
+                .membershipLevel(order.getMembershipLevel())
                 .shippingStatus(order.getShippingStatus())
                 .shippingFee(emptyIfNull(order.getShippingFee(), BigDecimal.ZERO))
                 .estShippingDate(order.getEstimatedShippingDate())
@@ -424,62 +451,11 @@ public class OrderService {
         }
     }
 
-    private List<AddToCartResponseDto> getAddToCartResponseDTOS(List<OrderItem> items) {
-        if (items == null || items.isEmpty()) return new ArrayList<>();
-
-        List<AddToCartResponseDto> itemList = new ArrayList<>();
-        List<Integer> itemIds = items.stream().map(OrderItem::getProductVariantId).toList();
-        Map<Integer, ProductVariantDto> productVariants = fetchVariantMap(itemIds);
-
-        for (OrderItem orderItems : items) {
-            AddToCartResponseDto addToCartResponseDTO = new AddToCartResponseDto();
-            addToCartResponseDTO.setProductVariantId(orderItems.getProductVariantId());
-            addToCartResponseDTO.setQuantity(orderItems.getQuantity());
-
-            if (productVariants != null && productVariants.containsKey(orderItems.getProductVariantId())) {
-                ProductVariantDto productVariant = productVariants.get(orderItems.getProductVariantId());
-                addToCartResponseDTO.setProductVariantName(productVariant.getProductVariantName());
-                addToCartResponseDTO.setProductVariantImage(productVariant.getProductImageUrl());
-                addToCartResponseDTO.setPrice(productVariant.getPrice());
-                addToCartResponseDTO.setPromotionPrice(productVariant.getPromotionPrice());
-            }
-            itemList.add(addToCartResponseDTO);
-        }
-        
-        return itemList;
-    }
     private String addressDtoToAddress(AddressDto dto) {
-        return dto.getAddress()+", "+dto.getWard().getWardName() + ", "+ dto.getDistrict().getDistrictName()+  ", "+ dto.getProvince().getProvinceName()
-                + "|" + dto.getWard().getWardCode().toString()
-                + ":" + dto.getDistrict().getDistrictID().toString()
-                + ":" + dto.getProvince().getProvinceID().toString();
+        return OrderAddressUtils.addressDtoToAddress(dto);
     }
     private AddressDto toAddressDto(String address) {
-        String[] addressArray = address.split("\\|");
-        if(addressArray.length!=2) return null;
-        String nameField = addressArray[0];
-        String codeField = addressArray[1];
-        String[] nameArray = nameField.split(",\\s*");
-        if(nameArray.length< 4) return null;
-        int nameLength = nameArray.length;
-
-        StringBuilder addressName  = new StringBuilder();
-        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
-            if(nameIndex>0) addressName.append(", ");
-            addressName.append(nameArray[nameIndex]);
-        }
-
-        String wardName  = nameArray[nameLength-3];
-        String districtName = nameArray[nameLength-2];
-        String provinceName = nameArray[nameLength-1];
-        String[] codeArray = codeField.split(":");
-        if(codeArray.length!=3) return null;
-        return AddressDto.builder()
-                .address(addressName.toString())
-                .ward(new WardDto(Integer.valueOf(codeArray[0]), wardName))
-                .district(new DistrictDto(Integer.valueOf(codeArray[1]), districtName))
-                .province(new ProvinceDto(Integer.valueOf(codeArray[2]), provinceName))
-                .build();
+        return OrderAddressUtils.toAddressDto(address);
     }
 
     public OrderResponseDto getOrderById(Integer orderId, String userId) {

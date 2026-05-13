@@ -11,6 +11,7 @@ import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
 import com.bkeuty.order.repository.PaymentTransactionRepository;
 import com.bkeuty.order.service.shipping.ShippingService;
+import com.bkeuty.order.util.OrderAddressUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -85,39 +86,6 @@ public class PaymentService {
                 .build();
     }
     private AddressDto toAddressDto(String address) {
-        AddressDto addressDto = new AddressDto();
-        String[] addressArray = address.split("\\|");
-        if(addressArray.length!=2){
-            return null;
-        }
-        String nameField = addressArray[0];
-        String codeField = addressArray[1];
-        String[] nameArray = nameField.split(",\\s*");
-        if(nameArray.length< 4){
-            return null;
-        }
-        int nameLength = nameArray.length;
-
-        StringBuilder addressName  = new StringBuilder();
-        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
-            addressName.append(", ").append(nameArray[nameIndex]);
-        }
-
-        String wardName  = nameArray[nameLength-3];
-        String districtName = nameArray[nameLength-2];
-        String provinceName = nameArray[nameLength-1];
-        String[] codeArray = codeField.split(":");
-        if(codeArray.length!=3){
-            return null;
-        }
-        String wardCode = codeArray[0];
-        String districtCode = codeArray[1];
-        String provinceCode = codeArray[2];
-        return AddressDto.builder()
-                .address(addressName.toString())
-                .ward(new WardDto(Integer.valueOf(wardCode), wardName))
-                .district(new DistrictDto(Integer.valueOf(districtCode), districtName))
-                .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
-                .build();
+        return OrderAddressUtils.toAddressDto(address);
     }
 }

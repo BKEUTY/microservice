@@ -38,4 +38,5 @@ public class ProductDetailDto {
     private String description;
     private Double averageRating;
     private Integer reviewCount;
+    private String appliedPromotionType;
 }

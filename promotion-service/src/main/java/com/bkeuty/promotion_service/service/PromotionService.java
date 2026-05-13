@@ -5,6 +5,7 @@ import com.bkeuty.promotion_service.dto.internal.ProductPromotionCheckRequestDTO
 import com.bkeuty.promotion_service.dto.internal.ProductPromotionCheckResponseDTO;
 import com.bkeuty.promotion_service.entity.ProductPromotion;
 import com.bkeuty.promotion_service.entity.Promotion;
+import com.bkeuty.promotion_service.entity.UserPromotion;
 import com.bkeuty.promotion_service.entity.UserVoucher;
 import com.bkeuty.promotion_service.entity.VoucherPromotion;
 import com.bkeuty.promotion_service.enums.DiscountType;
@@ -12,6 +13,7 @@ import com.bkeuty.promotion_service.enums.PromotionStatus;
 import com.bkeuty.promotion_service.repository.ProductPromotionRepository;
 import com.bkeuty.promotion_service.repository.PromotionRepository;
 import com.bkeuty.promotion_service.repository.UserVoucherRepository;
+import com.bkeuty.promotion_service.repository.UserPromotionRepository;
 import com.bkeuty.promotion_service.repository.VoucherRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +40,9 @@ public class PromotionService {
     private final VoucherRepository voucherRepository;
     private final UserVoucherRepository userVoucherRepository;
     private final StringRedisTemplate redisTemplate;
+    private final UserPromotionRepository userPromotionRepository;
 
-    public Page<PromotionResponseDto> findAll(String title, PromotionStatus status, LocalDateTime startAt, LocalDateTime endAt, String userId, Pageable pageable) {
+    public Page<PromotionResponseDto> findAll(String title, PromotionStatus status, LocalDateTime startAt, LocalDateTime endAt, String promotionType, String userId, Pageable pageable) {
         Specification<Promotion> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (title != null && !title.isEmpty()) {
@@ -47,6 +50,9 @@ public class PromotionService {
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (promotionType != null && !promotionType.isEmpty()) {
+                predicates.add(cb.equal(root.get("promotionType"), promotionType));
             }
             if (startAt != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("startAt"), startAt));
@@ -64,15 +70,14 @@ public class PromotionService {
                 .id(promotion.getId())
                 .title(promotion.getTitle())
                 .description(promotion.getDescription())
-                .createAt(promotion.getCreateAt())
-                .updateAt(promotion.getUpdateAt())
                 .startAt(promotion.getStartAt())
                 .endAt(promotion.getEndAt())
                 .status(promotion.getStatus())
                 .discountType(promotion.getDiscountType())
                 .discountValue(promotion.getDiscountValue())
                 .maxDiscount(promotion.getMaxDiscount())
-                .promotionType(promotion.getPromotionType());
+                .promotionType(promotion.getPromotionType())
+                .membershipLevels(promotion.getMembershipLevels());
 
         if (promotion instanceof ProductPromotion productPromotion) {
             builder.categoryIds(productPromotion.getCategoryIds())
@@ -92,13 +97,20 @@ public class PromotionService {
                 builder.currentUserUsage(currentUsage);
                 builder.remainingUsages(Math.max(0, (voucherPromotion.getUsageLimitPerUser() != null ? voucherPromotion.getUsageLimitPerUser() : 1) - currentUsage));
             }
+        } else if (promotion instanceof UserPromotion userPromotion) {
+            builder.birthdayMonth(userPromotion.getBirthdayMonth())
+                .userIds(userPromotion.getUserIds());
         }
         return builder.build();
     }
 
-    public BigDecimal applyVoucher(String userId, Integer voucherId, BigDecimal subtotal) {
+    public BigDecimal applyVoucher(String userId, Integer membershipLevel, Integer voucherId, BigDecimal subtotal) {
         VoucherPromotion voucher = voucherRepository.findById(voucherId)
                 .orElseThrow(() -> new RuntimeException("Voucher not found"));
+
+        if (!isEligibleForMembership(voucher, membershipLevel)) {
+            throw new RuntimeException("Bạn không đủ hạng thành viên để sử dụng voucher này");
+        }
 
         if (voucher.getMinOrderValue() != null && subtotal.compareTo(voucher.getMinOrderValue()) < 0) {
             throw new RuntimeException("Min order value not met");
@@ -167,32 +179,73 @@ public class PromotionService {
     public Map<Integer,ProductPromotionCheckResponseDTO> checkProductPromotion (List<ProductPromotionCheckRequestDTO> productPromotionCheckRequestDTOList){
         Map<Integer,ProductPromotionCheckResponseDTO> map = new HashMap<>();
         for (ProductPromotionCheckRequestDTO productPromotionCheckRequestDTO : productPromotionCheckRequestDTOList) {
-            BigDecimal newPrice = getPromotionPrice(productPromotionCheckRequestDTO);
-            map.put(productPromotionCheckRequestDTO.getProductVariantId(),new ProductPromotionCheckResponseDTO(newPrice));
+            ProductPromotionCheckResponseDTO response = getPromotionPrice(productPromotionCheckRequestDTO);
+            map.put(productPromotionCheckRequestDTO.getProductVariantId(), response);
         }
         return map;
     }
 
-    public BigDecimal getPromotionPrice(ProductPromotionCheckRequestDTO productPromotionCheckRequestDto) {
-        List<ProductPromotion> applicableProductPromotions = productPromotionRepository.findApplicablePromotions(productPromotionCheckRequestDto.getProductId(),
-                                                                                                                 productPromotionCheckRequestDto.getBrandId(),
-                                                                                                                 productPromotionCheckRequestDto.getCategoryIds(),
-                                                                                                                 LocalDateTime.now(ZoneOffset.UTC));
+    public ProductPromotionCheckResponseDTO getPromotionPrice(ProductPromotionCheckRequestDTO request) {
+        BigDecimal originalPrice = request.getPrice();
+        LocalDateTime now = LocalDateTime.now();
 
-        BigDecimal newPrice = productPromotionCheckRequestDto.getPrice();
-        for(ProductPromotion applicableProductPromotion : applicableProductPromotions) {
-            if(applicableProductPromotion.getDiscountType().equals(DiscountType.PERCENTAGE)){
-                BigDecimal percentage = BigDecimal.valueOf(applicableProductPromotion.getDiscountValue()).divide(BigDecimal.valueOf(100));
-                BigDecimal discountAmount = productPromotionCheckRequestDto.getPrice().multiply(percentage);
-                if(discountAmount.compareTo(BigDecimal.valueOf(applicableProductPromotion.getMaxDiscount())) > 0){
-                    discountAmount = BigDecimal.valueOf(applicableProductPromotion.getMaxDiscount());
+        List<Promotion> allPromotions = new ArrayList<>();
+        allPromotions.addAll(productPromotionRepository.findApplicablePromotions(
+                request.getProductId(),
+                request.getBrandId(),
+                request.getCategoryIds(),
+                now
+        ));
+
+        if (request.getUserId() != null || request.getMembershipLevel() != null) {
+            allPromotions.addAll(userPromotionRepository.findApplicablePromotions(
+                    request.getMembershipLevel(),
+                    request.getUserId(),
+                    now
+            ));
+        }
+
+        BigDecimal maxDiscount = BigDecimal.ZERO;
+        String bestPromotionType = null;
+
+        for (Promotion promotion : allPromotions) {
+            BigDecimal currentDiscount = BigDecimal.ZERO;
+            
+            if (promotion.getDiscountType() == DiscountType.PERCENTAGE) {
+                BigDecimal percentage = BigDecimal.valueOf(promotion.getDiscountValue()).divide(BigDecimal.valueOf(100));
+                currentDiscount = originalPrice.multiply(percentage);
+                if (promotion.getMaxDiscount() != null && promotion.getMaxDiscount() > 0) {
+                    BigDecimal max = BigDecimal.valueOf(promotion.getMaxDiscount());
+                    if (currentDiscount.compareTo(max) > 0) {
+                        currentDiscount = max;
+                    }
                 }
-                newPrice = newPrice.subtract(discountAmount);
+            } else if (promotion.getDiscountType() == DiscountType.AMOUNT) {
+                currentDiscount = BigDecimal.valueOf(promotion.getDiscountValue());
             }
-            else {
-                newPrice = newPrice.subtract(BigDecimal.valueOf(applicableProductPromotion.getDiscountValue()));
+
+            if (currentDiscount.compareTo(maxDiscount) > 0) {
+                if (isEligibleForMembership(promotion, request.getMembershipLevel())) {
+                    maxDiscount = currentDiscount;
+                    bestPromotionType = (promotion.getClass().getSimpleName().contains("UserPromotion")) ? "UserPromotion" : "ProductPromotion";
+                }
             }
         }
-        return newPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : newPrice;
+
+        BigDecimal finalPrice = originalPrice.subtract(maxDiscount);
+        finalPrice = finalPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : finalPrice;
+        
+        if (maxDiscount.compareTo(BigDecimal.ZERO) > 0 && bestPromotionType == null) {
+            bestPromotionType = "ProductPromotion";
+        }
+        
+        return new ProductPromotionCheckResponseDTO(finalPrice, bestPromotionType);
+    }
+
+    private boolean isEligibleForMembership(Promotion promotion, Integer userLevel) {
+        if (promotion.getMembershipLevels() == null || promotion.getMembershipLevels().isEmpty()) {
+            return true;
+        }
+        return userLevel != null && promotion.getMembershipLevels().contains(userLevel);
     }
 }

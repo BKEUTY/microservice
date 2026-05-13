@@ -22,8 +22,6 @@ public abstract class Promotion {
     private Integer id;
     private String title;
     private String description;
-    private LocalDateTime createAt;
-    private LocalDateTime updateAt;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
     private PromotionStatus status;
@@ -32,5 +30,13 @@ public abstract class Promotion {
     private Integer maxDiscount;
     @Column(name = "promotion_type", insertable = false, updatable = false)
     protected String promotionType;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "promotion_membership_level",
+            joinColumns = @JoinColumn(name = "promotion_id")
+    )
+    @Column(name = "membership_level")
+    private java.util.Set<Integer> membershipLevels;
 }
 

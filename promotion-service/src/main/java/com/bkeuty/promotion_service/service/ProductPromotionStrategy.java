@@ -32,21 +32,14 @@ public class ProductPromotionStrategy implements PromotionStrategy {
         promotion.setDescription(productReq.getDescription());
         promotion.setStartAt(productReq.getStartAt());
         promotion.setEndAt(productReq.getEndAt());
-
-        // Set audit fields and default status
-        promotion.setCreateAt(LocalDateTime.now());
-        promotion.setUpdateAt(LocalDateTime.now());
-        promotion.setStatus(PromotionStatus.INCOMING); // Assuming ACTIVE is an enum value you have
-
-        // 3. Map Child Fields
+        promotion.setStatus(PromotionStatus.INCOMING);
         promotion.setCategoryIds(productReq.getCategoryIds());
         promotion.setProductIds(productReq.getProductIds());
         promotion.setBrandIds(productReq.getBrandIds());
         promotion.setDiscountType(productReq.getDiscountType());
         promotion.setDiscountValue(productReq.getDiscountValue());
         promotion.setMaxDiscount(productReq.getMaxDiscount());
-        // 4. Save to database
-        // Hibernate handles inserting into the main table AND the three @ElementCollection tables
+        promotion.setMembershipLevels(productReq.getMembershipLevels());
         return toCreateProductResponseDTO(productPromotionRepository.save(promotion));
     }
     public CreateProductPromotionResponse toCreateProductResponseDTO(ProductPromotion promotion) {
@@ -62,13 +55,13 @@ public class ProductPromotionStrategy implements PromotionStrategy {
                 .discountValue(promotion.getDiscountValue())
                 .productIds(promotion.getProductIds())
                 .maxDiscountValue(promotion.getMaxDiscount())
+                .membershipLevels(promotion.getMembershipLevels())
                 .build();
     }
     @Override
     public CreatePromotionResponse update(Integer promotionId, CreatePromotionRequest request){
         CreateProductPromotionRequest productReq = (CreateProductPromotionRequest) request;
         ProductPromotion existingPromotion = productPromotionRepository.findById(promotionId).orElseThrow(()-> new EntityNotFoundException("Promotion with ID:" +promotionId+ " not found"));
-        // 2. Update Parent Fields
         if (productReq.getTitle() != null) {
             existingPromotion.setTitle(productReq.getTitle());
         }
@@ -85,10 +78,6 @@ public class ProductPromotionStrategy implements PromotionStrategy {
             existingPromotion.setStatus(productReq.getStatus());
         }
 
-        // Always update the modified timestamp
-        existingPromotion.setUpdateAt(LocalDateTime.now());
-
-        // 2. Only update Child Fields if they are provided
         if (productReq.getDiscountType() != null) {
             existingPromotion.setDiscountType(productReq.getDiscountType());
         }
@@ -99,21 +88,26 @@ public class ProductPromotionStrategy implements PromotionStrategy {
             existingPromotion.setMaxDiscount(productReq.getMaxDiscount());
         }
 
-        // 3. Update Collections Safely (See updated helper method below)
         updateCollectionSafely(existingPromotion.getCategoryIds(), productReq.getCategoryIds());
         updateCollectionSafely(existingPromotion.getProductIds(), productReq.getProductIds());
         updateCollectionSafely(existingPromotion.getBrandIds(), productReq.getBrandIds());
+        if (productReq.getMembershipLevels() != null) {
+            if (existingPromotion.getMembershipLevels() == null) {
+                existingPromotion.setMembershipLevels(new java.util.HashSet<>());
+            }
+            existingPromotion.getMembershipLevels().clear();
+            existingPromotion.getMembershipLevels().addAll(productReq.getMembershipLevels());
+        }
 
-        // 4. Save and Map to Response
         return toCreateProductResponseDTO(productPromotionRepository.save(existingPromotion));
     }
     private void updateCollectionSafely(Set<Integer> existingCollection, Set<Integer> incomingCollection) {
         if (incomingCollection == null) {
             return;
         }
-        existingCollection.clear(); // Hibernate tracks this and deletes old rows in the DB
+        existingCollection.clear();
         if (!incomingCollection.isEmpty()) {
-            existingCollection.addAll(incomingCollection); // Hibernate inserts the new rows
+            existingCollection.addAll(incomingCollection);
         }
     }
 }
