@@ -14,18 +14,32 @@ public class ProductClient {
     @Qualifier("internalRestTemplate")
     private final RestTemplate internalRestTemplate;
 
-    public String getProductContext() {
+    public String getProductContext(String userId, Integer membershipLevel) {
         try {
-            return internalRestTemplate.getForObject("http://product/api/product?size=50&status=ACTIVE&minStock=1", String.class);
+            String url = "http://product/api/product?size=50&status=ACTIVE&minStock=1";
+            if (userId != null) {
+                url += "&userId=" + userId;
+                if (membershipLevel != null) {
+                    url += "&membershipLevel=" + membershipLevel;
+                }
+            }
+            return internalRestTemplate.getForObject(url, String.class);
         } catch (Exception e) {
             log.error("Error fetching product context: {}", e.getMessage());
             return "[]";
         }
     }
 
-    public ProductDetailDto getProductById(Integer id) {
+    public ProductDetailDto getProductById(Integer id, String userId, Integer membershipLevel) {
         try {
-            return internalRestTemplate.getForObject("http://product/api/product/{productId}", ProductDetailDto.class, id);
+            String url = "http://product/api/product/" + id;
+            if (userId != null) {
+                url += "?userId=" + userId;
+                if (membershipLevel != null) {
+                    url += "&membershipLevel=" + membershipLevel;
+                }
+            }
+            return internalRestTemplate.getForObject(url, ProductDetailDto.class);
         } catch (Exception e) {
             log.error("Error fetching product detail data for ID {}: {}", id, e.getMessage());
             return null;

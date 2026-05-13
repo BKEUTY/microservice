@@ -16,7 +16,10 @@ public class DashboardOrderDto {
     private String id;
     private String customerName;
     private LocalDateTime date;
-    private BigDecimal total;
+    private BigDecimal originalPriceTotal;
+    private BigDecimal subtotal;
+    private BigDecimal voucherDiscount;
     private BigDecimal shippingFee;
+    private BigDecimal total;
     private String status;
 }

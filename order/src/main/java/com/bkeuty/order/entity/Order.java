@@ -56,6 +56,16 @@ public class Order {
     private String shippingStatus = "NOT_CREATED";
     @Builder.Default
     private OrderStatus status = OrderStatus.NOT_CONFIRMED;
+    
+    @Column(name = "voucher_id")
+    private Integer voucherId;
+
+    @Column(name = "voucher_discount_amount")
+    private BigDecimal voucherDiscountAmount;
+
+    @Column(name = "membership_level")
+    private Integer membershipLevel;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

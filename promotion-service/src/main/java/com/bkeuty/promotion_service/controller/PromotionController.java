@@ -69,6 +69,7 @@ public class PromotionController {
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) PromotionStatus status,
+            @RequestParam(required = false) String promotionType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
             @RequestParam(defaultValue = "1") @Min(1) int page,
@@ -81,6 +82,6 @@ public class PromotionController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
         Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
-        return ResponseEntity.status(HttpStatus.OK).body(promotionService.findAll(title, status, startAt, endAt, pageable));
+        return ResponseEntity.status(HttpStatus.OK).body(promotionService.findAll(title, status, startAt, endAt, promotionType, null, pageable));
     }
 }

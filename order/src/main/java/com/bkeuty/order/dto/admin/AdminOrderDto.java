@@ -30,4 +30,5 @@ public class AdminOrderDto {
     private String buyerNote;
     private List<AddToCartResponseDto> items;
     private List<String> availableStatuses;
+    private Integer membershipLevel;
 }

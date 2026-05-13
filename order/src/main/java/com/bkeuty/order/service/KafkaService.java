@@ -2,35 +2,54 @@ package com.bkeuty.order.service;
 
 import com.bkeuty.order.dto.order.DecreaseStockResponseDto;
 import com.bkeuty.order.dto.order.DecreaseStockStatusDto;
-import com.bkeuty.order.dto.shipping.*;
+import com.bkeuty.order.dto.order.OrderEventDto;
+import com.bkeuty.order.dto.shipping.AddressDto;
+import com.bkeuty.order.dto.shipping.CreateShippingOrderDto;
+import com.bkeuty.order.dto.shipping.CreateShippingOrderMessage;
+import com.bkeuty.order.dto.shipping.CreateShippingResponseMessage;
+import com.bkeuty.order.dto.shipping.GhnWebhookMessage;
+import com.bkeuty.order.dto.shipping.ShippingItemDto;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
-import org.jboss.logging.Logger;
-import org.slf4j.LoggerFactory;
+import com.bkeuty.order.service.membership.MembershipService;
+import com.bkeuty.order.util.OrderAddressUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
-@Component
+@Service
+@Transactional
+@Slf4j
 public class KafkaService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate;
-    Logger logger = Logger.getLogger(KafkaService.class);
+    private final MembershipService membershipService;
+    private final KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate;
+    private final KafkaTemplate<String, Object> kafkaEventTemplate;
 
-    public KafkaService(OrderRepository orderRepository, OrderItemRepository orderItemRepository,  KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate) {
+    public KafkaService(OrderRepository orderRepository, 
+                        OrderItemRepository orderItemRepository, 
+                        MembershipService membershipService,
+                        KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate, 
+                        KafkaTemplate<String, Object> kafkaEventTemplate) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.membershipService = membershipService;
         this.kafkaCreateShippingOrderTemplate = kafkaCreateShippingOrderTemplate;
+        this.kafkaEventTemplate = kafkaEventTemplate;
     }
+
     @KafkaListener(topics = "payment-transaction-topic")
-    public void listenPaymentTransactionTopic(String message){
+    public void listenPaymentTransactionTopic(String message) {
         Order order = orderRepository.findById(Integer.valueOf(message)).orElse(null);
         if(order!=null){
             order.setPaymentStatus(PaymentStatus.PAID);
@@ -45,21 +64,30 @@ public class KafkaService {
                     .toDistrictName(addressDto.getDistrict().getDistrictName())
                     .toProvinceName(addressDto.getProvince().getProvinceName())
                     .toWardName(addressDto.getWard().getWardName())
-                    .items(orderItems!=null?orderItems.stream().map(this::toShippingItemDto).toList():null)
+                    .items(orderItems != null ? orderItems.stream().map(this::toShippingItemDto).toList() : null)
                     .build();
             kafkaCreateShippingOrderTemplate.send("create-shipping-order-topic", CreateShippingOrderMessage.builder().createShippingOrderDto(createShippingOrderDto).orderId(Integer.valueOf(message)).build());
+            
+            // Notify promotion service to commit voucher
+            if (order.getVoucherId() != null) {
+                OrderEventDto event = new OrderEventDto(
+                    order.getId(), order.getUserId(), order.getVoucherId(), "COMPLETED"
+                );
+                kafkaEventTemplate.send("order-completed-topic", event);
+            }
         }
     }
+
     @KafkaListener(topics = "decrease-stock-status-topic")
     public void listenToDecreaseStockStatus(DecreaseStockStatusDto message) {
         Integer orderId = message.getOrderId();
         if (orderId == null) {
-            logger.error("DecreaseStockStatusMessage: orderId is null");
+            log.error("DecreaseStockStatusMessage: orderId is null");
             return;
         }
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) {
-            logger.error("DecreaseStockStatusMessage: order is null");
+            log.error("DecreaseStockStatusMessage: order is null");
             return;
         }
         if(message.getIsSuccess().equals(true)) {
@@ -78,31 +106,47 @@ public class KafkaService {
                 }
             }
 
+            // Notify promotion service to refund voucher
+            if (order.getVoucherId() != null) {
+                OrderEventDto event = new OrderEventDto(
+                    order.getId(), order.getUserId(), order.getVoucherId(), "FAILED"
+                );
+                kafkaEventTemplate.send("order-failed-topic", event);
+            }
         }
-
     }
+
     @KafkaListener(topics = "create-shipping-response-topic")
-    public void listenToCreateShippingOrderTopic(CreateShippingResponseMessage message){
+    public void listenToCreateShippingOrderTopic(CreateShippingResponseMessage message) {
         Order order = orderRepository.findById(message.getOrderId()).orElse(null);
         if(order!=null){
             order.setShippingCode(message.getShippingResponse().getData().getOrderCode());
             orderRepository.save(order);
-        }
-        else {
-            logger.error("listenToCreateShippingOrderTopic: order is null");
+        } else {
+            log.error("listenToCreateShippingOrderTopic: order is null");
         }
     }
+
     @KafkaListener(topics = "update-shipping-status-topic")
-    public void listenToUpdateShippingStatusTopic(GhnWebhookMessage message){
+    public void listenToUpdateShippingStatusTopic(GhnWebhookMessage message) {
         Order order = orderRepository.findByShippingCode(message.getOrderCode());
         if(order !=null){
+            OrderStatus oldStatus = order.getStatus();
             order.setShippingStatus(message.getStatus());
-            orderRepository.save(order);
-        }
-        else {
-            logger.error("listenToUpdateShippingStatusTopic: order is null");
+
+            if ("delivered".equalsIgnoreCase(message.getStatus()) && oldStatus != OrderStatus.SUCCEEDED) {
+                order.setStatus(OrderStatus.SUCCEEDED);
+                orderRepository.saveAndFlush(order);
+                membershipService.recalculateMembershipLevel(order.getUserId());
+            } else {
+                orderRepository.saveAndFlush(order);
+            }
+        } else {
+            log.error("listenToUpdateShippingStatusTopic: order with shipping code {} not found", message.getOrderCode());
         }
     }
+
+
     private ShippingItemDto toShippingItemDto(OrderItem dto) {
         return ShippingItemDto.builder()
                 .name(dto.getProductVariantName())
@@ -110,39 +154,8 @@ public class KafkaService {
                 .price(dto.getProductVariantPrice().intValue())
                 .build();
     }
+
     private AddressDto toAddressDto(String address) {
-        String[] addressArray = address.split("\\|");
-        if(addressArray.length!=2){
-            return null;
-        }
-        String nameField = addressArray[0];
-        String codeField = addressArray[1];
-        String[] nameArray = nameField.split(",\\s*");
-        if(nameArray.length< 4){
-            return null;
-        }
-        int nameLength = nameArray.length;
-
-        StringBuilder addressName  = new StringBuilder();
-        for(int nameIndex=0;nameIndex<nameLength-3;nameIndex++){
-            addressName.append(", ").append(nameArray[nameIndex]);
-        }
-
-        String wardName  = nameArray[nameLength-3];
-        String districtName = nameArray[nameLength-2];
-        String provinceName = nameArray[nameLength-1];
-        String[] codeArray = codeField.split(":");
-        if(codeArray.length!=3){
-            return null;
-        }
-        String wardCode = codeArray[0];
-        String districtCode = codeArray[1];
-        String provinceCode = codeArray[2];
-        return AddressDto.builder()
-                .address(addressName.toString())
-                .ward(new WardDto(Integer.valueOf(wardCode), wardName))
-                .district(new DistrictDto(Integer.valueOf(districtCode), districtName))
-                .province(new ProvinceDto(Integer.valueOf(provinceCode), provinceName))
-                .build();
+        return OrderAddressUtils.toAddressDto(address);
     }
 }

@@ -1,24 +1,23 @@
 package com.bkeuty.product.dto.user.product;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.math.BigDecimal;
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class DisplayProductDto {
     private Integer productId;
     private String variantName;
     private BigDecimal originPrice;
     private BigDecimal discountPrice;
+    private String appliedPromotionType;
     private String imageUrl;
     private Integer stockQuantity;
     private Integer sold;

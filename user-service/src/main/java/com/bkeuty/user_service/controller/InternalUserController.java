@@ -40,4 +40,13 @@ public class InternalUserController {
             @RequestParam(required = false) Long endDate) {
         return ResponseEntity.ok(userService.getNewUsersByDateRange(startDate, endDate));
     }
+
+    @PatchMapping("/{userId}/membership-level")
+    public ResponseEntity<Void> updateMembershipLevel(
+            @PathVariable String userId,
+            @RequestParam Integer level,
+            @RequestParam(required = false) java.math.BigDecimal totalSpending) {
+        userService.updateMembershipLevel(userId, level, totalSpending);
+        return ResponseEntity.ok().build();
+    }
 }

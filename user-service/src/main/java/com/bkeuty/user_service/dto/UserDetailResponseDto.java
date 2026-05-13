@@ -21,5 +21,6 @@ public class UserDetailResponseDto {
     private String dob;
     private String gender;
     private String userRole;
-
+    private Integer membershipLevel;
+    private java.math.BigDecimal totalSpending;
 }

@@ -23,7 +23,7 @@ public class InternalController {
     }
     @PostMapping("/check-promotion-price")
     public ResponseEntity<ProductPromotionCheckResponseDTO> getPromotionPrice (@RequestBody ProductPromotionCheckRequestDTO productPromotionCheckRequestDTO) {
-        return ResponseEntity.ok(promotionService.getPromotion(productPromotionCheckRequestDTO));
+        return ResponseEntity.ok(promotionService.getPromotionPrice(productPromotionCheckRequestDTO));
     }
 
 }
