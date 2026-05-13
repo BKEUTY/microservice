@@ -53,7 +53,9 @@ public class UserService {
                 "phoneNumber", List.of(dto.getPhoneNumber()),
                 "addresses", List.of(address),
                 "userRole", List.of("user"),
-                "dob", List.of(dto.getDateOfBirth())
+                "dob", List.of(dto.getDateOfBirth()),
+                "membershipLevel", List.of("0"),
+                "totalSpending", List.of("0")
         ));
 
         // Call the API

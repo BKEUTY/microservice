@@ -23,8 +23,9 @@ public class TransactionalPerformanceDto {
     private BigDecimal profit;
     private BigDecimal originalPrice;
     private BigDecimal promotionalPrice;
+    private BigDecimal voucherDiscount;
 
-    public TransactionalPerformanceDto(LocalDateTime date, Integer entityId, String entityName, Integer productId, String productVariantName, Long quantity, BigDecimal revenue, BigDecimal originalPrice, BigDecimal promotionalPrice) {
+    public TransactionalPerformanceDto(LocalDateTime date, Integer entityId, String entityName, Integer productId, String productVariantName, Long quantity, BigDecimal revenue, BigDecimal originalPrice, BigDecimal promotionalPrice, BigDecimal voucherDiscount) {
         this.date = date;
         this.entityId = entityId;
         this.entityName = entityName;
@@ -35,5 +36,6 @@ public class TransactionalPerformanceDto {
         this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
         this.originalPrice = originalPrice;
         this.promotionalPrice = promotionalPrice;
+        this.voucherDiscount = voucherDiscount;
     }
 }

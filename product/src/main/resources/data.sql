@@ -534,7 +534,7 @@ INSERT INTO product_variant (id, product_id, product_variant_name, price, promot
 (147, 45, 'Son SK-II Pro - Tone 23', 3300000, 2970000, 293, 979, 'Mô tả Son SK-II Pro - Tone 23', 0, 'v48.jpg', 0.0, 0),
 (148, 46, 'Sữa Rửa Mặt SK-II Limited - Red', 1800000, 1620000, 91, 413, 'Mô tả Sữa Rửa Mặt SK-II Limited - Red', 0, 'v49.jpg', 0.0, 0),
 (149, 46, 'Sữa Rửa Mặt SK-II Limited - Coral', 600000, 540000, 277, 1969, 'Mô tả Sữa Rửa Mặt SK-II Limited - Coral', 0, 'v50.jpg', 0.0, 0),
-(150, 46, 'Sữa Rửa Mặt SK-II Limited - Nude', 4600000, 4140000, 176, 460, 'Mô tả Sữa Rửa Mặt SK-II Limited - Nude', 0, 'v1.jpg', 0.0, 0),
+(150, 46, 'Sữa Rửa Mặt SK-II Limited - Nude', 4600000, 4140000, 176, 460, 'Mô tả Sữa Rửa Mặt SK-II Limited - Nude', 0, 'v1.jpg', 0.0, 0);
 
 INSERT INTO variant_option_values (variant_id, option_value_id) VALUES
 (1, 1),

@@ -28,7 +28,10 @@ public class KafkaService {
     public void receiveMessage(DecreaseStockRequestDto message){
         List<DecreaseStockResponseDto> failDecreaseStockItem = new ArrayList<>();
         boolean decreaseFailed = false;
-        for(OrderItemDto item : message.getOrderItems()){
+        List<OrderItemDto> sortedOrderItems = new ArrayList<>(message.getOrderItems());
+        sortedOrderItems.sort(java.util.Comparator.comparing(OrderItemDto::getProductVariantId));
+
+        for(OrderItemDto item : sortedOrderItems){
             ProductVariant productVariant = productVariantRepository.findById(item.getProductVariantId()).orElse(null);
             if(productVariant == null){
                 failDecreaseStockItem.add(DecreaseStockResponseDto.builder().productVariantId(item.getProductVariantId()).build());

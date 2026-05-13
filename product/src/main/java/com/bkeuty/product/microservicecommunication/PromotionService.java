@@ -20,30 +20,39 @@ public class PromotionService {
     public PromotionService(WebClient promotionWebClient) {
         this.promotionWebClient = promotionWebClient;
     }
-    public PromotionPriceDto getPromotionPrice(ProductVariant productVariant){
-
+    public PromotionPriceDto getPromotionPrice(ProductVariant productVariant, String userId, Integer membershipLevel){
         PromotionPriceDto promotionPriceDto = promotionWebClient.post()
                 .uri("/api/promotion/internal/check-promotion-price")
-                .bodyValue(toProductPromotionDto(productVariant)).retrieve().bodyToMono(PromotionPriceDto.class).block();
+                .bodyValue(toProductPromotionDto(productVariant, userId, membershipLevel)).retrieve().bodyToMono(PromotionPriceDto.class).block();
         return  promotionPriceDto;
     }
-    public Map<Integer,PromotionPriceDto> getListOfPromotionPrice(Page<ProductVariant> productVariants){
-        List<ProductPromotionDto> productPromotionDtos = productVariants.getContent().stream().map(this::toProductPromotionDto).collect(Collectors.toList());
+
+    public PromotionPriceDto getPromotionPrice(ProductVariant productVariant){
+        return getPromotionPrice(productVariant, null, 0);
+    }
+
+    public Map<Integer,PromotionPriceDto> getListOfPromotionPrice(Page<ProductVariant> productVariants, String userId, Integer membershipLevel){
+        List<ProductPromotionDto> productPromotionDtos = productVariants.getContent().stream().map(pv -> toProductPromotionDto(pv, userId, membershipLevel)).collect(Collectors.toList());
         Map<Integer,PromotionPriceDto> promotionPrice = promotionWebClient.post()
                 .uri("/api/promotion/internal/check-promotion-price/batch")
                 .bodyValue(productPromotionDtos).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer,PromotionPriceDto>>() {
                 }).block();
         return promotionPrice;
     }
+
+    public Map<Integer,PromotionPriceDto> getListOfPromotionPrice(List<ProductVariant> productVariants, String userId, Integer membershipLevel){
+        List<ProductPromotionDto> productPromotionDtos = productVariants.stream().map(pv -> toProductPromotionDto(pv, userId, membershipLevel)).collect(Collectors.toList());
+        Map<Integer,PromotionPriceDto> promotionPrice = promotionWebClient.post()
+                .uri("/api/promotion/internal/check-promotion-price/batch")
+                .bodyValue(productPromotionDtos).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer,PromotionPriceDto>>() {
+                }).block();
+        return promotionPrice;
+    }
+
     public Map<Integer,PromotionPriceDto> getListOfPromotionPrice(List<ProductVariant> productVariants){
-        List<ProductPromotionDto> productPromotionDtos = productVariants.stream().map(this::toProductPromotionDto).collect(Collectors.toList());
-        Map<Integer,PromotionPriceDto> promotionPrice = promotionWebClient.post()
-                .uri("/api/promotion/internal/check-promotion-price/batch")
-                .bodyValue(productPromotionDtos).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer,PromotionPriceDto>>() {
-                }).block();
-        return promotionPrice;
+        return getListOfPromotionPrice(productVariants, null, 0);
     }
-    public ProductPromotionDto toProductPromotionDto(ProductVariant productVariant) {
+    public ProductPromotionDto toProductPromotionDto(ProductVariant productVariant, String userId, Integer membershipLevel) {
         Product product = productVariant.getProduct();
         return ProductPromotionDto.builder()
                 .productVariantId(productVariant.getId())
@@ -51,6 +60,8 @@ public class PromotionService {
                 .productId(product.getId())
                 .categoryIds(product.getCategories().stream().map(ProductCategory::getId).collect(Collectors.toList()))
                 .price(productVariant.getPrice())
+                .userId(userId)
+                .membershipLevel(membershipLevel)
                 .build();
     }
 }

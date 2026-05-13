@@ -6,6 +6,7 @@ import com.bkeuty.order.dto.cart.ProductVariantDto;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.repository.OrderRepository;
+import com.bkeuty.order.service.membership.MembershipService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -33,10 +34,12 @@ public class AdminOrderService {
 
     private final OrderRepository orderRepository;
     private final WebClient productWebClient;
+    private final MembershipService membershipService;
 
-    public AdminOrderService(OrderRepository orderRepository, WebClient productWebClient) {
+    public AdminOrderService(OrderRepository orderRepository, WebClient productWebClient, MembershipService membershipService) {
         this.orderRepository = orderRepository;
         this.productWebClient = productWebClient;
+        this.membershipService = membershipService;
     }
 
     public Page<AdminOrderDto> getAllOrders(Pageable pageable, String status, String search, LocalDate startDate, LocalDate endDate, String token) {
@@ -104,13 +107,21 @@ public class AdminOrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be blank");
         }
         try {
-            order.setStatus(OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT)));
+            OrderStatus newStatus = OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            OrderStatus oldStatus = order.getStatus();
+            
+            order.setStatus(newStatus);
+            Order savedOrder = orderRepository.saveAndFlush(order);
+
+            if (newStatus == OrderStatus.SUCCEEDED || oldStatus == OrderStatus.SUCCEEDED) {
+                membershipService.recalculateMembershipLevel(savedOrder.getUserId());
+            }
+            
+            return toAdminOrderDto(savedOrder, token);
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid order status: " + status + ". Allowed: " + Arrays.toString(OrderStatus.values()));
         }
-
-        return toAdminOrderDto(orderRepository.save(order), token);
     }
 
     private AdminOrderDto toAdminOrderDto(Order order, String token) {
@@ -129,6 +140,7 @@ public class AdminOrderService {
                                     .price(item.getProductVariantPrice())
                                     .promotionPrice(item.getPromotionPrice())
                                     .quantity(item.getQuantity())
+                                    .voucherDiscountAmount(item.getVoucherDiscountAmount() != null ? item.getVoucherDiscountAmount() : BigDecimal.ZERO)
                                     .build();
                         } else {
                             if (item.getProductVariantId() != null) missingVariantIds.add(item.getProductVariantId());
@@ -152,6 +164,7 @@ public class AdminOrderService {
                                     .price(dto.getPrice())
                                     .promotionPrice(dto.getPromotionPrice())
                                     .quantity(item.getQuantity())
+                                    .voucherDiscountAmount(item.getVoucherDiscountAmount() != null ? item.getVoucherDiscountAmount() : BigDecimal.ZERO)
                                     .build();
                         })
                         .filter(Objects::nonNull)
@@ -177,6 +190,7 @@ public class AdminOrderService {
                 .buyerNote(order.getBuyerNote())
                 .items(itemDtos)
                 .availableStatuses(Arrays.stream(OrderStatus.values()).map(Enum::name).collect(Collectors.toList()))
+                .membershipLevel(order.getMembershipLevel())
                 .build();
     }
 

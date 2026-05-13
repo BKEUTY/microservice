@@ -21,8 +21,9 @@ public class DailyProductPerformanceDto {
     private BigDecimal profit;
     private BigDecimal originalPrice;
     private BigDecimal promotionalPrice;
+    private BigDecimal voucherDiscount;
 
-    public DailyProductPerformanceDto(LocalDateTime date, Integer variantId, String name, Long quantity, BigDecimal revenue, BigDecimal originalPrice, BigDecimal promotionalPrice) {
+    public DailyProductPerformanceDto(LocalDateTime date, Integer variantId, String name, Long quantity, BigDecimal revenue, BigDecimal originalPrice, BigDecimal promotionalPrice, BigDecimal voucherDiscount) {
         this.date = date;
         this.variantId = variantId;
         this.name = name;
@@ -31,5 +32,6 @@ public class DailyProductPerformanceDto {
         this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
         this.originalPrice = originalPrice;
         this.promotionalPrice = promotionalPrice;
+        this.voucherDiscount = voucherDiscount;
     }
 }

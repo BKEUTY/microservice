@@ -28,7 +28,10 @@ public class InventoryService {
         }
         
         List<DecreaseStockResponseDto> decreaseStockResponseDtos = new ArrayList<>();
-        for (OrderItemDto orderItem : orderItems) {
+        List<OrderItemDto> sortedOrderItems = new ArrayList<>(orderItems);
+        sortedOrderItems.sort(java.util.Comparator.comparing(OrderItemDto::getProductVariantId));
+
+        for (OrderItemDto orderItem : sortedOrderItems) {
             if (orderItem.getProductVariantId() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
                         "Product variant ID is required for each order item");

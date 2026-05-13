@@ -18,4 +18,6 @@ public class ChatRequest {
     private String message;
 
     private String language;
+    private String userId;
+    private Integer membershipLevel;
 }

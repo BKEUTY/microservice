@@ -23,4 +23,5 @@ public abstract class CreatePromotionResponse {
     private PromotionStatus status;
     private Integer discountValue;
     private Integer maxDiscountValue;
+    private java.util.Set<Integer> membershipLevels;
 }

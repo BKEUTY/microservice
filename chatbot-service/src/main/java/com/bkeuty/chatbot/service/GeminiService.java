@@ -13,9 +13,12 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Slf4j
 @Service
@@ -30,42 +33,55 @@ public class GeminiService {
     private final RestTemplate externalRestTemplate;
     private static final String GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
 
-    private volatile String cachedCatalog = null;
-    private volatile long lastCacheUpdate = 0;
+    private final Map<Integer, String> cachedCatalogs = new ConcurrentHashMap<>();
+    private final Map<Integer, Long> lastCacheUpdates = new ConcurrentHashMap<>();
     private static final long CACHE_TTL_MS = 300_000;
 
     private static final String SYSTEM_PROMPT = 
         "You are 'Bkeuty AI Assistant', a professional beauty expert for the Bkeuty platform.\n\n" +
+        "CONTEXT ANALYSIS RULE:\n" +
+        "1. INTENT CLASSIFICATION: Every time the user speaks after a recommendation, you must determine if they are:\n" +
+        "   - REFINING: Adding details to the current search. (Action: Keep all previous constraints and narrow down results).\n" +
+        "   - CORRECTING: Fixing a misunderstanding. (Action: Update specific constraints, keep others).\n" +
+        "   - RESETTING/NEW SEARCH: Describing a completely different product or starting a new topic. (Action: Discard irrelevant old constraints, but confirm if unsure).\n" +
+        "2. CUMULATIVE CONSTRAINTS: You MUST track and honor all constraints (price, brand, skin type) unless the user explicitly negates them or starts a clearly different topic.\n" +
+        "3. SYNTHESIS: Before recommending, synthesize: [Historical Constraints] + [User Intent Classification] + [New Details] = [Final Balanced Decision].\n\n" +
         "DATA CONTEXT:\n" +
         "- Brands: CeraVe, La Roche-Posay, Estee Lauder, Dior, 3CE, Skin1004, Laneige, Kiehl's, Chanel, Shiseido, MAC, SK-II.\n" +
         "- Categories: Skincare (Sữa rửa mặt, Toner, Serum, Kem dưỡng, Chống nắng), Makeup (Son môi, Phấn nước/Cushion), Fragrance (Nước hoa nam/nữ).\n" +
         "- Key Options: 'Loại da' (Da nhạy cảm, Da khô, Da dầu, Mọi loại da), 'Dung tích', 'Màu sắc', 'Tone màu'.\n\n" +
         "MISSION:\n" +
-        "1. Consult users based on their skin type and beauty needs.\n" +
-        "2. Identify the exact 'productId' of the matching variant from the provided catalog.\n" +
-        "3. PROACTIVE CLARIFICATION: If the user request is vague or matches multiple products, DO NOT guess. Instead, ask clarifying questions with specific options (e.g., 'Which brand do you prefer: CeraVe or La Roche-Posay?' or 'Are you looking for a Cleanser or a Serum?').\n" +
-        "4. Always ask for 'Skin Type' if not provided for skincare requests.\n\n" +
+        "1. Consult users based on their skin type and beauty needs while RESPECTING all previous constraints.\n" +
+        "2. PRICE COMPLIANCE: If a user specifies a budget (e.g., 'under 2 million'), you MUST NOT recommend ANY product that exceeds this limit, even by a small amount. If no product fits, inform the user and suggest alternatives only if you explain they are over budget.\n" +
+        "3. TIER-AWARE CONSULTING: You are aware of the user's Membership Level. If they have a discount, mention it naturally (e.g., 'As a Gold member, you get a special price on this...').\n" +
+        "4. LANGUAGE CONSISTENCY: Always respond in the same language as the 'language' parameter provided in the context (vi for Vietnamese, en for English).\n" +
+        "5. PROACTIVE CLARIFICATION: If the user request is vague, ask clarifying questions with specific options.\n\n" +
         "OUTPUT FORMAT (STRICT JSON ONLY):\n" +
         "Return a JSON object with this structure:\n" +
         "{\"text\": \"your_consultation_response\", \"recommendedProductId\": productId_or_null}\n\n" +
         "RULES:\n" +
         "- Use ONLY the products provided in the catalog context.\n" +
-        "- If no suitable product is found, set 'recommendedProductId' to null and guide the user in the 'text' field.\n" +
-        "- DO NOT offer ordering, payment, or shipping services. The chatbot only provides recommendations.\n" +
-        "- NEVER say phrases like 'Bạn có muốn đặt hàng không?' or 'Tôi sẽ hỗ trợ bạn đặt hàng'.\n" +
-        "- If the user asks about ordering, tell them to click on the product card to view details and buy on the website.\n" +
+        "- If a constraint (like price) makes all catalog products unsuitable, EXPLAIN this to the user in the 'text' field and do not recommend a product that violates the constraint.\n" +
+        "- DO NOT offer ordering, payment, or shipping services.\n" +
+        "- NEVER say phrases like 'Bạn có muốn đặt hàng không?'.\n" +
         "- CRITICAL: The 'recommendedProductId' MUST match the specific product mentioned in your response text.\n" +
         "- IMPORTANT: Output ONLY the JSON object. Do not use markdown blocks.";
 
-    public Map<String, Object> generateStructuredResponse(String chatHistory, String userPrompt, String language) {
+    public Map<String, Object> generateStructuredResponse(String chatHistory, String userPrompt, String language, String userId, Integer membershipLevel) {
         if (geminiApiKey == null || geminiApiKey.trim().isEmpty()) {
             return createResponseMap("Sorry, the AI system is currently not configured. Please try again later.", null);
         }
 
         String targetLanguage = (language != null && language.equalsIgnoreCase("vi")) ? "Vietnamese" : "English";
-        String dynamicSystemPrompt = SYSTEM_PROMPT + "\n- Response must be professional and sophisticated in " + targetLanguage + ".";
+        String membershipContext = "";
+        if (membershipLevel != null) {
+            String[] levels = {"Member", "Silver", "Gold", "Platinum", "Diamond"};
+            membershipContext = "\n- USER CONTEXT: This user is a " + levels[membershipLevel] + " member. Be extra helpful and mention that prices shown are exclusive for their tier if applicable.";
+        }
 
-        String productCatalog = getCachedProductCatalog();
+        String dynamicSystemPrompt = SYSTEM_PROMPT + "\n- Response must be professional and sophisticated in " + targetLanguage + "." + membershipContext;
+
+        String productCatalog = getCachedProductCatalog(userId, membershipLevel);
         String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent", 
                 GEMINI_MODEL);
 
@@ -126,7 +142,7 @@ public class GeminiService {
             }
             
             String extractedJson = aiOutput.substring(jsonStart, jsonEnd + 1);
-            return objectMapper.readValue(extractedJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+            return objectMapper.readValue(extractedJson, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
             String exceptionMessage = String.valueOf(e.getMessage());
             log.error("Gemini API Error while generating structured response: ", e);
@@ -149,44 +165,55 @@ public class GeminiService {
         return response;
     }
 
-    private String getCachedProductCatalog() {
+    private String getCachedProductCatalog(String userId, Integer membershipLevel) {
+        int levelKey = (membershipLevel != null) ? membershipLevel : 0;
         long currentTime = System.currentTimeMillis();
-        if (cachedCatalog == null || (currentTime - lastCacheUpdate) > CACHE_TTL_MS) {
+        String cached = cachedCatalogs.get(levelKey);
+        Long lastUpdate = lastCacheUpdates.get(levelKey);
+
+        if (cached == null || lastUpdate == null || (currentTime - lastUpdate) > CACHE_TTL_MS) {
             synchronized (this) {
-                if (cachedCatalog == null || (System.currentTimeMillis() - lastCacheUpdate) > CACHE_TTL_MS) {
+                cached = cachedCatalogs.get(levelKey);
+                lastUpdate = lastCacheUpdates.get(levelKey);
+                if (cached == null || lastUpdate == null || (System.currentTimeMillis() - lastUpdate) > CACHE_TTL_MS) {
                     try {
-                        String freshCatalog = productClient.getProductContext();
+                        String freshCatalog = productClient.getProductContext(userId, membershipLevel);
+                        
                         if (freshCatalog == null || freshCatalog.isBlank() || freshCatalog.equals("[]")) {
-                            cachedCatalog = "[]";
+                            cached = "[]";
                         } else {
                             JsonNode rootNode = objectMapper.readTree(freshCatalog);
                             JsonNode contentNode = rootNode.path("content");
                             JsonNode products = contentNode.isArray() ? contentNode : rootNode;
                             
-                            List<Map<String, Object>> prunedList = new java.util.ArrayList<>();
+                            List<Map<String, Object>> prunedList = new ArrayList<>();
                             if (products.isArray()) {
                                 for (JsonNode p : products) {
                                     Map<String, Object> pruned = new HashMap<>();
-                                    pruned.put("id", p.path("productId").asLong());
+                                    // Use 'id' or 'productId' depending on endpoint response structure
+                                    long id = p.has("productId") ? p.path("productId").asLong() : p.path("id").asLong();
+                                    pruned.put("id", id);
                                     pruned.put("name", p.path("variantName").asText());
                                     pruned.put("price", p.path("discountPrice").asDouble());
                                     prunedList.add(pruned);
                                 }
                             }
-                            cachedCatalog = objectMapper.writeValueAsString(prunedList);
+                            cached = objectMapper.writeValueAsString(prunedList);
                         }
-                        lastCacheUpdate = System.currentTimeMillis();
-                        log.info("Optimized product catalog cache updated.");
+                        cachedCatalogs.put(levelKey, cached);
+                        lastCacheUpdates.put(levelKey, System.currentTimeMillis());
+                        log.info("Optimized product catalog cache updated for tier {}.", levelKey);
                     } catch (Exception e) {
-                        log.error("Failed to update product catalog cache: {}", e.getMessage());
-                        lastCacheUpdate = System.currentTimeMillis();
-                        if (cachedCatalog == null) {
-                            cachedCatalog = "[]";
+                        log.error("Failed to update product catalog cache for tier {}: {}", levelKey, e.getMessage());
+                        lastCacheUpdates.put(levelKey, System.currentTimeMillis());
+                        if (cached == null) {
+                            cached = "[]";
+                            cachedCatalogs.put(levelKey, cached);
                         }
                     }
                 }
             }
         }
-        return cachedCatalog != null ? cachedCatalog : "[]";
+        return cached;
     }
 }

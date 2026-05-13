@@ -61,7 +61,7 @@ public class ProductService {
     }
 
     @Transactional
-    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String search, Integer categoryId, String status, Integer minStock, BigDecimal minPrice, BigDecimal maxPrice) {
+    public Page<DisplayProductDto> getListProductVariants(Pageable pageable, String search, Integer categoryId, String status, Integer minStock, BigDecimal minPrice, BigDecimal maxPrice, String userId, Integer membershipLevel) {
         Specification<ProductVariant> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             
@@ -111,7 +111,7 @@ public class ProductService {
         };
 
         Page<ProductVariant> productRes = productVariantRepository.findAll(spec, pageable);
-        Map<Integer, PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes);
+        Map<Integer, PromotionPriceDto> promotionPrice = promotionService.getListOfPromotionPrice(productRes, userId, membershipLevel);
 
         productRes.forEach(pv -> {
             if (promotionPrice.containsKey(pv.getId())) {
@@ -136,6 +136,7 @@ public class ProductService {
                 .imageUrl(productVariant.getProductImageUrl())
                 .originPrice(productVariant.getPrice())
                 .discountPrice(promotionPrice.get(productVariant.getId()).getNewPrice())
+                .appliedPromotionType(promotionPrice.get(productVariant.getId()).getAppliedPromotionType())
                 .brand(productVariant.getProduct().getBrand()!=null?productVariant.getProduct().getBrand().getBrandName():null)
                 .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .status(productVariant.getStatus().name())
@@ -148,9 +149,9 @@ public class ProductService {
 
 
     @Transactional
-    public ProductDetailDto getProductVariantById(Integer id) {
+    public ProductDetailDto getProductVariantById(Integer id, String userId, Integer membershipLevel) {
         ProductVariant productVariant=  productVariantRepository.findById(id).orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with id: " + id));
-        PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
+        PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant, userId, membershipLevel);
         if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
             if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(promotionPriceDto.getNewPrice()) != 0) {
                 productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
@@ -165,10 +166,10 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductDetailDto getProductVariantByName(String variantName) {
+    public ProductDetailDto getProductVariantByName(String variantName, String userId, Integer membershipLevel) {
         ProductVariant productVariant = productVariantRepository.findFirstByProductVariantName(variantName)
                 .orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with name: " + variantName));
-        PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant);
+        PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant, userId, membershipLevel);
         if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
             if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(promotionPriceDto.getNewPrice()) != 0) {
                 productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
@@ -223,9 +224,10 @@ public class ProductService {
                 .image(productVariant.getProductImageUrl())
                 .originPrice(productVariant.getPrice())
                 .promotionPrice(promotionPrice.getNewPrice())
+                .appliedPromotionType(promotionPrice.getAppliedPromotionType())
                 .brand(product.getBrand().getBrandName())
                 .categories(product.getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
-                .variants(productVariantRepository.findAllByProductId(product.getId()).stream().map(productVariantInstance ->toDto(productVariantInstance,new PromotionPriceDto(BigDecimal.ZERO)) )
+                .variants(productVariantRepository.findAllByProductId(product.getId()).stream().map(productVariantInstance -> toDto(productVariantInstance, promotionPrice))
                         .collect(Collectors.toList()))
                 .options(options)
                 .status(productVariant.getStatus().name())

@@ -1,5 +1,6 @@
 package com.bkeuty.order.service.cart;
 
+import com.bkeuty.order.service.membership.MembershipService;
 import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.dto.cart.AddToCartRequestDto;
 import com.bkeuty.order.dto.cart.AddToCartResponseDto;
@@ -25,10 +26,12 @@ import java.util.Objects;
 public class CartService {
     private final CartItemRepository cartItemRepository;
     private final WebClient productWebClient;
+    private final MembershipService membershipService;
 
-    public CartService(CartItemRepository cartItemRepository, WebClient productWebClient) {
+    public CartService(CartItemRepository cartItemRepository, WebClient productWebClient, MembershipService membershipService) {
         this.cartItemRepository = cartItemRepository;
         this.productWebClient = productWebClient;
+        this.membershipService = membershipService;
     }
 
     public List<CartItemResponseDto> getListCartItem(TokenValidationResponseDto tokenValidationResponseDto) {
@@ -47,8 +50,14 @@ public class CartService {
             return new ArrayList<>();
         }
 
+        String userId = tokenValidationResponseDto.getUserId();
+        int membershipLevel = membershipService.getMembershipLevel(userId);
+
         Map<Integer, ProductVariantDto> productVariants = productWebClient.post()
-                .uri("/api/product/internal/variants/batch")
+                .uri(uriBuilder -> uriBuilder.path("/api/product/internal/variants/batch")
+                        .queryParam("userId", userId)
+                        .queryParam("membershipLevel", membershipLevel)
+                        .build())
                 .bodyValue(productVariantIds).retrieve().bodyToMono(new ParameterizedTypeReference<Map<Integer, ProductVariantDto>>() {
                 }).block();
 
@@ -89,7 +98,8 @@ public class CartService {
 
             if (itemInCartItem != null) {
                 itemInCartItem.setQuantity(itemInCartItem.getQuantity() + addToCartRequest.getQuantity());
-                return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
+                int membershipLevel = membershipService.getMembershipLevel(tokenValidationResponseDto.getUserId());
+                return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem), tokenValidationResponseDto.getUserId(), membershipLevel));
             }
         }
 
@@ -100,7 +110,8 @@ public class CartService {
                 .isBuyNow(Boolean.TRUE.equals(addToCartRequest.getBuyNow()))
                 .build();
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(cartItems)));
+        int membershipLevel = membershipService.getMembershipLevel(tokenValidationResponseDto.getUserId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(cartItems), tokenValidationResponseDto.getUserId(), membershipLevel));
     }
 
     public ResponseEntity<AddToCartResponseDto> minusToCart(TokenValidationResponseDto tokenValidationResponseDto, Integer cartItemId) {
@@ -110,10 +121,11 @@ public class CartService {
             itemInCartItem.setQuantity(itemInCartItem.getQuantity() - 1);
             if (itemInCartItem.getQuantity() == 0) {
                 cartItemRepository.deleteById(cartItemId);
-                return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(itemInCartItem));
+                return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(itemInCartItem, tokenValidationResponseDto.getUserId(), 0));
             }
 
-            return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem)));
+            int membershipLevel = membershipService.getMembershipLevel(tokenValidationResponseDto.getUserId());
+            return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem), tokenValidationResponseDto.getUserId(), membershipLevel));
         }
 
         throw new CartItemNotFound("Cart Item not found", cartItemId);
@@ -137,8 +149,12 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    public AddToCartResponseDto toAddToCartResponseDTO(CartItem cartItems) {
-        ProductVariantDto productVariant = productWebClient.get().uri("/api/product/internal/variant/{productVariantId}", cartItems.getProductVariant())
+    public AddToCartResponseDto toAddToCartResponseDTO(CartItem cartItems, String userId, int membershipLevel) {
+        ProductVariantDto productVariant = productWebClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/api/product/internal/variant/{productVariantId}")
+                        .queryParam("userId", userId)
+                        .queryParam("membershipLevel", membershipLevel)
+                        .build(cartItems.getProductVariant()))
                 .retrieve().bodyToMono(ProductVariantDto.class).block();
                 
         if (productVariant == null) {

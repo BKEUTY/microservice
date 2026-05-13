@@ -19,4 +19,5 @@ public class AddToCartResponseDto {
     private Integer quantity;
     private BigDecimal price;
     private BigDecimal promotionPrice;
+    private BigDecimal voucherDiscountAmount;
 }

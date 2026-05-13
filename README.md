@@ -13,10 +13,10 @@ BKEUTY is an advanced e-commerce ecosystem built on a high-performance **Microse
 ### 🏗 Architecture & Design Patterns
 - **Microservices Design:** Independent services with specialized domains (Domain-Driven Design).
 - **Service Discovery:** Centralized registry using **Netflix Eureka**.
-- **API Gateway:** Unified entry point with **Spring Cloud Gateway** for routing and security.
-- **Event-Driven Architecture:** Asynchronous communication powered by **Apache Kafka**.
-- **Distributed Caching:** Optimized performance using **Redis**.
-- **Centralized Identity:** Managed by **Keycloak** (OAuth2/OIDC).
+- **API Gateway:** Unified entry point with **Spring Cloud Gateway** for routing and strict internal security (blocks `/api/*/internal/**`).
+- **Event-Driven Architecture:** Asynchronous communication powered by **Apache Kafka** (Saga Orchestration for distributed transactions).
+- **Distributed Caching:** Optimized performance and state management using **Redis**.
+- **Centralized Identity:** Managed by **Keycloak** (OAuth2/OIDC) utilizing Hybrid Storage (SessionStorage & HttpOnly Cookie).
 
 ### 🚦 Detailed Startup Sequence & Instructions
 To ensure system stability, please follow the startup steps below in the exact order:
@@ -38,7 +38,7 @@ To ensure system stability, please follow the startup steps below in the exact o
 *   **Path:** `/microservice/gateway`
 *   **Port:** `8080`
 *   **Command:** `./mvnw spring-boot:run`
-*   **Role:** The entry point for all client requests, handling routing and global security.
+*   **Role:** The entry point for all client requests, handling routing, timeout policies, and global security.
 
 #### Step 4: Auth Service
 *   **Path:** `/microservice/auth-service`
@@ -48,13 +48,14 @@ To ensure system stability, please follow the startup steps below in the exact o
 
 #### Step 5: Business Microservices (Core Operations)
 Run these services after the infrastructure (Steps 1-4) is online:
-1.  **Product Service** (Port `8081`): `/microservice/product` - Catalog management.
-2.  **Order Service** (Port `8082`): `/microservice/order` - Transaction processing.
-3.  **Promotion Service** (Port `8084`): `/microservice/promotion-service` - Discount logic.
-4.  **Review Service** (Port `8085`): `/microservice/review-service` - Customer feedback.
-5.  **User Service** (Port `8086`): `/microservice/user-service` - Profile management.
-6.  **Shipping Service** (Port `8087`): `/microservice/shipping-service` - Logistics integration.
-7.  **Payment Service** (Port `8088`): `/microservice/payment-service` - Financial gateway.
+1.  **Product Service** (Port `8081`): `/microservice/product` - Catalog management, STI Promotion, AI Recommendation (Gemini), Rating sync.
+2.  **Order Service** (Port `8082`): `/microservice/order` - Transaction processing, Redis Cart, Voucher Apportionment, Saga Start.
+3.  **Promotion Service** (Port `8084`): `/microservice/promotion-service` - Discount logic, Redis Voucher Tracking, Saga Compensation.
+4.  **Review Service** (Port `8085`): `/microservice/review-service` - Customer feedback, Two-way interaction.
+5.  **User Service** (Port `8086`): `/microservice/user-service` - Profile management acting as Keycloak Proxy.
+6.  **Shipping Service** (Port `8087`): `/microservice/shipping-service` - Logistics integration (GHN).
+7.  **Payment Service** (Port `8088`): `/microservice/payment-service` - Financial gateway (SePay).
+8.  **Chatbot Service** (Port `8089`): `/microservice/chatbot-service` - AI Chatbot utilizing MongoDB.
 
 ### ⚙️ Database Configuration
 Create the following databases in PostgreSQL (Default Port `5433`):
@@ -64,6 +65,7 @@ CREATE DATABASE "bkeuty-promotion"; CREATE DATABASE "bkeuty-review";
 CREATE DATABASE "bkeuty-user"; CREATE DATABASE "bkeuty-shipping";
 CREATE DATABASE "bkeuty-payment"; CREATE DATABASE "bkeuty-keycloak";
 ```
+*Note: Chatbot Service uses MongoDB.*
 
 ---
 
@@ -76,10 +78,10 @@ BKEUTY là một hệ sinh thái thương mại điện tử tiên tiến đư�
 ### 🏗 Kiến trúc & Mô hình Thiết kế
 - **Microservices Design:** Các dịch vụ độc lập theo từng miền nghiệp vụ (Domain-Driven Design).
 - **Service Discovery:** Đăng ký và quản lý dịch vụ tập trung sử dụng **Netflix Eureka**.
-- **API Gateway:** Điểm đầu nhận yêu cầu duy nhất với **Spring Cloud Gateway** để điều phối và bảo mật.
-- **Event-Driven Architecture:** Giao tiếp bất đồng bộ thông qua **Apache Kafka**.
-- **Distributed Caching:** Tối ưu hiệu năng bằng **Redis**.
-- **Centralized Identity:** Quản lý bởi **Keycloak** (OAuth2/OIDC).
+- **API Gateway:** Điểm đầu nhận yêu cầu duy nhất với **Spring Cloud Gateway** để điều phối và bảo mật biên nghiêm ngặt (chặn `/api/*/internal/**`).
+- **Event-Driven Architecture:** Giao tiếp bất đồng bộ thông qua **Apache Kafka** (Saga Orchestration cho giao dịch phân tán).
+- **Distributed Caching:** Tối ưu hiệu năng và trạng thái bằng **Redis**.
+- **Centralized Identity:** Quản lý bởi **Keycloak** (OAuth2/OIDC) áp dụng Hybrid Storage (SessionStorage & HttpOnly Cookie).
 
 ### 🚦 Quy trình Khởi chạy & Hướng dẫn Chi tiết
 Để đảm bảo hệ thống hoạt động ổn định, vui lòng tuân thủ các bước khởi chạy sau theo đúng thứ tự:
@@ -101,7 +103,7 @@ BKEUTY là một hệ sinh thái thương mại điện tử tiên tiến đư�
 *   **Thư mục:** `/microservice/gateway`
 *   **Port:** `8080`
 *   **Lệnh chạy:** `./mvnw spring-boot:run`
-*   **Vai trò:** Cổng vào duy nhất cho mọi request từ Client, điều phối routing và bảo mật biên.
+*   **Vai trò:** Cổng vào duy nhất cho mọi request từ Client, điều phối routing, quản lý timeout và bảo mật biên.
 
 #### Bước 4: Auth Service
 *   **Thư mục:** `/microservice/auth-service`
@@ -111,13 +113,14 @@ BKEUTY là một hệ sinh thái thương mại điện tử tiên tiến đư�
 
 #### Bước 5: Các Business Microservices (Dịch vụ Nghiệp vụ)
 Khởi chạy sau khi hạ tầng (Bước 1-4) đã sẵn sàng:
-1.  **Product Service** (Port `8081`): `/microservice/product` - Quản lý sản phẩm & tồn kho.
-2.  **Order Service** (Port `8082`): `/microservice/order` - Xử lý đơn hàng.
-3.  **Promotion Service** (Port `8084`): `/microservice/promotion-service` - Logic khuyến mãi.
-4.  **Review Service** (Port `8085`): `/microservice/review-service` - Đánh giá từ khách hàng.
-5.  **User Service** (Port `8086`): `/microservice/user-service` - Quản lý hồ sơ người dùng.
-6.  **Shipping Service** (Port `8087`): `/microservice/shipping-service` - Tích hợp vận chuyển.
-7.  **Payment Service** (Port `8088`): `/microservice/payment-service` - Cổng thanh toán.
+1.  **Product Service** (Port `8081`): `/microservice/product` - Quản lý sản phẩm, STI Promotion, AI Recommendation (Gemini), đồng bộ đánh giá.
+2.  **Order Service** (Port `8082`): `/microservice/order` - Xử lý đơn hàng, Redis Cart, phân bổ Voucher, khởi chạy Saga.
+3.  **Promotion Service** (Port `8084`): `/microservice/promotion-service` - Logic khuyến mãi, theo dõi Voucher bằng Redis, Saga Compensation.
+4.  **Review Service** (Port `8085`): `/microservice/review-service` - Quản lý đánh giá và phản hồi 2 chiều.
+5.  **User Service** (Port `8086`): `/microservice/user-service` - Quản lý hồ sơ, hoạt động như Proxy của Keycloak.
+6.  **Shipping Service** (Port `8087`): `/microservice/shipping-service` - Tích hợp vận chuyển thực tế (GHN).
+7.  **Payment Service** (Port `8088`): `/microservice/payment-service` - Cổng thanh toán (SePay).
+8.  **Chatbot Service** (Port `8089`): `/microservice/chatbot-service` - AI Chatbot lưu trữ bằng MongoDB.
 
 ### ⚙️ Cấu hình Cơ sở dữ liệu
 Khởi tạo các database sau trong PostgreSQL (Mặc định Port `5433`):
@@ -127,6 +130,7 @@ CREATE DATABASE "bkeuty-promotion"; CREATE DATABASE "bkeuty-review";
 CREATE DATABASE "bkeuty-user"; CREATE DATABASE "bkeuty-shipping";
 CREATE DATABASE "bkeuty-payment"; CREATE DATABASE "bkeuty-keycloak";
 ```
+*Lưu ý: Chatbot Service sử dụng MongoDB.*
 
 ---
 © 2026 BKEUTY Project. Documentation for Thesis and Academic Research.
