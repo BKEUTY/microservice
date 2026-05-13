@@ -19,18 +19,19 @@
         <module name="shipping-service" />
         <module name="payment-service" />
       </profile>
-      <profile name="Annotation profile for product" enabled="true">
+      <profile name="Annotation profile for chatbot-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.42/lombok-1.18.42.jar" />
         </processorPath>
+        <module name="chatbot-service" />
         <module name="product" />
         <module name="auth-service" />
-        <module name="user-service" />
         <module name="review-service" />
         <module name="promotion-service" />
+        <module name="user-service" />
         <module name="order" />
       </profile>
     </annotationProcessing>
@@ -38,6 +39,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="auth-service" options="-parameters" />
+      <module name="chatbot-service" options="-parameters" />
       <module name="discoveryserver" options="-parameters" />
       <module name="gateway" options="-parameters" />
       <module name="order" options="-parameters" />

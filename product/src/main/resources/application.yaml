@@ -77,3 +77,12 @@ eureka:
 springdoc:
   api-docs:
     path: /api/product/v3/api-docs
+
+service-base-url:
+  auth-service: ${AUTH_SERVICE_URL:http://auth-service}
+  promotion-service: ${PROMOTION_SERVICE_URL:http://promotion-service}
+  review-service: ${REVIEW_SERVICE_URL:http://review-service}
+  order-service: ${ORDER_SERVICE_URL:http://order}
+
+
+
