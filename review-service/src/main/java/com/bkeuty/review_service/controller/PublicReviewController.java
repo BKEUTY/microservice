@@ -32,6 +32,10 @@ public class PublicReviewController {
         Pageable pageable = PageRequest.of(page - 1, size, ReviewSortUtils.parseSort(sort, "createdAt"));
         return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, rating, hasImage, pageable));
     }
+    @GetMapping("/healthcheck")
+    public ResponseEntity<String> getHealthCheck() {
+        return ResponseEntity.ok("OK");
+    }
 
     @GetMapping("/product/{variantId}/stats")
     public ResponseEntity<java.util.Map<String, Long>> getReviewStats(@PathVariable Long variantId) {

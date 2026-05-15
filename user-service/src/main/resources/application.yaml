@@ -18,3 +18,6 @@ keycloak:
   realm: ${REALM:bkeuty}
   client-id: ${CLIENT_ID:bkeuty-user-service}
   client-secret: ${CLIENT_SECRET:BVTdsuPlcW7Y8hDvO1xfgEWf1s063FQ1}
+
+service-base-url:
+  auth-service: ${AUTH_SERVICE_URL:http://auth-service}

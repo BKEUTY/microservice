@@ -29,6 +29,7 @@ eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+    enabled: ${EUREKA_ENABLED:true}
 
 gemini:
   api-key: ${GEMINI_API_KEY:}

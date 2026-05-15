@@ -3,11 +3,9 @@ package com.bkeuty.shipping_service.controller;
 import com.bkeuty.shipping_service.dto.*;
 import com.bkeuty.shipping_service.service.KafkaService;
 import com.bkeuty.shipping_service.service.ShippingService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -19,7 +17,10 @@ public class ShippingController {
         this.shippingService = shippingService;
         this.kafkaService = kafkaService;
     }
-
+    @GetMapping("healthcheck")
+    public ResponseEntity<String> getHealthCheck() {
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
     @PostMapping("/fee")
     public Mono<CalShippingFeeResponseDto> calShippingFee(@RequestBody CalShippingFeeDto calShippingFeeDto) {
         return shippingService.calShippingFee(calShippingFeeDto);
