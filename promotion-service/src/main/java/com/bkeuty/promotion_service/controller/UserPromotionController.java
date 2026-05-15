@@ -25,7 +25,10 @@ public class UserPromotionController {
     public UserPromotionController(PromotionService promotionService) {
         this.promotionService = promotionService;
     }
-
+    @GetMapping("/healthcheck")
+    ResponseEntity<String> getHealthCheck(){
+        return  ResponseEntity.ok("ok");
+    }
     @GetMapping
     public ResponseEntity<Page<PromotionResponseDto>> getPromotions(
             @RequestParam(required = false) String title,

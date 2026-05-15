@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    @Value("${service-base-url.auth-service}")
+    private String authServiceUrl;
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -24,14 +27,14 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true);
     }
     @Bean
-    @LoadBalanced // This is the "bridge" between WebClient and Eureka
+//    @LoadBalanced // This is the "bridge" between WebClient and Eureka
     public WebClient.Builder webClientBuilder() {
         return WebClient.builder();
     }
 
     @Bean
     public WebClient authWebClient(WebClient.Builder builder) {
-        return builder.baseUrl("http://auth-service").build();
+        return builder.baseUrl(authServiceUrl).build();
     }
 
     @Bean
