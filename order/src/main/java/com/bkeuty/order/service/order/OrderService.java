@@ -91,13 +91,27 @@ public class OrderService {
         }
         final Integer finalLevel = trustedLevel;
 
-        Integer shippingFee = shippingService.calShippingFee(CalShippingFeeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
-                                                                                                                                .toDistrictId(request.getAddress().getDistrict().getDistrictID())
-                .serviceTypeId(2).weight(100).build())
-                .block().getData().getServiceFee();
- 
-        String shippingDate = shippingService.calShippingTime(CalShippingTimeDto.builder().toWardCode(request.getAddress().getWard().getWardCode().toString())
-                .toDistrictId(request.getAddress().getDistrict().getDistrictID()).serviceTypeId(2).build()).block().getData().getLeaderTimeOrder().getToEstimateTime();
+        Integer shippingFee = 30000;
+        try {
+            shippingFee = shippingService.calShippingFee(CalShippingFeeDto.builder()
+                    .toWardCode(request.getAddress().getWard().getWardCode().toString())
+                    .toDistrictId(request.getAddress().getDistrict().getDistrictID())
+                    .serviceTypeId(2).weight(100).build())
+                    .block().getData().getServiceFee();
+        } catch (Exception e) {
+            log.warn("Failed to calculate shipping fee from GHN, defaulting to 30000: {}", e.getMessage());
+        }
+
+        String shippingDate = LocalDateTime.now().plusDays(3).toString();
+        try {
+            shippingDate = shippingService.calShippingTime(CalShippingTimeDto.builder()
+                    .toWardCode(request.getAddress().getWard().getWardCode().toString())
+                    .toDistrictId(request.getAddress().getDistrict().getDistrictID())
+                    .serviceTypeId(2).build())
+                    .block().getData().getLeaderTimeOrder().getToEstimateTime();
+        } catch (Exception e) {
+            log.warn("Failed to calculate shipping time from GHN, defaulting to 3 days from now: {}", e.getMessage());
+        }
         
         Order order = Order.builder()
                 .orderDate(java.time.LocalDateTime.now())

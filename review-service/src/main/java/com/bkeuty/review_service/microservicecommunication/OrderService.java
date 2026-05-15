@@ -17,13 +17,16 @@ public class OrderService {
                 .userId(userId)
                 .variantId(variantId)
                 .build();
-
-        return orderWebClient.post()
-                .uri("/api/order/internal/check-delivered")
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Boolean.class)
-                .block();
+        try {
+            return orderWebClient.post()
+                    .uri("/api/order/internal/check-delivered")
+                    .bodyValue(requestDto)
+                    .retrieve()
+                    .bodyToMono(Boolean.class)
+                    .block();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public void markReviewed(String userId, Integer variantId) {
@@ -31,12 +34,15 @@ public class OrderService {
                 .userId(userId)
                 .variantId(variantId)
                 .build();
-
-        orderWebClient.post()
-                .uri("/api/order/internal/mark-reviewed")
-                .bodyValue(requestDto)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .block();
+        try {
+            orderWebClient.post()
+                    .uri("/api/order/internal/mark-reviewed")
+                    .bodyValue(requestDto)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .block();
+        } catch (Exception e) {
+            System.err.println("Failed to mark order as reviewed: " + e.getMessage());
+        }
     }
 }

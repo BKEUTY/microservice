@@ -17,12 +17,20 @@ public class UserService {
     }
 
     public Map<String, String> getUserNames(List<String> userIds) {
-        return userWebClient.post()
-                .uri("/api/user/internal/names")
-                .bodyValue(userIds)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
-                .block();
+        try {
+            return userWebClient.post()
+                    .uri("/api/user/internal/names")
+                    .bodyValue(userIds)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
+                    .block();
+        } catch (Exception e) {
+            Map<String, String> fallback = new java.util.HashMap<>();
+            for (String id : userIds) {
+                fallback.put(id, "User " + id);
+            }
+            return fallback;
+        }
     }
 
     public String getUserName(String userId) {

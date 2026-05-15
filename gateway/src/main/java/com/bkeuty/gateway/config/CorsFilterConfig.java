@@ -14,9 +14,7 @@ public class CorsFilterConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:3000"); // Web Frontend (User)
-        config.addAllowedOrigin("http://localhost:3100"); // Web Frontend (Admin)
-        config.addAllowedOrigin("http://localhost:8081"); // Expo Web
+        config.addAllowedOriginPattern("*");
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);

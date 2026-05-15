@@ -115,7 +115,11 @@ public class ProductService {
 
         productRes.forEach(pv -> {
             if (promotionPrice.containsKey(pv.getId())) {
-                BigDecimal newPrice = promotionPrice.get(pv.getId()).getNewPrice();
+                PromotionPriceDto dto = promotionPrice.get(pv.getId());
+                if ("SERVICE_DOWN".equals(dto.getAppliedPromotionType())) {
+                    return; // Skip DB update if service is down
+                }
+                BigDecimal newPrice = dto.getNewPrice();
                 if (pv.getPromotionPrice() == null || pv.getPromotionPrice().compareTo(newPrice) != 0) {
                     pv.setPromotionPrice(newPrice);
                 }
@@ -129,14 +133,23 @@ public class ProductService {
         return productRes.map(productVariant -> toDisplayProductDto(productVariant,promotionPrice));
     }
     private DisplayProductDto toDisplayProductDto(ProductVariant productVariant, Map<Integer,PromotionPriceDto> promotionPrice) {
+        PromotionPriceDto dto = promotionPrice.get(productVariant.getId());
+        BigDecimal displayPrice = dto != null ? dto.getNewPrice() : productVariant.getPrice();
+        String promoType = dto != null ? dto.getAppliedPromotionType() : null;
+
+        if ("SERVICE_DOWN".equals(promoType)) {
+            promoType = null;
+            displayPrice = productVariant.getPromotionPrice() != null ? productVariant.getPromotionPrice() : productVariant.getPrice();
+        }
+
         return DisplayProductDto.builder()
                 .productId(productVariant.getId())
                 .variantName(productVariant.getProductVariantName())
                 .stockQuantity(productVariant.getStockQuantity())
                 .imageUrl(productVariant.getProductImageUrl())
                 .originPrice(productVariant.getPrice())
-                .discountPrice(promotionPrice.get(productVariant.getId()).getNewPrice())
-                .appliedPromotionType(promotionPrice.get(productVariant.getId()).getAppliedPromotionType())
+                .discountPrice(displayPrice)
+                .appliedPromotionType(promoType)
                 .brand(productVariant.getProduct().getBrand()!=null?productVariant.getProduct().getBrand().getBrandName():null)
                 .categories(productVariant.getProduct().getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .status(productVariant.getStatus().name())
@@ -152,7 +165,10 @@ public class ProductService {
     public ProductDetailDto getProductVariantById(Integer id, String userId, Integer membershipLevel) {
         ProductVariant productVariant=  productVariantRepository.findById(id).orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with id: " + id));
         PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant, userId, membershipLevel);
-        if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
+        if (promotionPriceDto != null && "SERVICE_DOWN".equals(promotionPriceDto.getAppliedPromotionType())) {
+            promotionPriceDto.setNewPrice(productVariant.getPromotionPrice() != null ? productVariant.getPromotionPrice() : productVariant.getPrice());
+            promotionPriceDto.setAppliedPromotionType(null);
+        } else if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
             if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(promotionPriceDto.getNewPrice()) != 0) {
                 productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
             }
@@ -170,7 +186,10 @@ public class ProductService {
         ProductVariant productVariant = productVariantRepository.findFirstByProductVariantName(variantName)
                 .orElseThrow(() -> new ProductVariantNotFoundException("Product Variant not found with name: " + variantName));
         PromotionPriceDto promotionPriceDto = promotionService.getPromotionPrice(productVariant, userId, membershipLevel);
-        if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
+        if (promotionPriceDto != null && "SERVICE_DOWN".equals(promotionPriceDto.getAppliedPromotionType())) {
+            promotionPriceDto.setNewPrice(productVariant.getPromotionPrice() != null ? productVariant.getPromotionPrice() : productVariant.getPrice());
+            promotionPriceDto.setAppliedPromotionType(null);
+        } else if (promotionPriceDto != null && promotionPriceDto.getNewPrice() != null) {
             if (productVariant.getPromotionPrice() == null || productVariant.getPromotionPrice().compareTo(promotionPriceDto.getNewPrice()) != 0) {
                 productVariant.setPromotionPrice(promotionPriceDto.getNewPrice());
             }
