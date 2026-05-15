@@ -23,6 +23,10 @@ public class UserController {
         this.userService = userService;
         this.authService = authService;
     }
+    @GetMapping("/healthcheck")
+    public ResponseEntity<?> getHealthCheck() {
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
     @GetMapping
     public ResponseEntity<UserDetailResponseDto> getUser(@Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);

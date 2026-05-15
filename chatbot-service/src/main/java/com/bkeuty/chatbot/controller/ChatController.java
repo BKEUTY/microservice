@@ -17,6 +17,10 @@ import java.util.List;
 public class ChatController {
     private final ChatService chatService;
 
+    @GetMapping("/healthcheck")
+    public ResponseEntity<String> healthcheck() {
+        return ResponseEntity.ok("OK");
+    }
     @PostMapping("/send")
     public ResponseEntity<ChatResponse> sendMessage(@Valid @RequestBody ChatRequest request) {
         return ResponseEntity.ok(chatService.processChatMessage(request));
