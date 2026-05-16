@@ -18,6 +18,10 @@ public class PaymentController {
     }
     @Value("${sepay.api-key}")
     private String webhookApiKey;
+    @GetMapping("/healthcheck")
+    public ResponseEntity<String> healthcheck() {
+        return new ResponseEntity<>("OK", HttpStatus.OK);
+    }
     @PostMapping("/webhook")
     public ResponseEntity<?> sepayWebhook(@RequestHeader("Authorization") String authHeader , @RequestBody PaymentWebhookData webhook){
         System.out.println("webhook: Call to webhook");

@@ -34,7 +34,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public WebClient authWebClient(WebClient.Builder builder) {
-        return builder.baseUrl("http://auth-service").build();
+        return builder.baseUrl(authServiceUrl).build();
     }
 
     @Bean
