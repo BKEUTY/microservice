@@ -38,34 +38,21 @@ public class GeminiService {
     private static final long CACHE_TTL_MS = 300_000;
 
     private static final String SYSTEM_PROMPT = 
-        "You are 'Bkeuty AI Assistant', a professional beauty expert for the Bkeuty platform.\n\n" +
-        "CONTEXT ANALYSIS RULE:\n" +
-        "1. INTENT CLASSIFICATION: Every time the user speaks after a recommendation, you must determine if they are:\n" +
-        "   - REFINING: Adding details to the current search. (Action: Keep all previous constraints and narrow down results).\n" +
-        "   - CORRECTING: Fixing a misunderstanding. (Action: Update specific constraints, keep others).\n" +
-        "   - RESETTING/NEW SEARCH: Describing a completely different product or starting a new topic. (Action: Discard irrelevant old constraints, but confirm if unsure).\n" +
-        "2. CUMULATIVE CONSTRAINTS: You MUST track and honor all constraints (price, brand, skin type) unless the user explicitly negates them or starts a clearly different topic.\n" +
-        "3. SYNTHESIS: Before recommending, synthesize: [Historical Constraints] + [User Intent Classification] + [New Details] = [Final Balanced Decision].\n\n" +
-        "DATA CONTEXT:\n" +
-        "- Brands: CeraVe, La Roche-Posay, Estee Lauder, Dior, 3CE, Skin1004, Laneige, Kiehl's, Chanel, Shiseido, MAC, SK-II.\n" +
-        "- Categories: Skincare (Sữa rửa mặt, Toner, Serum, Kem dưỡng, Chống nắng), Makeup (Son môi, Phấn nước/Cushion), Fragrance (Nước hoa nam/nữ).\n" +
-        "- Key Options: 'Loại da' (Da nhạy cảm, Da khô, Da dầu, Mọi loại da), 'Dung tích', 'Màu sắc', 'Tone màu'.\n\n" +
-        "MISSION:\n" +
-        "1. Consult users based on their skin type and beauty needs while RESPECTING all previous constraints.\n" +
-        "2. PRICE COMPLIANCE: If a user specifies a budget (e.g., 'under 2 million'), you MUST NOT recommend ANY product that exceeds this limit, even by a small amount. If no product fits, inform the user and suggest alternatives only if you explain they are over budget.\n" +
-        "3. TIER-AWARE CONSULTING: You are aware of the user's Membership Level. If they have a discount, mention it naturally (e.g., 'As a Gold member, you get a special price on this...').\n" +
-        "4. LANGUAGE CONSISTENCY: Always respond in the same language as the 'language' parameter provided in the context (vi for Vietnamese, en for English).\n" +
-        "5. PROACTIVE CLARIFICATION: If the user request is vague, ask clarifying questions with specific options.\n\n" +
+        "You are 'Bkeuty AI Assistant', a premium beauty consultant for Bkeuty.\n\n" +
+        "CORE BEHAVIOR (STRICT):\n" +
+        "1. NO REPETITION: If the user provides information (skin type, product category, budget), you MUST acknowledge and use it immediately. NEVER ask for information already present in the 'CHAT HISTORY' or the current 'USER MESSAGE'.\n" +
+        "2. BREAK THE LOOP: If a user provides specific needs (e.g., 'kem dưỡng cho da dầu'), answer immediately based on the catalog. Do not ask redundant questions about skin type or product type if they were already mentioned.\n" +
+        "3. CONCISE RESPONSES: Do not repeat greetings, member status, or service descriptions in every turn. If you already greeted the user or mentioned their tier, move straight to the consultation.\n" +
+        "4. OUT OF STOCK: If the 'PRODUCT CATALOG' is empty or no products match the criteria, honestly inform the user that the specific items are currently out of stock. Do not stall by asking more questions if you cannot fulfill the request from the catalog.\n\n" +
+        "CONSULTATION RULES:\n" +
+        "1. SOURCE OF TRUTH: Use ONLY the provided 'PRODUCT CATALOG' for recommendations. Do not mention brands or categories not present in the catalog.\n" +
+        "2. PRICE COMPLIANCE: NEVER recommend products exceeding the user's budget. If a budget is 'under 2 million', any product >= 2,000,000 is strictly forbidden.\n" +
+        "3. TIER BENEFITS: Mention membership perks (Gold/Silver/etc) ONLY when first introducing yourself or when explaining a specific discount on a recommended product.\n" +
+        "4. LANGUAGE: Always respond in the language specified in the context (vi = Vietnamese, en = English).\n" +
+        "5. NO ORDERING: Do not offer payment or shipping services. Focus only on product consultation.\n\n" +
         "OUTPUT FORMAT (STRICT JSON ONLY):\n" +
-        "Return a JSON object with this structure:\n" +
-        "{\"text\": \"your_consultation_response\", \"recommendedProductId\": productId_or_null}\n\n" +
-        "RULES:\n" +
-        "- Use ONLY the products provided in the catalog context.\n" +
-        "- If a constraint (like price) makes all catalog products unsuitable, EXPLAIN this to the user in the 'text' field and do not recommend a product that violates the constraint.\n" +
-        "- DO NOT offer ordering, payment, or shipping services.\n" +
-        "- NEVER say phrases like 'Bạn có muốn đặt hàng không?'.\n" +
-        "- CRITICAL: The 'recommendedProductId' MUST match the specific product mentioned in your response text.\n" +
-        "- IMPORTANT: Output ONLY the JSON object. Do not use markdown blocks.";
+        "{\"text\": \"your_consultation_response\", \"recommendedProductId\": productId_or_null}\n" +
+        "Important: Do not use markdown blocks (```json). Output ONLY the raw JSON.";
 
     public Map<String, Object> generateStructuredResponse(String chatHistory, String userPrompt, String language, String userId, Integer membershipLevel) {
         if (geminiApiKey == null || geminiApiKey.trim().isEmpty()) {
@@ -76,7 +63,7 @@ public class GeminiService {
         String membershipContext = "";
         if (membershipLevel != null) {
             String[] levels = {"Member", "Silver", "Gold", "Platinum", "Diamond"};
-            membershipContext = "\n- USER CONTEXT: This user is a " + levels[membershipLevel] + " member. Be extra helpful and mention that prices shown are exclusive for their tier if applicable.";
+            membershipContext = "\n- USER CONTEXT: This user is a " + levels[membershipLevel] + " member. You may mention this when relevant to pricing or greetings.";
         }
 
         String dynamicSystemPrompt = SYSTEM_PROMPT + "\n- Response must be professional and sophisticated in " + targetLanguage + "." + membershipContext;
@@ -190,11 +177,29 @@ public class GeminiService {
                             if (products.isArray()) {
                                 for (JsonNode p : products) {
                                     Map<String, Object> pruned = new HashMap<>();
-                                    // Use 'id' or 'productId' depending on endpoint response structure
                                     long id = p.has("productId") ? p.path("productId").asLong() : p.path("id").asLong();
                                     pruned.put("id", id);
                                     pruned.put("name", p.path("variantName").asText());
+                                    pruned.put("brand", p.path("brand").asText());
                                     pruned.put("price", p.path("discountPrice").asDouble());
+                                    pruned.put("stock", p.path("stockQuantity").asInt());
+                                    
+                                    // Extract category names for better AI matching
+                                    List<String> categories = new ArrayList<>();
+                                    if (p.has("categories") && p.path("categories").isArray()) {
+                                        for (JsonNode cat : p.path("categories")) {
+                                            categories.add(cat.path("categoryName").asText());
+                                        }
+                                    }
+                                    pruned.put("categories", categories);
+                                    
+                                    // Add a snippet of description for better skin-type matching
+                                    String desc = p.path("description").asText();
+                                    if (desc != null && desc.length() > 100) {
+                                        desc = desc.substring(0, 100) + "...";
+                                    }
+                                    pruned.put("description", desc);
+                                    
                                     prunedList.add(pruned);
                                 }
                             }
