@@ -132,4 +132,42 @@ public class ChatService {
                     .build();
         }
     }
+
+    public String checkHealth() {
+        StringBuilder status = new StringBuilder("OK");
+        
+        // 1. Check MongoDB
+        try {
+            bucketRepository.count();
+        } catch (Exception e) {
+            log.error("Health check: MongoDB connection failed: {}", e.getMessage());
+            status.append(" | MONGODB_DOWN");
+        }
+
+        // 2. Check Redis
+        try {
+            contextService.getFormattedContext("health-check");
+        } catch (Exception e) {
+            log.error("Health check: Redis connection failed: {}", e.getMessage());
+            status.append(" | REDIS_DOWN");
+        }
+        
+        // 3. Check Product Service
+        try {
+            productClient.getProductContext("health-check", 0);
+        } catch (Exception e) {
+            log.error("Health check: Product Service connection failed: {}", e.getMessage());
+            status.append(" | PRODUCT_SERVICE_DOWN");
+        }
+        
+        // 4. Check Kafka
+        try {
+            kafkaTemplate.send(KafkaTopicConfig.CHAT_PERSIST_TOPIC, "health-check", "ping");
+        } catch (Exception e) {
+            log.error("Health check: Kafka connection failed: {}", e.getMessage());
+            status.append(" | KAFKA_DOWN");
+        }
+        
+        return status.toString();
+    }
 }

@@ -19,7 +19,11 @@ public class ChatController {
 
     @GetMapping("/healthcheck")
     public ResponseEntity<String> healthcheck() {
-        return ResponseEntity.ok("OK");
+        String status = chatService.checkHealth();
+        if (status.contains("DOWN")) {
+            return ResponseEntity.status(503).body(status);
+        }
+        return ResponseEntity.ok(status);
     }
     @PostMapping("/send")
     public ResponseEntity<ChatResponse> sendMessage(@Valid @RequestBody ChatRequest request) {
