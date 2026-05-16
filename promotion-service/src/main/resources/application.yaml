@@ -42,3 +42,6 @@ springdoc:
   api-docs:
     path: /api/promotion/v3/api-docs
 
+service-base-url:
+  auth-service: ${AUTH_SERVICE_URL:http://auth-service}
+
