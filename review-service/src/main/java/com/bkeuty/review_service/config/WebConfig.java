@@ -62,7 +62,6 @@ public class WebConfig implements WebMvcConfigurer {
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()
-                .addServersItem(new Server().url("http://localhost:8080").description("API Gateway"))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName,

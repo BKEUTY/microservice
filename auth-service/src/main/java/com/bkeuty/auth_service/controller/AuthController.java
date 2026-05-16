@@ -94,9 +94,12 @@ public class AuthController {
     private void setCookie(HttpServletResponse response, String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Chuyển thành true khi deploy production (HTTPS)
+        cookie.setSecure(true); // Chuyển thành true khi deploy production (HTTPS)
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
+        // response.addCookie(cookie);
+        String cookieHeader = String.format("%s=%s; Path=%s; Max-Age=%d; HttpOnly; Secure; SameSite=None", 
+                                            name, value, "/", maxAge, true);
+        response.setHeader("Set-Cookie", cookieHeader);
     }
 }
