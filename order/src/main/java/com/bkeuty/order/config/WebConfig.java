@@ -75,7 +75,7 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Bean
     public WebClient promotionWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
-        return builder.baseUrl(productServiceUrl).build();
+        return builder.baseUrl(promotionServiceUrl).build();
     }
     @Bean
     public OpenAPI customOpenAPI() {
