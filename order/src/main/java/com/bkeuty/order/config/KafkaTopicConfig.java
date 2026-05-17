@@ -19,4 +19,19 @@ public class KafkaTopicConfig {
         return new NewTopic("create-shipping-order-topic", 1, (short) 1);
     }
 
+    @Bean
+    public NewTopic refundOrderTopic(){
+        return new NewTopic("refund-order-topic", 1, (short) 1);
+    }
+
+    @Bean
+    public NewTopic processRefundTopic(){
+        return new NewTopic("process-refund-topic", 1, (short) 1);
+    }
+
+    @Bean
+    public NewTopic refundWalletSuccessTopic(){
+        return new NewTopic("refund-wallet-success-topic", 1, (short) 1);
+    }
+
 }

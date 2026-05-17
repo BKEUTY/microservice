@@ -4,6 +4,7 @@ import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentMethod;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import com.bkeuty.order.enums.PaymentStatus;
 import jakarta.persistence.CascadeType;
@@ -21,6 +22,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.joda.time.DateTime;
 
 @Data
 @AllArgsConstructor
@@ -65,7 +67,9 @@ public class Order {
 
     @Column(name = "membership_level")
     private Integer membershipLevel;
-
+    @Column(name = "delivery_date" , columnDefinition = "TIMESTAMP")
+    @Builder.Default
+    private LocalDateTime deliveryDate = null;
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

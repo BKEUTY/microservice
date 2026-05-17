@@ -6,6 +6,9 @@ import com.bkeuty.payment_service.repository.PaymentTransactionRepository;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Service
 public class PaymentService {
     private final PaymentTransactionRepository paymentTransactionRepository;
@@ -14,10 +17,20 @@ public class PaymentService {
         this.paymentTransactionRepository = paymentTransactionRepository;
         this.kafkaTemplate = kafkaTemplate;
     }
+    public  Integer extractOrderNumber(String text) {
+        Pattern pattern = Pattern.compile("DH(\\d+)");
+        Matcher matcher = pattern.matcher(text);
 
+        if (matcher.find()) {
+            return Integer.valueOf(matcher.group(1));
+        }
+
+        return null;
+    }
     public Boolean updatePaymentTransaction(PaymentWebhookData paymentWebhookData) {
         String content = paymentWebhookData.getContent();
-        Integer orderId = Integer.valueOf(content.replaceAll("\\D", ""));
+
+        Integer orderId = extractOrderNumber(content);
         System.out.println("orderId:" + orderId);
 
         PaymentTransaction paymentTransaction = new PaymentTransaction();

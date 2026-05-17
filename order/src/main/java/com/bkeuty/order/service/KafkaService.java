@@ -3,6 +3,7 @@ package com.bkeuty.order.service;
 import com.bkeuty.order.dto.order.DecreaseStockResponseDto;
 import com.bkeuty.order.dto.order.DecreaseStockStatusDto;
 import com.bkeuty.order.dto.order.OrderEventDto;
+import com.bkeuty.order.dto.order.RefundWalletSuccessEventDto;
 import com.bkeuty.order.dto.shipping.AddressDto;
 import com.bkeuty.order.dto.shipping.CreateShippingOrderDto;
 import com.bkeuty.order.dto.shipping.CreateShippingOrderMessage;
@@ -15,16 +16,22 @@ import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
+import com.bkeuty.order.service.admin.AdminRefundOrderService;
 import com.bkeuty.order.service.membership.MembershipService;
 import com.bkeuty.order.util.OrderAddressUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.TimeZone;
 
 @Service
 @Transactional
@@ -35,17 +42,20 @@ public class KafkaService {
     private final MembershipService membershipService;
     private final KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate;
     private final KafkaTemplate<String, Object> kafkaEventTemplate;
+    private final AdminRefundOrderService adminRefundOrderService;
 
-    public KafkaService(OrderRepository orderRepository, 
-                        OrderItemRepository orderItemRepository, 
+    public KafkaService(OrderRepository orderRepository,
+                        OrderItemRepository orderItemRepository,
                         MembershipService membershipService,
-                        KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate, 
-                        KafkaTemplate<String, Object> kafkaEventTemplate) {
+                        KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate,
+                        KafkaTemplate<String, Object> kafkaEventTemplate,
+                        AdminRefundOrderService adminRefundOrderService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.membershipService = membershipService;
         this.kafkaCreateShippingOrderTemplate = kafkaCreateShippingOrderTemplate;
         this.kafkaEventTemplate = kafkaEventTemplate;
+        this.adminRefundOrderService = adminRefundOrderService;
     }
 
     @KafkaListener(topics = "payment-transaction-topic")
@@ -136,6 +146,10 @@ public class KafkaService {
 
             if ("delivered".equalsIgnoreCase(message.getStatus()) && oldStatus != OrderStatus.SUCCEEDED) {
                 order.setStatus(OrderStatus.SUCCEEDED);
+
+                order.setDeliveryDate(
+                        LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))
+                );
                 orderRepository.saveAndFlush(order);
                 membershipService.recalculateMembershipLevel(order.getUserId());
             } else {
@@ -146,6 +160,20 @@ public class KafkaService {
         }
     }
 
+
+    /**
+     * Listens to acknowledgement events from User Service after a wallet credit completes.
+     * Updates the matching {@link com.bkeuty.order.entity.RefundOrder} status to REFUNDED.
+     */
+    @KafkaListener(topics = "refund-wallet-success-topic")
+    public void listenToRefundWalletSuccessTopic(RefundWalletSuccessEventDto message) {
+        if (message == null || message.getRefundOrderId() == null) {
+            log.error("listenToRefundWalletSuccessTopic: received null or incomplete message");
+            return;
+        }
+        log.info("Received refund-wallet-success-topic for refundOrderId={}", message.getRefundOrderId());
+        adminRefundOrderService.markRefunded(message.getRefundOrderId());
+    }
 
     private ShippingItemDto toShippingItemDto(OrderItem dto) {
         return ShippingItemDto.builder()
