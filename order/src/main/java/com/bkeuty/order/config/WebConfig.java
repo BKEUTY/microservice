@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +16,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-
+    @Value("${service-base-url.auth-service}")
+    private String authServiceUrl;
+    @Value("${service-base-url.user-service}")
+    private String userServiceUrl;
+    @Value("${service-base-url.product-service}")
+    private String productServiceUrl;
+    @Value("${service-base-url.promotion-service}")
+    private String promotionServiceUrl;
+    @Value("${service-base-url.payment-service}")
+    private String paymentServiceUrl;
+    @Value("${service-base-url.shipping-service}")
+    private String shippingServiceUrl;
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -26,7 +38,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    @LoadBalanced // This is the "bridge" between WebClient and Eureka
+//    @LoadBalanced // This is the "bridge" between WebClient and Eureka
     public WebClient.Builder loadBalancedWebClientBuilder() {
         return WebClient.builder();
     }
@@ -37,23 +49,23 @@ public class WebConfig implements WebMvcConfigurer {
     }
     @Bean
     public WebClient productWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
-        return builder.baseUrl("http://product").build();
+        return builder.baseUrl(productServiceUrl).build();
     }
     @Bean
     public WebClient authWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
-        return builder.baseUrl("http://auth-service").build();
+        return builder.baseUrl(authServiceUrl).build();
     }
     @Bean
     public WebClient shippingWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
-        return builder.baseUrl("http://shipping-service").build();
+        return builder.baseUrl(shippingServiceUrl).build();
     }
     @Bean
     public WebClient paymentWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
-        return builder.baseUrl("http://payment-service").build();
+        return builder.baseUrl(paymentServiceUrl).build();
     }
     @Bean
     public WebClient userWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
-        return builder.baseUrl("http://user-service").build();
+        return builder.baseUrl(userServiceUrl).build();
     }
 
     @Bean
@@ -63,7 +75,7 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Bean
     public WebClient promotionWebClient(@Qualifier("loadBalancedWebClientBuilder") WebClient.Builder builder) {
-        return builder.baseUrl("http://promotion-service").build();
+        return builder.baseUrl(productServiceUrl).build();
     }
     @Bean
     public OpenAPI customOpenAPI() {

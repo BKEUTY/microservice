@@ -37,7 +37,10 @@ public class OrderController {
         this.orderService = orderService;
         this.shippingService = shippingService;
     }
-
+    @GetMapping("/healthcheck")
+    public ResponseEntity<String> getHealthCheck() {
+        return new ResponseEntity<>("OK", HttpStatus.OK);
+    }
     @GetMapping("/history")
     public ResponseEntity<Page<OrderResponseDto>> findOrderByUserId(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,

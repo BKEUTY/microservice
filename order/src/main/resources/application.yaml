@@ -22,13 +22,13 @@ spring:
 #    init:
 #      mode: always
   kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: "order-service-group"
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -76,3 +76,10 @@ ghn:
   from-ward-code: "90740"
   shop-id: "199833"
 
+service-base-url:
+  auth-service: ${AUTH_SERVICE_URL:http://auth-service}
+  product-service: ${PRODUCT_SERVICE_URL:http://product}
+  shipping-service: ${SHIPPING_SERVICE_URL:http://shipping-service}
+  payment-service: ${PAYMENT_SERVICE_URL:http://payment-service}
+  user-service: ${USER_SERVICE_URL:http://user-service}
+  promotion-service: ${PROMOTION_SERVICE_URL:http://promotion-service}
