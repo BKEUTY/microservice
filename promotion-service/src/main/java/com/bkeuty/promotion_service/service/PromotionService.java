@@ -191,15 +191,25 @@ public class PromotionService {
                     now
             ));
         }
+        List<ProductPromotion> activeProductPromotions = productPromotionRepository.findAllActivePromotions(now);
 
         for (ProductPromotionCheckRequestDTO request : productPromotionCheckRequestDTOList) {
             List<Promotion> allPromotions = new ArrayList<>();
-            allPromotions.addAll(productPromotionRepository.findApplicablePromotions(
-                    request.getProductId(),
-                    request.getBrandId(),
-                    request.getCategoryIds(),
-                    now
-            ));
+            
+            for (ProductPromotion p : activeProductPromotions) {
+                boolean matchesProduct = p.getProductIds() == null || p.getProductIds().isEmpty() || 
+                                         p.getProductIds().contains(request.getProductId());
+                
+                boolean matchesBrand = p.getBrandIds() == null || p.getBrandIds().isEmpty() || 
+                                       (request.getBrandId() != null && p.getBrandIds().contains(request.getBrandId()));
+                
+                boolean matchesCategory = p.getCategoryIds() == null || p.getCategoryIds().isEmpty() || 
+                                          (request.getCategoryIds() != null && request.getCategoryIds().stream().anyMatch(cid -> p.getCategoryIds().contains(cid)));
+                
+                if (matchesProduct && matchesBrand && matchesCategory) {
+                    allPromotions.add(p);
+                }
+            }
             allPromotions.addAll(globalUserPromotions);
             
             map.put(request.getProductVariantId(), calculatePriceHelper(request.getPrice(), allPromotions, request.getMembershipLevel()));

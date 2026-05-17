@@ -23,4 +23,11 @@ public interface ProductPromotionRepository extends JpaRepository<ProductPromoti
             @Param("categoryIds") List<Integer> categoryIds,
             @Param("now") LocalDateTime now
     );
+
+    @Query("""
+        SELECT p from ProductPromotion p
+        WHERE p.status = com.bkeuty.promotion_service.enums.PromotionStatus.STARTING
+        AND :now BETWEEN p.startAt AND p.endAt
+        """)
+    List<ProductPromotion> findAllActivePromotions(@Param("now") LocalDateTime now);
 }
