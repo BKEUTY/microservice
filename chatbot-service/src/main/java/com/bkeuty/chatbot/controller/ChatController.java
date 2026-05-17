@@ -17,13 +17,18 @@ import java.util.List;
 public class ChatController {
     private final ChatService chatService;
 
-    @GetMapping("/healthcheck")
-    public ResponseEntity<String> healthcheck() {
+    @GetMapping("/healthchecks")
+    public ResponseEntity<String> healthchecks() {
         String status = chatService.checkHealth();
         if (status.contains("DOWN")) {
             return ResponseEntity.status(503).body(status);
         }
         return ResponseEntity.ok(status);
+    }
+    @GetMapping("/healthcheck")
+    public ResponseEntity<String> healthcheck() {
+
+        return ResponseEntity.ok("OK");
     }
     @PostMapping("/send")
     public ResponseEntity<ChatResponse> sendMessage(@Valid @RequestBody ChatRequest request) {
