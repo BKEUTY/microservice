@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,7 +21,9 @@ public class ReviewResponse {
     private Integer rating;
     private String comment;
     private List<String> images;
+    @JsonProperty("isHidden")
     private boolean isHidden;
+    @JsonProperty("isReplied")
     private boolean isReplied;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

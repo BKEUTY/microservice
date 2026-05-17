@@ -19,6 +19,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
            "AND (:hasImage IS NULL OR (:hasImage = true AND r.images IS NOT EMPTY) OR (:hasImage = false AND r.images IS EMPTY))")
     Page<Review> findByFilters(Long variantId, Integer rating, Boolean hasImage, Pageable pageable);
 
+    @Query("SELECT r FROM Review r WHERE " +
+           "(:variantId IS NULL OR r.variantId = :variantId) " +
+           "AND (:rating IS NULL OR r.rating = :rating) " +
+           "AND (:hasImage IS NULL OR (:hasImage = true AND r.images IS NOT EMPTY) OR (:hasImage = false AND r.images IS EMPTY)) " +
+           "AND (:isReplied IS NULL OR r.isReplied = :isReplied) " +
+           "AND (:isHidden IS NULL OR r.isHidden = :isHidden)")
+    Page<Review> findByAdminFilters(Integer rating, Boolean hasImage, Boolean isReplied, Boolean isHidden, Long variantId, Pageable pageable);
+
     @Query("SELECT r FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false AND r.rating = :rating")
     Page<Review> findByVariantIdAndRatingAndIsHiddenFalse(Long variantId, Integer rating, Pageable pageable);
 
