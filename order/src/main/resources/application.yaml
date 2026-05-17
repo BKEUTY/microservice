@@ -92,6 +92,6 @@ aws:
   s3:
     bucket-name: ${AWS_S3_BUCKET_NAME:bkeuty-bucket}
     region: ${AWS_REGION:us-east-1}
-    access-key: ${AWS_ACCESS_KEY_ID:AKIAWMSQIVJWHCVKCYVW}
-    secret-key: ${AWS_SECRET_ACCESS_KEY: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}
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
     refund-evidence-folder: refund-evident
