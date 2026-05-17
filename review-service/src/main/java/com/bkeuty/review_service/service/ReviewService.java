@@ -188,6 +188,11 @@ public class ReviewService {
                 .build();
     }
 
+    public Page<ReviewResponse> getAllReviewsForAdmin(Integer rating, Boolean hasImage, Boolean isReplied, Boolean isHidden, Long variantId, Pageable pageable) {
+        Page<Review> reviewPage = reviewRepository.findByAdminFilters(rating, hasImage, isReplied, isHidden, variantId, pageable);
+        return reviewPage.map(this::mapToReviewResponse);
+    }
+
     private Boolean checkOrderIsDelivered(String userId, Long variantId, String token) {
         try {
             return orderService.checkOrderIsDelivered(userId, variantId.intValue());
