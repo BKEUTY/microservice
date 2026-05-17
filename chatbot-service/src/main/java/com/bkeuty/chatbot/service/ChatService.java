@@ -162,7 +162,7 @@ public class ChatService {
         
         // 4. Check Kafka
         try {
-            kafkaTemplate.send(KafkaTopicConfig.CHAT_PERSIST_TOPIC, "health-check", "ping");
+            kafkaTemplate.partitionsFor(KafkaTopicConfig.CHAT_PERSIST_TOPIC);
         } catch (Exception e) {
             log.error("Health check: Kafka connection failed: {}", e.getMessage());
             status.append(" | KAFKA_DOWN");

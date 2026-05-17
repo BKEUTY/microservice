@@ -19,7 +19,7 @@ public class PersistMessageListener {
 
     private final ConcurrentHashMap<String, Object> sessionLocks = new ConcurrentHashMap<>();
 
-    @KafkaListener(topics = KafkaTopicConfig.CHAT_PERSIST_TOPIC, groupId = "chatbot-group")
+    @KafkaListener(topics = KafkaTopicConfig.CHAT_PERSIST_TOPIC, groupId = "chatbot-group-v2")
     public void handlePersistMessage(ChatInteraction interaction) {
         String sessionId = interaction.getSessionId();
         Object sessionLock = sessionLocks.computeIfAbsent(sessionId, key -> new Object());
