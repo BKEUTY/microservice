@@ -178,17 +178,37 @@ public class PromotionService {
 
     public Map<Integer,ProductPromotionCheckResponseDTO> checkProductPromotion (List<ProductPromotionCheckRequestDTO> productPromotionCheckRequestDTOList){
         Map<Integer,ProductPromotionCheckResponseDTO> map = new HashMap<>();
-        for (ProductPromotionCheckRequestDTO productPromotionCheckRequestDTO : productPromotionCheckRequestDTOList) {
-            ProductPromotionCheckResponseDTO response = getPromotionPrice(productPromotionCheckRequestDTO);
-            map.put(productPromotionCheckRequestDTO.getProductVariantId(), response);
+        if (productPromotionCheckRequestDTOList == null || productPromotionCheckRequestDTOList.isEmpty()) return map;
+
+        LocalDateTime now = LocalDateTime.now();
+        List<Promotion> globalUserPromotions = new ArrayList<>();
+        
+        ProductPromotionCheckRequestDTO first = productPromotionCheckRequestDTOList.get(0);
+        if (first.getUserId() != null || first.getMembershipLevel() != null) {
+            globalUserPromotions.addAll(userPromotionRepository.findApplicablePromotions(
+                    first.getMembershipLevel(),
+                    first.getUserId(),
+                    now
+            ));
+        }
+
+        for (ProductPromotionCheckRequestDTO request : productPromotionCheckRequestDTOList) {
+            List<Promotion> allPromotions = new ArrayList<>();
+            allPromotions.addAll(productPromotionRepository.findApplicablePromotions(
+                    request.getProductId(),
+                    request.getBrandId(),
+                    request.getCategoryIds(),
+                    now
+            ));
+            allPromotions.addAll(globalUserPromotions);
+            
+            map.put(request.getProductVariantId(), calculatePriceHelper(request.getPrice(), allPromotions, request.getMembershipLevel()));
         }
         return map;
     }
 
     public ProductPromotionCheckResponseDTO getPromotionPrice(ProductPromotionCheckRequestDTO request) {
-        BigDecimal originalPrice = request.getPrice();
         LocalDateTime now = LocalDateTime.now();
-
         List<Promotion> allPromotions = new ArrayList<>();
         allPromotions.addAll(productPromotionRepository.findApplicablePromotions(
                 request.getProductId(),
@@ -196,7 +216,6 @@ public class PromotionService {
                 request.getCategoryIds(),
                 now
         ));
-
         if (request.getUserId() != null || request.getMembershipLevel() != null) {
             allPromotions.addAll(userPromotionRepository.findApplicablePromotions(
                     request.getMembershipLevel(),
@@ -204,13 +223,14 @@ public class PromotionService {
                     now
             ));
         }
+        return calculatePriceHelper(request.getPrice(), allPromotions, request.getMembershipLevel());
+    }
 
+    private ProductPromotionCheckResponseDTO calculatePriceHelper(BigDecimal originalPrice, List<Promotion> allPromotions, Integer membershipLevel) {
         BigDecimal maxDiscount = BigDecimal.ZERO;
         String bestPromotionType = null;
-
         for (Promotion promotion : allPromotions) {
             BigDecimal currentDiscount = BigDecimal.ZERO;
-            
             if (promotion.getDiscountType() == DiscountType.PERCENTAGE) {
                 BigDecimal percentage = BigDecimal.valueOf(promotion.getDiscountValue()).divide(BigDecimal.valueOf(100));
                 currentDiscount = originalPrice.multiply(percentage);
@@ -225,7 +245,7 @@ public class PromotionService {
             }
 
             if (currentDiscount.compareTo(maxDiscount) > 0) {
-                if (isEligibleForMembership(promotion, request.getMembershipLevel())) {
+                if (isEligibleForMembership(promotion, membershipLevel)) {
                     maxDiscount = currentDiscount;
                     bestPromotionType = (promotion.getClass().getSimpleName().contains("UserPromotion")) ? "UserPromotion" : "ProductPromotion";
                 }

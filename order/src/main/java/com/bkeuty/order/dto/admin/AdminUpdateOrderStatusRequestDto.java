@@ -9,4 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AdminUpdateOrderStatusRequestDto {
     private String status;
+    private String paymentStatus;
 }

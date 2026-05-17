@@ -99,29 +99,36 @@ public class AdminOrderService {
         return toAdminOrderDto(order, token);
     }
 
-    public AdminOrderDto updateOrderStatus(Integer orderId, String status, String token) {
+    public AdminOrderDto updateOrderStatus(Integer orderId, String status, String paymentStatus, String token) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + orderId));
 
-        if (status == null || status.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be blank");
-        }
-        try {
-            OrderStatus newStatus = OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
-            OrderStatus oldStatus = order.getStatus();
-            
-            order.setStatus(newStatus);
-            Order savedOrder = orderRepository.saveAndFlush(order);
-
-            if (newStatus == OrderStatus.SUCCEEDED || oldStatus == OrderStatus.SUCCEEDED) {
-                membershipService.recalculateMembershipLevel(savedOrder.getUserId());
+        if (status != null && !status.isBlank()) {
+            try {
+                OrderStatus newStatus = OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+                OrderStatus oldStatus = order.getStatus();
+                order.setStatus(newStatus);
+                if (newStatus == OrderStatus.SUCCEEDED || oldStatus == OrderStatus.SUCCEEDED) {
+                    membershipService.recalculateMembershipLevel(order.getUserId());
+                }
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid order status: " + status + ". Allowed: " + Arrays.toString(OrderStatus.values()));
             }
-            
-            return toAdminOrderDto(savedOrder, token);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Invalid order status: " + status + ". Allowed: " + Arrays.toString(OrderStatus.values()));
         }
+        
+        if (paymentStatus != null && !paymentStatus.isBlank()) {
+            try {
+                com.bkeuty.order.enums.PaymentStatus newPaymentStatus = com.bkeuty.order.enums.PaymentStatus.valueOf(paymentStatus.trim().toUpperCase(Locale.ROOT));
+                order.setPaymentStatus(newPaymentStatus);
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid payment status: " + paymentStatus);
+            }
+        }
+
+        Order savedOrder = orderRepository.saveAndFlush(order);
+        return toAdminOrderDto(savedOrder, token);
     }
 
     private AdminOrderDto toAdminOrderDto(Order order, String token) {

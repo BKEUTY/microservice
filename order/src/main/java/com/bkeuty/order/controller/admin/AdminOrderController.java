@@ -75,7 +75,7 @@ public class AdminOrderController {
             
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         
-        return ResponseEntity.ok(adminOrderService.updateOrderStatus(orderId, request.getStatus(), bearerToken));
+        return ResponseEntity.ok(adminOrderService.updateOrderStatus(orderId, request.getStatus(), request.getPaymentStatus(), bearerToken));
     }
 
     private boolean isAdmin(String token) {
