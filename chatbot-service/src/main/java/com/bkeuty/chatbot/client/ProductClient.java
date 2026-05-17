@@ -11,19 +11,19 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @RequiredArgsConstructor
 public class ProductClient {
-    @Qualifier("internalRestTemplate")
-    private final RestTemplate internalRestTemplate;
+    @Qualifier("externalRestTemplate")
+    private final RestTemplate externalRestTemplate;
 
     public String getProductContext(String userId, Integer membershipLevel) {
         try {
-            String url = "http://product/api/product?size=50&status=ACTIVE&minStock=1";
+            String url = "https://backend.bkeuty.xyz/api/product?size=50&status=ACTIVE&minStock=1";
             if (userId != null) {
                 url += "&userId=" + userId;
                 if (membershipLevel != null) {
                     url += "&membershipLevel=" + membershipLevel;
                 }
             }
-            return internalRestTemplate.getForObject(url, String.class);
+            return externalRestTemplate.getForObject(url, String.class);
         } catch (Exception e) {
             log.error("Error fetching product context: {}", e.getMessage());
             return "[]";
@@ -32,14 +32,14 @@ public class ProductClient {
 
     public ProductDetailDto getProductById(Integer id, String userId, Integer membershipLevel) {
         try {
-            String url = "http://product/api/product/" + id;
+            String url = "https://backend.bkeuty.xyz/api/product/" + id;
             if (userId != null) {
                 url += "?userId=" + userId;
                 if (membershipLevel != null) {
                     url += "&membershipLevel=" + membershipLevel;
                 }
             }
-            return internalRestTemplate.getForObject(url, ProductDetailDto.class);
+            return externalRestTemplate.getForObject(url, ProductDetailDto.class);
         } catch (Exception e) {
             log.error("Error fetching product detail data for ID {}: {}", id, e.getMessage());
             return null;
