@@ -2,9 +2,11 @@ package com.bkeuty.order.service.admin;
 
 import com.bkeuty.order.dto.admin.AdminRefundOrderDto;
 import com.bkeuty.order.dto.order.ProcessRefundEventDto;
+import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.entity.RefundOrder;
 import com.bkeuty.order.enums.RefundStatus;
+import com.bkeuty.order.repository.OrderRepository;
 import com.bkeuty.order.repository.RefundOrderRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +33,14 @@ public class AdminRefundOrderService {
 
     private final RefundOrderRepository refundOrderRepository;
     private final KafkaTemplate<String, Object> kafkaEventTemplate;
+    private final OrderRepository orderRepository;
 
     public AdminRefundOrderService(RefundOrderRepository refundOrderRepository,
-            KafkaTemplate<String, Object> kafkaEventTemplate) {
+            KafkaTemplate<String, Object> kafkaEventTemplate,
+            OrderRepository orderRepository) {
         this.refundOrderRepository = refundOrderRepository;
         this.kafkaEventTemplate = kafkaEventTemplate;
+        this.orderRepository = orderRepository;
     }
 
     // -----------------------------------------------------------------------
@@ -244,14 +249,20 @@ public class AdminRefundOrderService {
                     .collect(Collectors.toList());
         }
 
+        String uName = orderRepository.findById(r.getOrderId())
+                .map(Order::getUserName)
+                .orElse(null);
+
         return AdminRefundOrderDto.builder()
                 .refundOrderId(r.getId())
                 .orderId(r.getOrderId())
                 .userId(r.getUserId())
+                .userName(uName)
                 .total(r.getTotal())
                 .status(r.getStatus())
                 .fromAddress(r.getFromAddress())
                 .phoneNumber(r.getPhoneNumber())
+                .note(r.getNote())
                 .createdAt(r.getCreatedAt())
                 .evidenceImageUrls(r.getEvidenceImageUrls())
                 .items(itemDtos)

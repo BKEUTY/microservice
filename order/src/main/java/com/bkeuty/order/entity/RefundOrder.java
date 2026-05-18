@@ -35,6 +35,9 @@ public class RefundOrder {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
+    @Column(name = "note", length = 2000)
+    private String note;
+
     @Builder.Default
     @Column(name = "status", length = 50)
     @Enumerated(EnumType.STRING)

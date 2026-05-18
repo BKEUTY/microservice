@@ -3,6 +3,7 @@ package com.bkeuty.order.service.order;
 import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.dto.order.CreateRefundOrderRequestDto;
 import com.bkeuty.order.dto.order.RefundOrderEventDto;
+import com.bkeuty.order.dto.order.UserRefundOrderDto;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.entity.RefundOrder;
@@ -19,6 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -161,6 +164,7 @@ public class RefundOrderService {
                 .total(refundTotal)
                 .fromAddress(fromAddressString)
                 .phoneNumber(request.getPhoneNumber())
+                .note(request.getNote())
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -193,11 +197,30 @@ public class RefundOrderService {
                 .phoneNumber(request.getPhoneNumber())
                 .orderItemIds(orderItemIds)
                 .evidenceImageUrls(imageUrls)
+                .note(request.getNote())
                 .build();
 
         kafkaEventTemplate.send("refund-order-topic", event);
         log.info("Published refund-order-topic event for refundOrderId={}", savedRefundOrder.getId());
 
         return savedRefundOrder;
+    }
+
+    public Page<UserRefundOrderDto> getUserRefundOrders(TokenValidationResponseDto userInfo, Pageable pageable) {
+        Page<RefundOrder> refunds = refundOrderRepository.findByUserId(userInfo.getUserId(), pageable);
+        return refunds.map(r -> UserRefundOrderDto.builder()
+                .id(r.getId())
+                .orderId(r.getOrderId())
+                .total(r.getTotal())
+                .fromAddress(r.getFromAddress())
+                .phoneNumber(r.getPhoneNumber())
+                .note(r.getNote())
+                .status(r.getStatus())
+                .createdAt(r.getCreatedAt())
+                .evidenceImageUrls(r.getEvidenceImageUrls())
+                .items(r.getOrderItems() != null ? r.getOrderItems().stream()
+                        .map(OrderItem::getProductVariantName)
+                        .collect(Collectors.toList()) : new ArrayList<>())
+                .build());
     }
 }

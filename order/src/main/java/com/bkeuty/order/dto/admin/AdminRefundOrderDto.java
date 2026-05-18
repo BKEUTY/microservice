@@ -18,10 +18,12 @@ public class AdminRefundOrderDto {
     private Integer refundOrderId;
     private Integer orderId;
     private String userId;
+    private String userName;
     private BigDecimal total;
     private RefundStatus status;
     private String fromAddress;
     private String phoneNumber;
+    private String note;
     private LocalDateTime createdAt;
     private List<String> evidenceImageUrls;
     private List<AdminRefundItemDto> items;

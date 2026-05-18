@@ -15,4 +15,5 @@ public class CreateRefundOrderRequestDto {
     private List<Integer> orderItemId;
     private AddressDto fromAddress;
     private String phoneNumber;
+    private String note;
 }
