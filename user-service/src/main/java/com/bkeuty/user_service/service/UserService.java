@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.Comparator;
+import java.math.BigDecimal;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,10 +90,16 @@ public class UserService {
             if (levelStr != null) membershipLevel = Integer.parseInt(levelStr);
         } catch (NumberFormatException ignored) {}
 
-        java.math.BigDecimal totalSpending = java.math.BigDecimal.ZERO;
+        BigDecimal totalSpending = BigDecimal.ZERO;
         try {
             String spendingStr = userRepresentation.firstAttribute("totalSpending");
-            if (spendingStr != null) totalSpending = new java.math.BigDecimal(spendingStr);
+            if (spendingStr != null) totalSpending = new BigDecimal(spendingStr);
+        } catch (Exception ignored) {}
+
+        BigDecimal wallet = BigDecimal.ZERO;
+        try {
+            String walletStr = userRepresentation.firstAttribute("wallet");
+            if (walletStr != null) wallet = new BigDecimal(walletStr);
         } catch (Exception ignored) {}
 
         return UserDetailResponseDto.builder()
@@ -107,6 +114,7 @@ public class UserService {
                 .userRole(userRepresentation.firstAttribute("userRole"))
                 .membershipLevel(membershipLevel)
                 .totalSpending(totalSpending)
+                .wallet(wallet)
                 .build();
     }
 
