@@ -4,6 +4,7 @@ import com.bkeuty.order.dto.auth.TokenValidationResponseDto;
 import com.bkeuty.order.dto.order.CreateRefundOrderRequestDto;
 import com.bkeuty.order.dto.order.OrderResponseDto;
 import com.bkeuty.order.dto.order.PlaceOrderRequestDto;
+import com.bkeuty.order.dto.order.UserRefundOrderDto;
 import com.bkeuty.order.dto.shipping.GetShippingOrderStatusRequest;
 import com.bkeuty.order.dto.shipping.GetShippingOrderStatusResponseDto;
 import com.bkeuty.order.entity.RefundOrder;
@@ -147,5 +148,21 @@ public class OrderController {
 
         RefundOrder refundOrder = refundOrderService.createRefundOrder(tokenValidationResponseDto, request, images);
         return ResponseEntity.status(HttpStatus.CREATED).body(refundOrder);
+    }
+
+    @GetMapping("/refunds")
+    public ResponseEntity<Page<UserRefundOrderDto>> getUserRefundOrders(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
+        if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
+                || !"user".equals(tokenValidationResponseDto.getUserRole())) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        return ResponseEntity.ok(refundOrderService.getUserRefundOrders(
+                tokenValidationResponseDto,
+                PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"))));
     }
 }
