@@ -67,6 +67,22 @@ CREATE DATABASE "bkeuty-payment"; CREATE DATABASE "bkeuty-keycloak";
 ```
 *Note: Chatbot Service uses MongoDB.*
 
+### 🧪 Running Unit Tests
+To run unit tests for any specific microservice, navigate to the service directory and run:
+
+*   **Run all tests in a service:**
+    ```bash
+    mvn clean test
+    ```
+*   **Run a specific test class:**
+    ```bash
+    mvn test -Dtest="PaymentServiceTest"
+    ```
+*   **Run multiple specific test classes:**
+    ```bash
+    mvn test -Dtest="ShippingServiceTest,AddressServiceTest,KafkaServiceTest"
+    ```
+
 ---
 
 <a name="tiếng-việt"></a>
@@ -131,6 +147,22 @@ CREATE DATABASE "bkeuty-user"; CREATE DATABASE "bkeuty-shipping";
 CREATE DATABASE "bkeuty-payment"; CREATE DATABASE "bkeuty-keycloak";
 ```
 *Lưu ý: Chatbot Service sử dụng MongoDB.*
+
+### 🧪 Quy trình Chạy Unit Test
+Để thực thi các kiểm thử đơn vị (unit test) cho bất kỳ microservice nào, vui lòng di chuyển vào thư mục của dịch vụ đó và chạy các lệnh sau:
+
+*   **Chạy toàn bộ kiểm thử của dịch vụ:**
+    ```bash
+    mvn clean test
+    ```
+*   **Chạy một lớp kiểm thử cụ thể:**
+    ```bash
+    mvn test -Dtest="PaymentServiceTest"
+    ```
+*   **Chạy nhiều lớp kiểm thử đồng thời:**
+    ```bash
+    mvn test -Dtest="ShippingServiceTest,AddressServiceTest,KafkaServiceTest"
+    ```
 
 ---
 © 2026 BKEUTY Project. Documentation for Thesis and Academic Research.
