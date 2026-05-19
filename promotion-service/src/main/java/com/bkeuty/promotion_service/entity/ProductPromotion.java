@@ -2,6 +2,7 @@ package com.bkeuty.promotion_service.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class ProductPromotion extends Promotion {
             joinColumns = @JoinColumn(name = "promotion_id") // Foreign key back to the main table
     )
     @Column(name = "category_id") // Name of the column holding the actual integer
+    @BatchSize(size = 100)
     private Set<Integer> categoryIds = new HashSet<>();
 
     @ElementCollection
@@ -27,6 +29,7 @@ public class ProductPromotion extends Promotion {
             joinColumns = @JoinColumn(name = "promotion_id")
     )
     @Column(name = "product_id")
+    @BatchSize(size = 100)
     private Set<Integer> productIds = new HashSet<>();
 
     @ElementCollection
@@ -35,5 +38,6 @@ public class ProductPromotion extends Promotion {
             joinColumns = @JoinColumn(name = "promotion_id")
     )
     @Column(name = "brand_id")
+    @BatchSize(size = 100)
     private Set<Integer> brandIds = new HashSet<>();
 }

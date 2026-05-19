@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +38,7 @@ public abstract class Promotion {
             joinColumns = @JoinColumn(name = "promotion_id")
     )
     @Column(name = "membership_level")
+    @BatchSize(size = 100)
     private java.util.Set<Integer> membershipLevels;
 }
 
