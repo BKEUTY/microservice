@@ -49,6 +49,12 @@ public class GHNCommunication {
                 .header("ShopId",shopId)
                 .retrieve().bodyToMono(CreateShippingOrderResponseDto.class);
     }
+    public Mono<CreateShippingOrderResponseDto> createRefundOrder(CreateRefundShippingDto createRefundShippingDto) {
+        return GHNWebClient.post().uri(uriBuilder -> uriBuilder.path("shiip/public-api/v2/shipping-order/create").build()).bodyValue(createRefundShippingDto)
+                .header("Token",apiToken)
+                .header("ShopId",shopId)
+                .retrieve().bodyToMono(CreateShippingOrderResponseDto.class);
+    }
 
     public Mono<GetShippingOrderStatusResponseDto> getShippingStatus(OrderCodeDto orderCodeDto) {
         return GHNWebClient.post().uri(uriBuilder -> uriBuilder.path("shiip/public-api/v2/shipping-order/detail").build()).bodyValue(orderCodeDto)

@@ -200,7 +200,7 @@ public class RefundOrderService {
                 .note(request.getNote())
                 .build();
 
-        kafkaEventTemplate.send("refund-order-topic", event);
+//        kafkaEventTemplate.send("refund-order-topic", event);
         log.info("Published refund-order-topic event for refundOrderId={}", savedRefundOrder.getId());
 
         return savedRefundOrder;

@@ -1,5 +1,6 @@
 package com.bkeuty.order.repository;
 
+import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.RefundOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -15,4 +16,6 @@ public interface RefundOrderRepository extends JpaRepository<RefundOrder, Intege
     Page<RefundOrder> findByUserId(String userId, Pageable pageable);
     List<RefundOrder> findByUserId(String userId);
     List<RefundOrder> findByOrderId(Integer orderId);
+
+    RefundOrder findByShippingCode(String shippingCode);
 }

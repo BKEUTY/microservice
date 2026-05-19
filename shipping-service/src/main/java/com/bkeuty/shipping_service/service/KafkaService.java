@@ -11,6 +11,7 @@ public class KafkaService {
     private final ShippingService shippingService;
     private final KafkaTemplate<String, CreateShippingResponseMessage>  kafkaTemplate;
     private final KafkaTemplate<String, GhnWebhookDto> updateShippingStatusKafkaTemplate;
+
     public KafkaService(ShippingService shippingService,  KafkaTemplate<String, CreateShippingResponseMessage> kafkaTemplate, KafkaTemplate<String, GhnWebhookDto> updateShippingStatusKafkaTemplate)
     {
         this.shippingService = shippingService;
@@ -28,7 +29,17 @@ public class KafkaService {
 
         }
     }
+    @KafkaListener(topics = "create-refund-shipping-topic")
+    public void listenCreateRefundShippingTopic(CreateRefundShippingMessage message){
+        CreateShippingOrderResponseDto res = shippingService.createRefundShippingOrder(message.getCreateRefundShippingDto()).block();
+        if(res!=null){
+            CreateShippingResponseMessage responseMessage = CreateShippingResponseMessage.builder()
+                    .orderId(message.getRefundOrderId()).shippingResponse(res).build();
+            kafkaTemplate.send("create-refund-shipping-response-topic", responseMessage);
 
+        }
+
+    }
     public void sendUpdateShippingOrder(GhnWebhookDto ghnWebhookDto) {
         updateShippingStatusKafkaTemplate.send("update-shipping-status-topic", ghnWebhookDto);
     }

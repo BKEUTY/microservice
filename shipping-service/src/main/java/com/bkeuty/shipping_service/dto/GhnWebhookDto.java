@@ -19,4 +19,6 @@ public class GhnWebhookDto {
 
     @JsonProperty("Status")
     private String status;
+    @JsonProperty("IsRefund")
+    private boolean isRefund;
 }

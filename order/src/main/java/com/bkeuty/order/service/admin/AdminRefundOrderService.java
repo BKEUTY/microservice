@@ -2,14 +2,17 @@ package com.bkeuty.order.service.admin;
 
 import com.bkeuty.order.dto.admin.AdminRefundOrderDto;
 import com.bkeuty.order.dto.order.ProcessRefundEventDto;
+import com.bkeuty.order.dto.shipping.*;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.entity.RefundOrder;
 import com.bkeuty.order.enums.RefundStatus;
 import com.bkeuty.order.repository.OrderRepository;
 import com.bkeuty.order.repository.RefundOrderRepository;
+import com.bkeuty.order.util.OrderAddressUtils;
 import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -31,16 +34,28 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AdminRefundOrderService {
 
+    @Value("${ghn.return-address}")
+    private String returnAddress;
+    @Value("${ghn.return-phone}")
+    private String returnPhone;
+    @Value("${ghn.return-ward}")
+    private String returnWard;
+    @Value("${ghn.return-district}")
+    private String returnDistrict;
+    @Value("${ghn.return-province}")
+    private String returnProvince;
     private final RefundOrderRepository refundOrderRepository;
     private final KafkaTemplate<String, Object> kafkaEventTemplate;
+    private final KafkaTemplate<String, CreateRefundShippingMessage> kafkaCreateShippingOrderTemplate;
     private final OrderRepository orderRepository;
 
     public AdminRefundOrderService(RefundOrderRepository refundOrderRepository,
             KafkaTemplate<String, Object> kafkaEventTemplate,
-            OrderRepository orderRepository) {
+            OrderRepository orderRepository, KafkaTemplate<String, CreateRefundShippingMessage> kafkaCreateShippingOrderTemplate) {
         this.refundOrderRepository = refundOrderRepository;
         this.kafkaEventTemplate = kafkaEventTemplate;
         this.orderRepository = orderRepository;
+        this.kafkaCreateShippingOrderTemplate = kafkaCreateShippingOrderTemplate;
     }
 
     // -----------------------------------------------------------------------
@@ -107,13 +122,34 @@ public class AdminRefundOrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Only PENDING refund orders can be approved. Current status: " + refundOrder.getStatus());
         }
-
+        AddressDto addressDto = OrderAddressUtils.toAddressDto(refundOrder.getFromAddress());
         refundOrder.setStatus(RefundStatus.APPROVED);
         RefundOrder saved = refundOrderRepository.save(refundOrder);
+        CreateRefundShippingDto createRefundShippingDto = CreateRefundShippingDto.builder()
+                    .fromName(refundOrder.getPhoneNumber())
+                            .fromPhone(refundOrder.getPhoneNumber())
+                                    .fromAddress(addressDto.getAddress())
+                                            .fromWardName(addressDto.getWard().getWardName())
+                                                    .fromDistrictName(addressDto.getDistrict().getDistrictName())
+                                                            .fromProvinceName(addressDto.getProvince().getProvinceName())
+                                                                    .toPhone(returnPhone)
+                                                                            .toWardName(returnWard)
+                                                                                    .toDistrictName(returnDistrict)
+                                                                                            .toProvinceName(returnProvince)
+                                                                                                    .items(refundOrder.getOrderItems().stream().map(this::toShippingItemDto).toList())
+                                                                                                            .build();
+
         log.info("RefundOrder {} approved by admin", refundOrderId);
+        kafkaCreateShippingOrderTemplate.send("create-refund-shipping-topic", CreateRefundShippingMessage.builder().refundOrderId(refundOrderId).createRefundShippingDto(createRefundShippingDto).build());
         return toDto(saved);
     }
-
+    private ShippingItemDto toShippingItemDto(OrderItem dto) {
+        return ShippingItemDto.builder()
+                .name(dto.getProductVariantName())
+                .quantity(dto.getQuantity())
+                .price(dto.getProductVariantPrice().intValue())
+                .build();
+    }
     /**
      * Rejects a refund order that is currently in {@link RefundStatus#PENDING}
      * state.
@@ -139,20 +175,20 @@ public class AdminRefundOrderService {
 
     /**
      * Marks an {@link RefundStatus#APPROVED} refund order as
-     * {@link RefundStatus#COMPLETED},
+     * {@link RefundStatus#DELIVERED},
      * signalling that the physical return has been received and money transfer can
      * proceed.
      */
     public AdminRefundOrderDto completeRefundOrder(Integer refundOrderId) {
         RefundOrder refundOrder = findOrThrow(refundOrderId);
 
-        if (refundOrder.getStatus() != RefundStatus.COMPLETED) {
+        if (refundOrder.getStatus() != RefundStatus.DELIVERED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Only APPROVED refund orders can be marked as COMPLETED. Current status: "
                             + refundOrder.getStatus());
         }
 
-        refundOrder.setStatus(RefundStatus.COMPLETED);
+        refundOrder.setStatus(RefundStatus.DELIVERED);
         RefundOrder saved = refundOrderRepository.save(refundOrder);
         log.info("RefundOrder {} marked COMPLETED by admin", refundOrderId);
         return toDto(saved);
@@ -165,7 +201,7 @@ public class AdminRefundOrderService {
     /**
      * Publishes a {@code process-refund-topic} Kafka event so the User Service can
      * credit the buyer's wallet. Only allowed when status is
-     * {@link RefundStatus#COMPLETED}.
+     * {@link RefundStatus#DELIVERED}.
      *
      * <p>
      * The status is NOT changed here; it will be updated to
@@ -175,7 +211,7 @@ public class AdminRefundOrderService {
     public AdminRefundOrderDto processMoneyRefund(Integer refundOrderId) {
         RefundOrder refundOrder = findOrThrow(refundOrderId);
 
-        if (refundOrder.getStatus() != RefundStatus.COMPLETED) {
+        if (refundOrder.getStatus() != RefundStatus.DELIVERED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Money refund can only be processed for COMPLETED refund orders. Current status: "
                             + refundOrder.getStatus());

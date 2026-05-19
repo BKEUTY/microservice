@@ -254,7 +254,24 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update membership level");
         }
     }
+    public void updateUserWallet(String userId, BigDecimal amountChange) {
+        try{
+            UsersResource usersResource = keycloak.realm(realmName).users();
+            UserResource userResource = usersResource.get(userId);
+            UserRepresentation user = userResource.toRepresentation();
+            Map<String, List<String>> attrs = user.getAttributes();
+            String currentWallet = attrs.get("wallet").getFirst();
+            BigDecimal wallet = currentWallet == null ? BigDecimal.ZERO : new BigDecimal(currentWallet);
+            wallet = wallet.add(amountChange);
+            attrs.put("wallet", List.of(String.valueOf(wallet)));
+            user.setAttributes(attrs);
+            userResource.update(user);
+        }catch (Exception e) {
+            log.error("Failed to update wallet for user " + userId + ": " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update wallet");
+        }
 
+    }
     public Map<String, String> getUserNames(List<String> userIds) {
         Map<String, String> result = new HashMap<>();
         for (String id : userIds) {

@@ -22,6 +22,9 @@ public class ShippingService {
     public Mono<CreateShippingOrderResponseDto> createShippingOrder(CreateShippingOrderDto createShippingOrderDto) {
         return ghnCommunication.createShippingOrder(createShippingOrderDto);
     }
+    public Mono<CreateShippingOrderResponseDto> createRefundShippingOrder(CreateRefundShippingDto createRefundShippingDto) {
+        return ghnCommunication.createRefundOrder(createRefundShippingDto);
+    }
 
 
 //    public GetShippingOrderStatusResponseDto getShippingOrderStatus(GetShippingOrderStatusRequest getShippingOrderStatusRequest, TokenValidationResponseDto  tokenValidationResponseDto) {

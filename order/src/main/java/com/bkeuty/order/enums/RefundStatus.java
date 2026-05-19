@@ -4,7 +4,7 @@ public enum RefundStatus {
     PENDING,
     APPROVED,
     REJECTED,
-    COMPLETED,
+    DELIVERED,
     REFUNDING,
     REFUND_FAILED,
     REFUNDED,

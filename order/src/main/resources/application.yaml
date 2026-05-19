@@ -40,7 +40,7 @@ spring:
         spring:
           json:
             type:
-              mapping: "com.bkeuty.product.dto.user.order.DecreaseStockStatusDto:com.bkeuty.order.dto.order.DecreaseStockStatusDto,com.bkeuty.shipping_service.dto.CreateShippingResponseMessage:com.bkeuty.order.dto.shipping.CreateShippingResponseMessage, com.bkeuty.shipping_service.dto.GhnWebhookDto:com.bkeuty.order.dto.shipping.GhnWebhookMessage"
+              mapping: "com.bkeuty.product.dto.user.order.DecreaseStockStatusDto:com.bkeuty.order.dto.order.DecreaseStockStatusDto,com.bkeuty.shipping_service.dto.CreateShippingResponseMessage:com.bkeuty.order.dto.shipping.CreateShippingResponseMessage, com.bkeuty.shipping_service.dto.GhnWebhookDto:com.bkeuty.order.dto.shipping.GhnWebhookMessage, com.bkeuty.user_service.dto.refund.RefundWalletSuccessEventDto:com.bkeuty.order.dto.order.RefundWalletSuccessEventDto"
 
   cloud:
     function:
@@ -75,6 +75,9 @@ sepay:
 ghn:
   api-token: ${GHN_API_TOKEN:7e4ff493-2f3f-11f1-a973-aee5264794df}
   return-phone: "0898680945"
+  return-province: "Thành phố Hồ Chí Minh"
+  return-district: "Thành phố Thủ Đức"
+  return-ward: "phường Hiệp Bình Phước"
   return-address: "4/21, đường 15, khu phố 3"
   from-district-id: 3695
   from-ward-code: "90740"

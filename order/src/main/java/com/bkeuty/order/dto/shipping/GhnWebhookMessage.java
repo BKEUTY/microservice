@@ -19,4 +19,6 @@ public class GhnWebhookMessage {
 
     @JsonProperty("Status")
     private String status;
+    @JsonProperty("IsRefund")
+    private boolean isRefund;
 }

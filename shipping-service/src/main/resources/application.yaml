@@ -28,7 +28,7 @@ spring:
         spring:
           json:
             type:
-              mapping: "com.bkeuty.order.dto.shipping.CreateShippingOrderMessage:com.bkeuty.shipping_service.dto.CreateShippingOrderMessage"
+              mapping: "com.bkeuty.order.dto.shipping.CreateShippingOrderMessage:com.bkeuty.shipping_service.dto.CreateShippingOrderMessage,com.bkeuty.order.dto.shipping.CreateRefundShippingMessage:com.bkeuty.shipping_service.dto.CreateRefundShippingMessage"
 
 server:
   port: 8087
