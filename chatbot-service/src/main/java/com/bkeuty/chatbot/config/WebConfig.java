@@ -22,7 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    @LoadBalanced
+//    @LoadBalanced
     public WebClient.Builder webClientBuilder() {
         return WebClient.builder();
     }

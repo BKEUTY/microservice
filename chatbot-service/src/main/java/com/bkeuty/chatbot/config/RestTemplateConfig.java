@@ -18,7 +18,7 @@ public class RestTemplateConfig {
     }
 
     @Bean
-    @LoadBalanced
+//    @LoadBalanced
     @Qualifier("internalRestTemplate")
     public RestTemplate internalRestTemplate() {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();

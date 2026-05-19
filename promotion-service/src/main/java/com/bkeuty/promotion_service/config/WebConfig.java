@@ -27,7 +27,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowCredentials(true);
     }
     @Bean
-    @LoadBalanced // This is the "bridge" between WebClient and Eureka
+//    @LoadBalanced // This is the "bridge" between WebClient and Eureka
     public WebClient.Builder webClientBuilder() {
         return WebClient.builder();
     }
