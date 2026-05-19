@@ -139,6 +139,7 @@ public class KafkaService {
     }
     @KafkaListener(topics = "create-refund-shipping-response-topic")
     public void listenToCreateRefundShippingOrderTopic(CreateShippingResponseMessage message) {
+        System.out.println("Order Service listenToCreateRefundShippingOrderTopic");
         RefundOrder order = refundOrderRepository.findById(message.getOrderId()).orElse(null);
         if(order!=null){
             order.setShippingCode(message.getShippingResponse().getData().getOrderCode());

@@ -126,20 +126,23 @@ public class AdminRefundOrderService {
         refundOrder.setStatus(RefundStatus.APPROVED);
         RefundOrder saved = refundOrderRepository.save(refundOrder);
         CreateRefundShippingDto createRefundShippingDto = CreateRefundShippingDto.builder()
-                    .fromName(refundOrder.getPhoneNumber())
-                            .fromPhone(refundOrder.getPhoneNumber())
-                                    .fromAddress(addressDto.getAddress())
-                                            .fromWardName(addressDto.getWard().getWardName())
-                                                    .fromDistrictName(addressDto.getDistrict().getDistrictName())
-                                                            .fromProvinceName(addressDto.getProvince().getProvinceName())
+                                                                    .fromName(refundOrder.getPhoneNumber())
+                                                                    .fromPhone(refundOrder.getPhoneNumber())
+                                                                    .fromAddress(addressDto.getAddress())
+                                                                    .fromWardName(addressDto.getWard().getWardName())
+                                                                    .fromDistrictName(addressDto.getDistrict().getDistrictName())
+                                                                    .fromProvinceName(addressDto.getProvince().getProvinceName())
+                                                                    .toAddress(returnAddress)
+                                                                    .toName(returnPhone)
                                                                     .toPhone(returnPhone)
-                                                                            .toWardName(returnWard)
-                                                                                    .toDistrictName(returnDistrict)
-                                                                                            .toProvinceName(returnProvince)
-                                                                                                    .items(refundOrder.getOrderItems().stream().map(this::toShippingItemDto).toList())
-                                                                                                            .build();
+                                                                    .toWardName(returnWard)
+                                                                    .toDistrictName(returnDistrict)
+                                                                    .toProvinceName(returnProvince)
+                                                                    .items(refundOrder.getOrderItems().stream().map(this::toShippingItemDto).toList())
+                                                                    .build();
 
         log.info("RefundOrder {} approved by admin", refundOrderId);
+        System.out.println("Order Service admin click approve refund and send kafka");
         kafkaCreateShippingOrderTemplate.send("create-refund-shipping-topic", CreateRefundShippingMessage.builder().refundOrderId(refundOrderId).createRefundShippingDto(createRefundShippingDto).build());
         return toDto(saved);
     }

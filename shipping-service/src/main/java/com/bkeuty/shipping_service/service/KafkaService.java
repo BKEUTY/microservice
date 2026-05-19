@@ -31,10 +31,17 @@ public class KafkaService {
     }
     @KafkaListener(topics = "create-refund-shipping-topic")
     public void listenCreateRefundShippingTopic(CreateRefundShippingMessage message){
+        System.out.println("Shipping Service Received CreateRefundShippingMessage");
+        if(message.getCreateRefundShippingDto()!=null){
+            System.out.println(message.getCreateRefundShippingDto());
+            System.out.println("getCreateRefundShippingDto not null");
+        }
+
         CreateShippingOrderResponseDto res = shippingService.createRefundShippingOrder(message.getCreateRefundShippingDto()).block();
         if(res!=null){
             CreateShippingResponseMessage responseMessage = CreateShippingResponseMessage.builder()
                     .orderId(message.getRefundOrderId()).shippingResponse(res).build();
+            System.out.println("Shipping Service send CreateRefundShippingResponseMessage");
             kafkaTemplate.send("create-refund-shipping-response-topic", responseMessage);
 
         }

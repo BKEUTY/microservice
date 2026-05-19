@@ -21,7 +21,8 @@ public class KafkaService {
 
     @KafkaListener(topics = "process-refund-topic")
     public void processRefundTopicListener(ProcessRefundEventDto processRefundEventDto) {
-        userService.updateUserWallet(processRefundEventDto.getUserId(), processRefundEventDto.getAmount().negate());
+        System.out.println("User Service: process-refund-topic");
+        userService.updateUserWallet(processRefundEventDto.getUserId(), processRefundEventDto.getAmount());
         kafkaTemplate.send("refund-wallet-success-topic", RefundWalletSuccessEventDto.builder().userId(processRefundEventDto.getUserId()).refundOrderId(processRefundEventDto.getRefundOrderId()).build());
 
     }

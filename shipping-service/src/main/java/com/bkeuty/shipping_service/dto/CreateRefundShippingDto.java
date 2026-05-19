@@ -27,7 +27,7 @@ public class CreateRefundShippingDto {
 
     @Builder.Default
     @JsonProperty("required_note")
-    private String requiredNote = "CHOXEMHANG";
+    private String requiredNote = "CHOXEMHANGKHONGTHU";
 
     @JsonProperty("from_name")
     private String fromName;
