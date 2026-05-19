@@ -83,6 +83,23 @@ To run unit tests for any specific microservice, navigate to the service directo
     mvn test -Dtest="ShippingServiceTest,AddressServiceTest,KafkaServiceTest"
     ```
 
+### 🧪 Running Integration Tests
+Integration tests run against isolated H2 memory databases (configured with PostgreSQL compatibility mode) to verify interaction between Web Controllers, Data Repositories, and Business Services.
+
+*   **Run all integration tests in a service:**
+    Navigate to the specific microservice folder (e.g., `/microservice/product`) and run:
+    ```bash
+    mvn clean test
+    ```
+*   **Run a specific integration test class:**
+    ```bash
+    mvn test -Dtest="ProductPromotionRepositoryIntegrationTest"
+    ```
+*   **Run a specific integration test method:**
+    ```bash
+    mvn test -Dtest="ProductPromotionRepositoryIntegrationTest#findApplicablePromotions_ShouldReturnEligiblePromotions"
+    ```
+
 ---
 
 <a name="tiếng-việt"></a>
@@ -162,6 +179,23 @@ CREATE DATABASE "bkeuty-payment"; CREATE DATABASE "bkeuty-keycloak";
 *   **Chạy nhiều lớp kiểm thử đồng thời:**
     ```bash
     mvn test -Dtest="ShippingServiceTest,AddressServiceTest,KafkaServiceTest"
+    ```
+
+### 🧪 Quy trình Chạy Integration Test (Kiểm thử Tích hợp)
+Kiểm thử tích hợp hoạt động trên cơ sở dữ liệu H2 bộ nhớ cô lập (ở chế độ tương thích PostgreSQL) nhằm kiểm tra sự phối hợp chính xác giữa tầng Web (Controller), tầng Dữ liệu (Repository) và tầng Nghiệp vụ (Service).
+
+*   **Chạy toàn bộ kiểm thử tích hợp của dịch vụ:**
+    Di chuyển vào thư mục dịch vụ cụ thể (ví dụ `/microservice/product`) và chạy:
+    ```bash
+    mvn clean test
+    ```
+*   **Chạy một lớp kiểm thử tích hợp cụ thể:**
+    ```bash
+    mvn test -Dtest="ProductPromotionRepositoryIntegrationTest"
+    ```
+*   **Chạy một kịch bản kiểm thử tích hợp cụ thể:**
+    ```bash
+    mvn test -Dtest="ProductPromotionRepositoryIntegrationTest#findApplicablePromotions_ShouldReturnEligiblePromotions"
     ```
 
 ---
