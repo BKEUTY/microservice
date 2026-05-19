@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,17 +63,58 @@ public class PromotionService {
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
-        return promotionRepository.findAll(spec, pageable).map(p -> this.toDto(p, userId));
+        
+        Page<Promotion> page = promotionRepository.findAll(spec, pageable);
+        
+        Map<Integer, Integer> voucherUsages = new HashMap<>();
+        if (userId != null && page.hasContent()) {
+            List<VoucherPromotion> vouchers = page.getContent().stream()
+                    .filter(VoucherPromotion.class::isInstance)
+                    .map(VoucherPromotion.class::cast)
+                    .toList();
+            
+            if (!vouchers.isEmpty()) {
+                List<String> keys = vouchers.stream()
+                        .map(v -> "voucher:" + v.getId() + ":user:" + userId + ":usage")
+                        .toList();
+                
+                List<String> values = redisTemplate.opsForValue().multiGet(keys);
+                if (values != null) {
+                    int size = Math.min(vouchers.size(), values.size());
+                    for (int i = 0; i < size; i++) {
+                        String val = values.get(i);
+                        voucherUsages.put(vouchers.get(i).getId(), val != null ? Integer.parseInt(val) : 0);
+                    }
+                }
+            }
+        }
+        return page.map(p -> this.toDto(p, userId, voucherUsages));
     }
 
     private PromotionResponseDto toDto(Promotion promotion, String userId) {
+        return toDto(promotion, userId, null);
+    }
+
+    private PromotionResponseDto toDto(Promotion promotion, String userId, Map<Integer, Integer> voucherUsages) {
+        PromotionStatus currentStatus = promotion.getStatus();
+        if (currentStatus != PromotionStatus.DISABLED) {
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isBefore(promotion.getStartAt())) {
+                currentStatus = PromotionStatus.INCOMING;
+            } else if (now.isAfter(promotion.getEndAt())) {
+                currentStatus = PromotionStatus.ENDED;
+            } else {
+                currentStatus = PromotionStatus.STARTING;
+            }
+        }
+
         PromotionResponseDto.PromotionResponseDtoBuilder builder = PromotionResponseDto.builder()
                 .id(promotion.getId())
                 .title(promotion.getTitle())
                 .description(promotion.getDescription())
                 .startAt(promotion.getStartAt())
                 .endAt(promotion.getEndAt())
-                .status(promotion.getStatus())
+                .status(currentStatus)
                 .discountType(promotion.getDiscountType())
                 .discountValue(promotion.getDiscountValue())
                 .maxDiscount(promotion.getMaxDiscount())
@@ -91,9 +133,14 @@ public class PromotionService {
                 .usageLimitPerUser(voucherPromotion.getUsageLimitPerUser());
                 
             if (userId != null) {
-                String usageKey = "voucher:" + voucherPromotion.getId() + ":user:" + userId + ":usage";
-                String usageStr = redisTemplate.opsForValue().get(usageKey);
-                int currentUsage = usageStr != null ? Integer.parseInt(usageStr) : 0;
+                int currentUsage = 0;
+                if (voucherUsages != null && voucherUsages.containsKey(voucherPromotion.getId())) {
+                    currentUsage = voucherUsages.get(voucherPromotion.getId());
+                } else {
+                    String usageKey = "voucher:" + voucherPromotion.getId() + ":user:" + userId + ":usage";
+                    String usageStr = redisTemplate.opsForValue().get(usageKey);
+                    currentUsage = usageStr != null ? Integer.parseInt(usageStr) : 0;
+                }
                 builder.currentUserUsage(currentUsage);
                 builder.remainingUsages(Math.max(0, (voucherPromotion.getUsageLimitPerUser() != null ? voucherPromotion.getUsageLimitPerUser() : 1) - currentUsage));
             }
@@ -277,5 +324,29 @@ public class PromotionService {
             return true;
         }
         return userLevel != null && promotion.getMembershipLevels().contains(userLevel);
+    }
+
+    @Scheduled(fixedDelay = 10000)
+    @Transactional
+    public void autoUpdatePromotionStatuses() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Promotion> promotions = promotionRepository.findAll();
+        for (Promotion promotion : promotions) {
+            if (promotion.getStatus() != PromotionStatus.DISABLED) {
+                PromotionStatus targetStatus;
+                if (now.isBefore(promotion.getStartAt())) {
+                    targetStatus = PromotionStatus.INCOMING;
+                } else if (now.isAfter(promotion.getEndAt())) {
+                    targetStatus = PromotionStatus.ENDED;
+                } else {
+                    targetStatus = PromotionStatus.STARTING;
+                }
+
+                if (promotion.getStatus() != targetStatus) {
+                    promotion.setStatus(targetStatus);
+                    promotionRepository.save(promotion);
+                }
+            }
+        }
     }
 }

@@ -98,8 +98,8 @@ public class CartService {
 
             if (itemInCartItem != null) {
                 itemInCartItem.setQuantity(itemInCartItem.getQuantity() + addToCartRequest.getQuantity());
-                int membershipLevel = membershipService.getMembershipLevel(tokenValidationResponseDto.getUserId());
-                return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem), tokenValidationResponseDto.getUserId(), membershipLevel));
+                CartItem saved = cartItemRepository.save(itemInCartItem);
+                return ResponseEntity.status(HttpStatus.CREATED).body(toBasicResponse(saved));
             }
         }
 
@@ -110,8 +110,16 @@ public class CartService {
                 .isBuyNow(Boolean.TRUE.equals(addToCartRequest.getBuyNow()))
                 .build();
 
-        int membershipLevel = membershipService.getMembershipLevel(tokenValidationResponseDto.getUserId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(toAddToCartResponseDTO(cartItemRepository.save(cartItems), tokenValidationResponseDto.getUserId(), membershipLevel));
+        CartItem saved = cartItemRepository.save(cartItems);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toBasicResponse(saved));
+    }
+
+    private AddToCartResponseDto toBasicResponse(CartItem cartItem) {
+        return AddToCartResponseDto.builder()
+                .cartId(cartItem.getId())
+                .productVariantId(cartItem.getProductVariant())
+                .quantity(cartItem.getQuantity())
+                .build();
     }
 
     public ResponseEntity<AddToCartResponseDto> minusToCart(TokenValidationResponseDto tokenValidationResponseDto, Integer cartItemId) {
@@ -121,11 +129,11 @@ public class CartService {
             itemInCartItem.setQuantity(itemInCartItem.getQuantity() - 1);
             if (itemInCartItem.getQuantity() == 0) {
                 cartItemRepository.deleteById(cartItemId);
-                return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(itemInCartItem, tokenValidationResponseDto.getUserId(), 0));
+                return ResponseEntity.status(HttpStatus.OK).body(toBasicResponse(itemInCartItem));
             }
 
-            int membershipLevel = membershipService.getMembershipLevel(tokenValidationResponseDto.getUserId());
-            return ResponseEntity.status(HttpStatus.OK).body(toAddToCartResponseDTO(cartItemRepository.save(itemInCartItem), tokenValidationResponseDto.getUserId(), membershipLevel));
+            CartItem saved = cartItemRepository.save(itemInCartItem);
+            return ResponseEntity.status(HttpStatus.OK).body(toBasicResponse(saved));
         }
 
         throw new CartItemNotFound("Cart Item not found", cartItemId);
@@ -149,30 +157,4 @@ public class CartService {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    public AddToCartResponseDto toAddToCartResponseDTO(CartItem cartItems, String userId, int membershipLevel) {
-        ProductVariantDto productVariant = productWebClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/api/product/internal/variant/{productVariantId}")
-                        .queryParam("userId", userId)
-                        .queryParam("membershipLevel", membershipLevel)
-                        .build(cartItems.getProductVariant()))
-                .retrieve().bodyToMono(ProductVariantDto.class).block();
-                
-        if (productVariant == null) {
-            return AddToCartResponseDto.builder()
-                    .quantity(cartItems.getQuantity())
-                    .productVariantId(cartItems.getProductVariant())
-                    .productVariantName("Sản phẩm không còn tồn tại")
-                    .build();
-        }        
-                
-        return  AddToCartResponseDto.builder()
-                .cartId(cartItems.getId())
-                .quantity(cartItems.getQuantity())
-                .price(productVariant.getPrice())
-                .productVariantId(productVariant.getId())
-                .productVariantImage(productVariant.getProductImageUrl())
-                .productVariantName(productVariant.getProductVariantName())
-                .promotionPrice(productVariant.getPromotionPrice())
-                .build();
-    }
 }
