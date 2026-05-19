@@ -158,14 +158,6 @@ public class OrderService {
                     if (dto.getStockQuantity() < variants.getQuantity()) {
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product '" + dto.getProductVariantName() + "' only has " + dto.getStockQuantity() + " in stock.");
                     }
-                    AddToCartResponseDto addToCartResponseDTO = AddToCartResponseDto.builder()
-                            .price(dto.getPrice())
-                            .productVariantId(dto.getId())
-                            .productVariantName(dto.getProductVariantName())
-                            .quantity(variants.getQuantity())
-                            .productVariantImage(dto.getProductImageUrl())
-                            .promotionPrice(dto.getPromotionPrice())
-                            .build();
                     if (dto.getPrice() != null && variants.getQuantity() != null) {
                         if(dto.getPromotionPrice() == null){
                             totalAmount = totalAmount.add(dto.getPrice().multiply(BigDecimal.valueOf(variants.getQuantity())));
@@ -185,6 +177,16 @@ public class OrderService {
                     orderItem.setProductDescription(dto.getProductVariantDescription());
                     OrderItem savedItem = orderItemRepository.save(orderItem);
                     savedOrderItems.add(savedItem);
+
+                    AddToCartResponseDto addToCartResponseDTO = AddToCartResponseDto.builder()
+                            .price(dto.getPrice())
+                            .productVariantId(dto.getId())
+                            .productVariantName(dto.getProductVariantName())
+                            .quantity(variants.getQuantity())
+                            .productVariantImage(dto.getProductImageUrl())
+                            .promotionPrice(dto.getPromotionPrice())
+                            .orderItemId(savedItem.getId())
+                            .build();
                     items.add(addToCartResponseDTO);
                 }
             }
@@ -409,6 +411,9 @@ public class OrderService {
                                     .promotionPrice(item.getPromotionPrice())
                                     .quantity(item.getQuantity())
                                     .voucherDiscountAmount(emptyIfNull(item.getVoucherDiscountAmount(), BigDecimal.ZERO))
+                                    .orderItemId(item.getId())
+                                    .refundOrderId(item.getRefundOrder() != null ? item.getRefundOrder().getId() : null)
+                                    .refundStatus(item.getRefundOrder() != null ? item.getRefundOrder().getStatus().name() : null)
                                     .build();
                         } else {
                             if (item.getProductVariantId() != null) {
@@ -435,6 +440,9 @@ public class OrderService {
                                         .price(variantDto.getPrice())
                                         .promotionPrice(variantDto.getPromotionPrice())
                                         .quantity(item.getQuantity())
+                                        .orderItemId(item.getId())
+                                        .refundOrderId(item.getRefundOrder() != null ? item.getRefundOrder().getId() : null)
+                                        .refundStatus(item.getRefundOrder() != null ? item.getRefundOrder().getStatus().name() : null)
                                         .build();
                             }
                             return null;

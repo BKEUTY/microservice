@@ -9,17 +9,17 @@
         <module name="discoveryserver" />
         <module name="gateway" />
       </profile>
-      <profile name="Annotation profile for shipping-service" enabled="true">
+      <profile name="Annotation profile for payment-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.44/lombok-1.18.44.jar" />
         </processorPath>
-        <module name="shipping-service" />
         <module name="payment-service" />
+        <module name="shipping-service" />
       </profile>
-      <profile name="Annotation profile for promotion-service" enabled="true">
+      <profile name="Annotation profile for user-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />

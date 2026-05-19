@@ -3,6 +3,7 @@ package com.bkeuty.order.service;
 import com.bkeuty.order.dto.order.DecreaseStockResponseDto;
 import com.bkeuty.order.dto.order.DecreaseStockStatusDto;
 import com.bkeuty.order.dto.order.OrderEventDto;
+import com.bkeuty.order.dto.order.RefundWalletSuccessEventDto;
 import com.bkeuty.order.dto.shipping.AddressDto;
 import com.bkeuty.order.dto.shipping.CreateShippingOrderDto;
 import com.bkeuty.order.dto.shipping.CreateShippingOrderMessage;
@@ -11,10 +12,14 @@ import com.bkeuty.order.dto.shipping.GhnWebhookMessage;
 import com.bkeuty.order.dto.shipping.ShippingItemDto;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
+import com.bkeuty.order.entity.RefundOrder;
 import com.bkeuty.order.enums.OrderStatus;
 import com.bkeuty.order.enums.PaymentStatus;
+import com.bkeuty.order.enums.RefundStatus;
 import com.bkeuty.order.repository.OrderItemRepository;
 import com.bkeuty.order.repository.OrderRepository;
+import com.bkeuty.order.repository.RefundOrderRepository;
+import com.bkeuty.order.service.admin.AdminRefundOrderService;
 import com.bkeuty.order.service.membership.MembershipService;
 import com.bkeuty.order.util.OrderAddressUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +27,9 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -32,20 +38,25 @@ import java.util.List;
 public class KafkaService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RefundOrderRepository refundOrderRepository;
     private final MembershipService membershipService;
     private final KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate;
     private final KafkaTemplate<String, Object> kafkaEventTemplate;
+    private final AdminRefundOrderService adminRefundOrderService;
 
-    public KafkaService(OrderRepository orderRepository, 
-                        OrderItemRepository orderItemRepository, 
+    public KafkaService(OrderRepository orderRepository,
+                        OrderItemRepository orderItemRepository,
                         MembershipService membershipService,
-                        KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate, 
-                        KafkaTemplate<String, Object> kafkaEventTemplate) {
+                        KafkaTemplate<String, CreateShippingOrderMessage> kafkaCreateShippingOrderTemplate,
+                        KafkaTemplate<String, Object> kafkaEventTemplate,
+                        AdminRefundOrderService adminRefundOrderService, RefundOrderRepository refundOrderRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.membershipService = membershipService;
         this.kafkaCreateShippingOrderTemplate = kafkaCreateShippingOrderTemplate;
         this.kafkaEventTemplate = kafkaEventTemplate;
+        this.adminRefundOrderService = adminRefundOrderService;
+        this.refundOrderRepository = refundOrderRepository;
     }
 
     @KafkaListener(topics = "payment-transaction-topic")
@@ -126,26 +137,77 @@ public class KafkaService {
             log.error("listenToCreateShippingOrderTopic: order is null");
         }
     }
-
-    @KafkaListener(topics = "update-shipping-status-topic")
-    public void listenToUpdateShippingStatusTopic(GhnWebhookMessage message) {
-        Order order = orderRepository.findByShippingCode(message.getOrderCode());
-        if(order !=null){
-            OrderStatus oldStatus = order.getStatus();
-            order.setShippingStatus(message.getStatus());
-
-            if ("delivered".equalsIgnoreCase(message.getStatus()) && oldStatus != OrderStatus.SUCCEEDED) {
-                order.setStatus(OrderStatus.SUCCEEDED);
-                orderRepository.saveAndFlush(order);
-                membershipService.recalculateMembershipLevel(order.getUserId());
-            } else {
-                orderRepository.saveAndFlush(order);
-            }
+    @KafkaListener(topics = "create-refund-shipping-response-topic")
+    public void listenToCreateRefundShippingOrderTopic(CreateShippingResponseMessage message) {
+        System.out.println("Order Service listenToCreateRefundShippingOrderTopic");
+        RefundOrder order = refundOrderRepository.findById(message.getOrderId()).orElse(null);
+        if(order!=null){
+            order.setShippingCode(message.getShippingResponse().getData().getOrderCode());
+            order.setShippingStatus("picking");
+            refundOrderRepository.save(order);
         } else {
-            log.error("listenToUpdateShippingStatusTopic: order with shipping code {} not found", message.getOrderCode());
+            log.error("listenToCreateShippingOrderTopic: order is null");
         }
     }
 
+    @KafkaListener(topics = "update-shipping-status-topic")
+    public void listenToUpdateShippingStatusTopic(GhnWebhookMessage message) {
+        if(message.isRefund()){
+            RefundOrder order = refundOrderRepository.findByShippingCode(message.getOrderCode());
+            if(order !=null){
+                RefundStatus oldStatus = order.getStatus();
+                order.setShippingStatus(message.getStatus());
+
+                if ("delivered".equalsIgnoreCase(message.getStatus()) && oldStatus != RefundStatus.DELIVERED) {
+                    order.setStatus(RefundStatus.DELIVERED);
+
+
+                    refundOrderRepository.saveAndFlush(order);
+                } else {
+                    refundOrderRepository.saveAndFlush(order);
+                }
+            } else {
+                log.error("listenToUpdateShippingStatusTopic: order with shipping code {} not found", message.getOrderCode());
+            }
+        }
+        else {
+            Order order = orderRepository.findByShippingCode(message.getOrderCode());
+            if(order !=null){
+                OrderStatus oldStatus = order.getStatus();
+                order.setShippingStatus(message.getStatus());
+
+                if ("delivered".equalsIgnoreCase(message.getStatus()) && oldStatus != OrderStatus.SUCCEEDED) {
+                    order.setStatus(OrderStatus.SUCCEEDED);
+
+                    order.setDeliveryDate(
+                            LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))
+                    );
+                    orderRepository.saveAndFlush(order);
+                    membershipService.recalculateMembershipLevel(order.getUserId());
+                } else {
+                    orderRepository.saveAndFlush(order);
+                }
+            } else {
+                log.error("listenToUpdateShippingStatusTopic: order with shipping code {} not found", message.getOrderCode());
+            }
+        }
+
+    }
+
+
+    /**
+     * Listens to acknowledgement events from User Service after a wallet credit completes.
+     * Updates the matching {@link com.bkeuty.order.entity.RefundOrder} status to REFUNDED.
+     */
+    @KafkaListener(topics = "refund-wallet-success-topic")
+    public void listenToRefundWalletSuccessTopic(RefundWalletSuccessEventDto message) {
+        if (message == null || message.getRefundOrderId() == null) {
+            log.error("listenToRefundWalletSuccessTopic: received null or incomplete message");
+            return;
+        }
+        log.info("Received refund-wallet-success-topic for refundOrderId={}", message.getRefundOrderId());
+        adminRefundOrderService.markRefunded(message.getRefundOrderId());
+    }
 
     private ShippingItemDto toShippingItemDto(OrderItem dto) {
         return ShippingItemDto.builder()

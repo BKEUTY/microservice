@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -108,8 +109,16 @@ public class AdminOrderService {
                 OrderStatus newStatus = OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
                 OrderStatus oldStatus = order.getStatus();
                 order.setStatus(newStatus);
-                if (newStatus == OrderStatus.SUCCEEDED || oldStatus == OrderStatus.SUCCEEDED) {
+                if (newStatus == OrderStatus.SUCCEEDED) {
+                    if (order.getDeliveryDate() == null) {
+                        order.setDeliveryDate(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
+                    }
                     membershipService.recalculateMembershipLevel(order.getUserId());
+                } else {
+                    if (oldStatus == OrderStatus.SUCCEEDED) {
+                        order.setDeliveryDate(null);
+                        membershipService.recalculateMembershipLevel(order.getUserId());
+                    }
                 }
             } catch (IllegalArgumentException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -148,6 +157,9 @@ public class AdminOrderService {
                                     .promotionPrice(item.getPromotionPrice())
                                     .quantity(item.getQuantity())
                                     .voucherDiscountAmount(item.getVoucherDiscountAmount() != null ? item.getVoucherDiscountAmount() : BigDecimal.ZERO)
+                                    .orderItemId(item.getId())
+                                    .refundOrderId(item.getRefundOrder() != null ? item.getRefundOrder().getId() : null)
+                                    .refundStatus(item.getRefundOrder() != null ? item.getRefundOrder().getStatus().name() : null)
                                     .build();
                         } else {
                             if (item.getProductVariantId() != null) missingVariantIds.add(item.getProductVariantId());
@@ -172,6 +184,9 @@ public class AdminOrderService {
                                     .promotionPrice(dto.getPromotionPrice())
                                     .quantity(item.getQuantity())
                                     .voucherDiscountAmount(item.getVoucherDiscountAmount() != null ? item.getVoucherDiscountAmount() : BigDecimal.ZERO)
+                                    .orderItemId(item.getId())
+                                    .refundOrderId(item.getRefundOrder() != null ? item.getRefundOrder().getId() : null)
+                                    .refundStatus(item.getRefundOrder() != null ? item.getRefundOrder().getStatus().name() : null)
                                     .build();
                         })
                         .filter(Objects::nonNull)

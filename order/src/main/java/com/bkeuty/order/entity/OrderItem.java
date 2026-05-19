@@ -14,6 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.RoundingMode;
+import java.util.Date;
 
 @Entity
 @Data
@@ -49,14 +50,18 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
+    @ManyToOne
+    @JoinColumn(name = "refund_order_id")
+    private RefundOrder refundOrder;
     @Builder.Default
     private boolean isReviewed = false;
     @Builder.Default
     private Boolean decreasedStockFailed = false;
 
+
     public BigDecimal calculateUnitRefundAmount() {
         BigDecimal effectivePrice = promotionPrice != null ? promotionPrice : productVariantPrice;
-        
+
         if (voucherDiscountAmount.compareTo(BigDecimal.ZERO) == 0 || quantity == 0) {
             return effectivePrice;
         }

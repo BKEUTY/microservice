@@ -71,7 +71,7 @@ server:
 
 eureka:
   client:
-    enabled: ${EUREKA_ENABLED:false}
+    enabled: ${EUREKA_ENABLED:true}
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
 

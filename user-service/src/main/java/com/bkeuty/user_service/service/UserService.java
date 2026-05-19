@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.Comparator;
+import java.math.BigDecimal;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -89,10 +90,16 @@ public class UserService {
             if (levelStr != null) membershipLevel = Integer.parseInt(levelStr);
         } catch (NumberFormatException ignored) {}
 
-        java.math.BigDecimal totalSpending = java.math.BigDecimal.ZERO;
+        BigDecimal totalSpending = BigDecimal.ZERO;
         try {
             String spendingStr = userRepresentation.firstAttribute("totalSpending");
-            if (spendingStr != null) totalSpending = new java.math.BigDecimal(spendingStr);
+            if (spendingStr != null) totalSpending = new BigDecimal(spendingStr);
+        } catch (Exception ignored) {}
+
+        BigDecimal wallet = BigDecimal.ZERO;
+        try {
+            String walletStr = userRepresentation.firstAttribute("wallet");
+            if (walletStr != null) wallet = new BigDecimal(walletStr);
         } catch (Exception ignored) {}
 
         return UserDetailResponseDto.builder()
@@ -107,6 +114,7 @@ public class UserService {
                 .userRole(userRepresentation.firstAttribute("userRole"))
                 .membershipLevel(membershipLevel)
                 .totalSpending(totalSpending)
+                .wallet(wallet)
                 .build();
     }
 
@@ -246,7 +254,24 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update membership level");
         }
     }
+    public void updateUserWallet(String userId, BigDecimal amountChange) {
+        try{
+            UsersResource usersResource = keycloak.realm(realmName).users();
+            UserResource userResource = usersResource.get(userId);
+            UserRepresentation user = userResource.toRepresentation();
+            Map<String, List<String>> attrs = user.getAttributes();
+            String currentWallet = attrs.get("wallet").getFirst();
+            BigDecimal wallet = currentWallet == null ? BigDecimal.ZERO : new BigDecimal(currentWallet);
+            wallet = wallet.add(amountChange);
+            attrs.put("wallet", List.of(String.valueOf(wallet)));
+            user.setAttributes(attrs);
+            userResource.update(user);
+        }catch (Exception e) {
+            log.error("Failed to update wallet for user " + userId + ": " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update wallet");
+        }
 
+    }
     public Map<String, String> getUserNames(List<String> userIds) {
         Map<String, String> result = new HashMap<>();
         for (String id : userIds) {
