@@ -4,6 +4,7 @@ import com.bkeuty.order.dto.admin.AdminOrderDto;
 import com.bkeuty.order.entity.Order;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.enums.OrderStatus;
+import com.bkeuty.order.enums.PaymentStatus;
 import com.bkeuty.order.repository.OrderRepository;
 import com.bkeuty.order.service.membership.MembershipService;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +53,8 @@ class AdminOrderServiceTest {
         mockOrder = Order.builder()
                 .id(1)
                 .userId("user123")
-                .status(OrderStatus.NOT_CONFIRMED) // Current status
+                .status(OrderStatus.NOT_CONFIRMED)
+                .paymentStatus(PaymentStatus.UNPAID)
                 .total(new BigDecimal("1000000"))
                 .orderItems(List.of(item))
                 .build();
@@ -66,10 +68,11 @@ class AdminOrderServiceTest {
         when(orderRepository.findById(1)).thenReturn(Optional.of(mockOrder));
         when(orderRepository.saveAndFlush(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AdminOrderDto result = adminOrderService.updateOrderStatus(1, newStatusStr, token);
+        AdminOrderDto result = adminOrderService.updateOrderStatus(1, newStatusStr, "PAID", token);
 
         assertNotNull(result);
         assertEquals("CONFIRMED", result.getStatus());
+        assertEquals("PAID", result.getPaymentStatus());
         assertEquals(1, result.getOrderId());
         verify(orderRepository, times(1)).saveAndFlush(mockOrder);
     }
@@ -82,9 +85,10 @@ class AdminOrderServiceTest {
         when(orderRepository.findById(1)).thenReturn(Optional.of(mockOrder));
         when(orderRepository.saveAndFlush(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        AdminOrderDto result = adminOrderService.updateOrderStatus(1, newStatusStr, token);
+        AdminOrderDto result = adminOrderService.updateOrderStatus(1, newStatusStr, "PAID", token);
 
         assertEquals("SUCCEEDED", result.getStatus());
+        assertEquals("PAID", result.getPaymentStatus());
         verify(membershipService, times(1)).recalculateMembershipLevel("user123");
     }
 
@@ -93,7 +97,7 @@ class AdminOrderServiceTest {
         when(orderRepository.findById(999)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            adminOrderService.updateOrderStatus(999, "CONFIRMED", "token");
+            adminOrderService.updateOrderStatus(999, "CONFIRMED", "UNPAID", "token");
         });
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
@@ -105,10 +109,22 @@ class AdminOrderServiceTest {
         when(orderRepository.findById(1)).thenReturn(Optional.of(mockOrder));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            adminOrderService.updateOrderStatus(1, "INVALID_STATUS_XXX", "token");
+            adminOrderService.updateOrderStatus(1, "INVALID_STATUS_XXX", "UNPAID", "token");
         });
 
         assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
         assertTrue(exception.getReason().contains("Invalid order status"));
+    }
+
+    @Test
+    void updateOrderStatus_ShouldThrowException_WhenPaymentStatusIsInvalid() {
+        when(orderRepository.findById(1)).thenReturn(Optional.of(mockOrder));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
+            adminOrderService.updateOrderStatus(1, "CONFIRMED", "INVALID_PAYMENT_STATUS", "token");
+        });
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertTrue(exception.getReason().contains("Invalid payment status"));
     }
 }
