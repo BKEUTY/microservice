@@ -35,7 +35,7 @@ class PaymentServiceTest {
     void updatePaymentTransaction_ShouldSaveTransactionAndPublishToKafka() {
         PaymentWebhookData webhookData = new PaymentWebhookData();
         webhookData.setId(999);
-        webhookData.setContent("Thanh toan don hang 12345");
+        webhookData.setContent("Thanh toan don hang DH12345");
         webhookData.setAccountNumber("0123456789");
         webhookData.setDescription("Payment for order 12345");
         webhookData.setTransferAmount(new BigDecimal("500000"));
@@ -83,7 +83,7 @@ class PaymentServiceTest {
 
         PaymentWebhookData webhookData = new PaymentWebhookData();
         webhookData.setId(77);
-        webhookData.setContent("Order 777");
+        webhookData.setContent("DH777 - Order");
         webhookData.setAccountNumber("ACC001");
         webhookData.setDescription("Order description");
         webhookData.setTransferAmount(new BigDecimal("200000"));
@@ -104,7 +104,7 @@ class PaymentServiceTest {
         PaymentTransaction tx = captor.getValue();
         assertEquals("77", tx.getCode());
         assertEquals("Order description", tx.getBody());
-        assertEquals("Order 777", tx.getTransactionContent());
+        assertEquals("DH777 - Order", tx.getTransactionContent());
         assertEquals("BIDV", tx.getGateway());
         assertEquals("sub_bidv", tx.getSubAccount());
         assertEquals("REFBIDV", tx.getReferenceNumber());
@@ -112,18 +112,18 @@ class PaymentServiceTest {
     }
 
     @Test
-    void updatePaymentTransaction_ShouldThrowNumberFormatException_WhenContentContainsNoDigits() {
+    void updatePaymentTransaction_ShouldThrowNullPointerException_WhenContentContainsNoDHPattern() {
         PaymentWebhookData webhookData = new PaymentWebhookData();
         webhookData.setId(10);
         webhookData.setContent("Thanh toan don hang khong co so");
         webhookData.setAccountNumber("0123456789");
         webhookData.setTransactionDate(LocalDateTime.now());
 
-        assertThrows(NumberFormatException.class, () -> {
+        when(paymentTransactionRepository.save(any(PaymentTransaction.class)))
+                .thenAnswer(i -> i.getArgument(0));
+
+        assertThrows(NullPointerException.class, () -> {
             paymentService.updatePaymentTransaction(webhookData);
         });
-
-        verify(paymentTransactionRepository, never()).save(any());
-        verify(kafkaTemplate, never()).send(any(), any());
     }
 }

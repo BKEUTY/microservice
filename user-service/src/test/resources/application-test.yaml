@@ -1,0 +1,17 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaDiscoveryClientConfiguration
+
+eureka:
+  client:
+    enabled: false
+
+keycloak:
+  server-url: http://localhost:8181
+  issuer: http://localhost:8181/realms/bkeuty
+  realm: bkeuty
+  client-id: test-client
+  client-secret: test-secret

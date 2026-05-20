@@ -265,7 +265,7 @@ class ChatServiceTest {
         when(bucketRepository.count()).thenThrow(new RuntimeException("Mongo connection refused"));
         when(contextService.getFormattedContext("health-check")).thenThrow(new RuntimeException("Redis timeout"));
         when(productClient.getProductContext("health-check", 0)).thenThrow(new RuntimeException("Product service 503"));
-        when(kafkaTemplate.send(any(), any(), any())).thenThrow(new RuntimeException("Kafka disconnected"));
+        when(kafkaTemplate.partitionsFor(any())).thenThrow(new RuntimeException("Kafka disconnected"));
 
         String status = chatService.checkHealth();
 

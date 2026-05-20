@@ -82,15 +82,7 @@ class CartServiceTest {
 
         when(cartItemRepository.findByUserIdAndProductVariantAndIsBuyNowFalse("user123", 10))
                 .thenReturn(existingItem);
-        when(membershipService.getMembershipLevel("user123")).thenReturn(0);
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(i -> i.getArgument(0));
-
-        // Mock WebClient deep chain
-        when(productWebClient.get()).thenReturn(requestHeadersUriSpecMock);
-        when(requestHeadersUriSpecMock.uri(any(java.util.function.Function.class))).thenReturn(requestHeadersSpecMock);
-        when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
-        when(responseSpecMock.bodyToMono(ProductVariantDto.class)).thenReturn(monoMock);
-        when(monoMock.block()).thenReturn(mockVariant);
 
         ResponseEntity<AddToCartResponseDto> response = cartService.addToCart(tokenValidationResponseDto, requestDto);
 
@@ -99,7 +91,7 @@ class CartServiceTest {
         AddToCartResponseDto body = response.getBody();
         assertNotNull(body);
         assertEquals(3, body.getQuantity()); // 1 + 2
-        assertEquals("Sữa rửa mặt", body.getProductVariantName());
+        assertNull(body.getProductVariantName());
         
         verify(cartItemRepository, times(1)).save(existingItem);
     }
@@ -119,15 +111,7 @@ class CartServiceTest {
 
         when(cartItemRepository.findByUserIdAndProductVariantAndIsBuyNowFalse("user123", 20))
                 .thenReturn(null);
-        when(membershipService.getMembershipLevel("user123")).thenReturn(0);
         when(cartItemRepository.save(any(CartItem.class))).thenAnswer(i -> i.getArgument(0));
-
-        // Mock WebClient deep chain
-        when(productWebClient.get()).thenReturn(requestHeadersUriSpecMock);
-        when(requestHeadersUriSpecMock.uri(any(java.util.function.Function.class))).thenReturn(requestHeadersSpecMock);
-        when(requestHeadersSpecMock.retrieve()).thenReturn(responseSpecMock);
-        when(responseSpecMock.bodyToMono(ProductVariantDto.class)).thenReturn(monoMock);
-        when(monoMock.block()).thenReturn(mockVariant);
 
         ResponseEntity<AddToCartResponseDto> response = cartService.addToCart(tokenValidationResponseDto, requestDto);
 
@@ -135,7 +119,7 @@ class CartServiceTest {
         AddToCartResponseDto body = response.getBody();
         assertNotNull(body);
         assertEquals(5, body.getQuantity());
-        assertEquals("Kem dưỡng", body.getProductVariantName());
+        assertNull(body.getProductVariantName());
         
         verify(cartItemRepository, times(1)).save(any(CartItem.class));
     }

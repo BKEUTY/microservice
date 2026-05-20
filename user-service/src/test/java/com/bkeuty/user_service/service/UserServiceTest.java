@@ -198,4 +198,49 @@ class UserServiceTest {
         assertNotNull(addresses);
         assertEquals(1, addresses.size());
     }
+
+    @Test
+    void updateUserWallet_ShouldAddAmountToWallet_WhenSuccess() {
+        mockUserRepresentation.getAttributes().put("wallet", new java.util.ArrayList<>(List.of("100000")));
+
+        when(usersResource.get(USER_ID)).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenReturn(mockUserRepresentation);
+        doNothing().when(userResource).update(any(UserRepresentation.class));
+
+        assertDoesNotThrow(() -> userService.updateUserWallet(USER_ID, new BigDecimal("50000")));
+
+        verify(userResource, times(1)).update(any(UserRepresentation.class));
+        
+        String finalWalletValue = mockUserRepresentation.getAttributes().get("wallet").get(0);
+        assertEquals(0, new BigDecimal("150000").compareTo(new BigDecimal(finalWalletValue)));
+    }
+
+    @Test
+    void updateUserWallet_ShouldInitializeWalletAndAddAmount_WhenWalletAttributeMissing() {
+        // Remove the wallet attribute entirely to simulate a new user
+        mockUserRepresentation.getAttributes().remove("wallet");
+
+        when(usersResource.get(USER_ID)).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenReturn(mockUserRepresentation);
+        doNothing().when(userResource).update(any(UserRepresentation.class));
+
+        assertDoesNotThrow(() -> userService.updateUserWallet(USER_ID, new BigDecimal("75000")));
+
+        verify(userResource, times(1)).update(any(UserRepresentation.class));
+        
+        String finalWalletValue = mockUserRepresentation.getAttributes().get("wallet").get(0);
+        assertEquals(0, new BigDecimal("75000").compareTo(new BigDecimal(finalWalletValue)));
+    }
+
+    @Test
+    void updateUserWallet_ShouldThrowException_WhenKeycloakFails() {
+        when(usersResource.get(USER_ID)).thenReturn(userResource);
+        when(userResource.toRepresentation()).thenThrow(new RuntimeException("Keycloak Error"));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                userService.updateUserWallet(USER_ID, new BigDecimal("50000")));
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("Failed to update wallet"));
+    }
 }

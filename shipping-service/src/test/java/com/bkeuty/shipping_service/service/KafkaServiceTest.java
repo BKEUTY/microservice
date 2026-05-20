@@ -88,4 +88,47 @@ class KafkaServiceTest {
         verify(updateShippingStatusKafkaTemplate, times(1))
                 .send(eq("update-shipping-status-topic"), eq(dto));
     }
+
+    @Test
+    void listenCreateRefundShippingTopic_ShouldCallShippingServiceAndPublishResponse_WhenSuccessful() {
+        CreateRefundShippingDto refundDto = new CreateRefundShippingDto();
+        CreateRefundShippingMessage message = CreateRefundShippingMessage.builder()
+                .refundOrderId(456)
+                .createRefundShippingDto(refundDto)
+                .build();
+
+        CreateShippingOrderResponseDto responseDto = new CreateShippingOrderResponseDto();
+        responseDto.setCode(200);
+        responseDto.setMessage("Success");
+        
+        ShippingOrderDto shippingOrderDto = new ShippingOrderDto();
+        shippingOrderDto.setOrderCode("GHN-REFUND-456");
+        responseDto.setData(shippingOrderDto);
+
+        when(shippingService.createRefundShippingOrder(refundDto)).thenReturn(Mono.just(responseDto));
+
+        kafkaService.listenCreateRefundShippingTopic(message);
+
+        ArgumentCaptor<CreateShippingResponseMessage> captor = ArgumentCaptor.forClass(CreateShippingResponseMessage.class);
+        verify(kafkaTemplate, times(1)).send(eq("create-refund-shipping-response-topic"), captor.capture());
+
+        CreateShippingResponseMessage sent = captor.getValue();
+        assertEquals(456, sent.getOrderId());
+        assertEquals(responseDto, sent.getShippingResponse());
+    }
+
+    @Test
+    void listenCreateRefundShippingTopic_ShouldDoNothing_WhenShippingServiceReturnsNull() {
+        CreateRefundShippingDto refundDto = new CreateRefundShippingDto();
+        CreateRefundShippingMessage message = CreateRefundShippingMessage.builder()
+                .refundOrderId(456)
+                .createRefundShippingDto(refundDto)
+                .build();
+
+        when(shippingService.createRefundShippingOrder(refundDto)).thenReturn(Mono.empty());
+
+        kafkaService.listenCreateRefundShippingTopic(message);
+
+        verify(kafkaTemplate, never()).send(anyString(), any());
+    }
 }

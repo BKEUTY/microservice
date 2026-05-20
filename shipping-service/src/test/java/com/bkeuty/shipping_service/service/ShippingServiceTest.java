@@ -64,4 +64,18 @@ class ShippingServiceTest {
         assertEquals(response, result.block());
         verify(ghnCommunication, times(1)).createShippingOrder(request);
     }
+
+    @Test
+    void createRefundShippingOrder_ShouldDelegate_ToGHNCommunication() {
+        CreateRefundShippingDto request = new CreateRefundShippingDto();
+        CreateShippingOrderResponseDto response = new CreateShippingOrderResponseDto();
+
+        when(ghnCommunication.createRefundOrder(request)).thenReturn(Mono.just(response));
+
+        Mono<CreateShippingOrderResponseDto> result = shippingService.createRefundShippingOrder(request);
+
+        assertNotNull(result);
+        assertEquals(response, result.block());
+        verify(ghnCommunication, times(1)).createRefundOrder(request);
+    }
 }

@@ -185,7 +185,7 @@ public class AdminRefundOrderService {
     public AdminRefundOrderDto completeRefundOrder(Integer refundOrderId) {
         RefundOrder refundOrder = findOrThrow(refundOrderId);
 
-        if (refundOrder.getStatus() != RefundStatus.DELIVERED) {
+        if (refundOrder.getStatus() != RefundStatus.APPROVED && refundOrder.getStatus() != RefundStatus.DELIVERED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Only APPROVED refund orders can be marked as COMPLETED. Current status: "
                             + refundOrder.getStatus());

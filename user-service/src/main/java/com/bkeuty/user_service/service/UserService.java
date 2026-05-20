@@ -1,13 +1,12 @@
 package com.bkeuty.user_service.service;
 
-import com.bkeuty.user_service.dto.AddressDto;
-import com.bkeuty.user_service.dto.DistrictDto;
-import com.bkeuty.user_service.dto.ProvinceDto;
-import com.bkeuty.user_service.dto.UpdateUserDto;
-import com.bkeuty.user_service.dto.UserDetailResponseDto;
-import com.bkeuty.user_service.dto.WardDto;
-import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -16,13 +15,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import java.util.Comparator;
-import java.math.BigDecimal;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.bkeuty.user_service.dto.AddressDto;
+import com.bkeuty.user_service.dto.DistrictDto;
+import com.bkeuty.user_service.dto.ProvinceDto;
+import com.bkeuty.user_service.dto.UpdateUserDto;
+import com.bkeuty.user_service.dto.UserDetailResponseDto;
+import com.bkeuty.user_service.dto.WardDto;
+import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -260,10 +262,13 @@ public class UserService {
             UserResource userResource = usersResource.get(userId);
             UserRepresentation user = userResource.toRepresentation();
             Map<String, List<String>> attrs = user.getAttributes();
-            String currentWallet = attrs.get("wallet").getFirst();
-            BigDecimal wallet = currentWallet == null ? BigDecimal.ZERO : new BigDecimal(currentWallet);
+            if (attrs == null) {
+                attrs = new HashMap<>();
+            }
+            List<String> walletAttr = attrs.get("wallet");
+            BigDecimal wallet = (walletAttr == null || walletAttr.isEmpty()) ? BigDecimal.ZERO : new BigDecimal(walletAttr.getFirst());
             wallet = wallet.add(amountChange);
-            attrs.put("wallet", List.of(String.valueOf(wallet)));
+            attrs.put("wallet", List.of(wallet.toPlainString()));
             user.setAttributes(attrs);
             userResource.update(user);
         }catch (Exception e) {
