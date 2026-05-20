@@ -16,7 +16,7 @@ public class ProductDetailDto {
     private Integer id;
     private String name;
     private String description;
-    private String image;
+    private List<String> image;
     private BigDecimal originPrice;
     private BigDecimal promotionPrice;
     private String appliedPromotionType;

@@ -22,7 +22,7 @@ public class AdminProductVariantDto {
     private String productVariantName;
     private Integer stockQuantity;
     private String description;
-    private String productImageUrl;
+    private List<String> productImageUrl;
     private List<String> optionValues;
     private Map<String, String> variantOptions;
     private ProductStatus status;

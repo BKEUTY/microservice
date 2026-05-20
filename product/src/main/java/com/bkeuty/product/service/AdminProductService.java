@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.bkeuty.product.entity.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,12 +29,6 @@ import com.bkeuty.product.dto.admin.UpdateProductDto.UpdateProductRequestDto;
 import com.bkeuty.product.dto.admin.UpdateProductDto.UpdateProductResponseDto;
 import com.bkeuty.product.dto.admin.UpdateProductVariantDto.UpdateProductVariantRequestDto;
 import com.bkeuty.product.dto.admin.UpdateProductVariantDto.UpdateProductVariantResponseDto;
-import com.bkeuty.product.entity.Product;
-import com.bkeuty.product.entity.ProductBrand;
-import com.bkeuty.product.entity.ProductCategory;
-import com.bkeuty.product.entity.ProductOption;
-import com.bkeuty.product.entity.ProductOptionValue;
-import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.exception.ProductNotFoundException;
 import com.bkeuty.product.exception.ProductVariantNotFoundException;
 import com.bkeuty.product.repository.ProductBrandRepository;
@@ -44,6 +39,7 @@ import com.bkeuty.product.repository.ProductRepository;
 import com.bkeuty.product.repository.ProductVariantRepository;
 
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
@@ -59,17 +55,19 @@ public class AdminProductService {
 
     private final ProductVariantRepository productVariantRepository;
     private final ProductBrandRepository productBrandRepository;
+    private final S3Service s3Service;
 
     public AdminProductService(ProductRepository productRepository, ProductCategoryRepository productCategoryRepository,
             ProductOptionRepository productOptionRepository, ProductOptionValueRepository productOptionValueRepository,
             ProductVariantRepository productVariantsRepository,
-                               ProductBrandRepository productBrandRepository) {
+                               ProductBrandRepository productBrandRepository,  S3Service s3Service) {
         this.productRepository = productRepository;
         this.productCategoryRepository = productCategoryRepository;
         this.productOptionRepository = productOptionRepository;
         this.productOptionValueRepository = productOptionValueRepository;
         this.productVariantRepository = productVariantsRepository;
         this.productBrandRepository = productBrandRepository;
+        this.s3Service = s3Service;
 
     }
 
@@ -112,7 +110,7 @@ public class AdminProductService {
         return AdminProductDto.builder()
                 .productId(product.getId())
                 .name(product.getName())
-                .image(product.getImage())
+                .images(product.getImages())
                 .description(product.getDescription())
                 .categories(product.getCategories().stream().map(ProductCategory::getCategoryName)
                         .collect(Collectors.toList()))
@@ -178,7 +176,7 @@ public class AdminProductService {
         return AdminProductVariantDto.builder()
                 .id(productVariant.getId())
                 .productId(productVariant.getProduct().getId())
-                .productImageUrl(productVariant.getProductImageUrl())
+                .productImageUrl(productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).collect(Collectors.toList()))
                 .productName(productVariant.getProduct().getName())
                 .price(productVariant.getPrice())
                 .promotionPrice(productVariant.getPromotionPrice())
@@ -193,18 +191,28 @@ public class AdminProductService {
                 .build();
     }
 
-    public CreateProductResponseDto createProduct(CreateProductRequestDto requestDto) {
+    public CreateProductResponseDto createProduct(CreateProductRequestDto requestDto, List<MultipartFile> images) {
+
         Product product = Product.builder()
                 .name(requestDto.getName())
-                .description(requestDto.getDescription())
-                .image(requestDto.getImage()).build();
+                .description(requestDto.getDescription()).build();
         Set<ProductCategory> setCategories = requestDto.getProductCategories().stream()
                 .map(categoryId -> productCategoryRepository.findById(categoryId).get()).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         product.setCategories(setCategories);
-        ProductBrand productBrand = productBrandRepository.findById(requestDto.getBrandId()).orElseThrow(()-> new RuntimeException("Brand not found"));
-        product.setBrand(productBrand);
-        return toCreateProductResponseDto(productRepository.save(product));
+        if (requestDto.getBrandId() != null) {
+            ProductBrand productBrand = productBrandRepository.findById(requestDto.getBrandId())
+                    .orElseThrow(() -> new RuntimeException("Brand not found"));
+
+            product.setBrand(productBrand);
+        }
+        Product saveProduct = productRepository.saveAndFlush(product);
+        List<String> imageUrls = s3Service.uploadProductImages(saveProduct.getId(), images);
+        if(!imageUrls.isEmpty()) {
+            saveProduct.setImages(imageUrls.stream().map(ProductImage::new).collect(Collectors.toList()));
+            saveProduct = productRepository.save(saveProduct);
+        }
+        return toCreateProductResponseDto(saveProduct);
 
     }
 
@@ -213,10 +221,10 @@ public class AdminProductService {
         createProductResponseDto.setId(product.getId());
         createProductResponseDto.setName(product.getName());
         createProductResponseDto.setDescription(product.getDescription());
-        createProductResponseDto.setImage(product.getImage());
+        createProductResponseDto.setImage(product.getImages());
         createProductResponseDto.setCategories(
                 product.getCategories().stream().map(ProductCategory::getCategoryName).collect(Collectors.toList()));
-        createProductResponseDto.setBrandName(product.getBrand().getBrandName());
+        createProductResponseDto.setBrandName(product.getBrand()!= null ? product.getBrand().getBrandName(): null);
         return createProductResponseDto;
 
     }
@@ -253,7 +261,7 @@ public class AdminProductService {
             variant.setProduct(product);
             variant.setOptionValues(new HashSet<>(productOptionValues));
             variant.setDescription(product.getDescription());
-            variant.setProductImageUrl(product.getImage());
+            variant.setProductImageUrls(List.of());
             String optionsSuffix = productOptionValues.stream().map(ProductOptionValue::getOptionValueName).collect(Collectors.joining(" - "));
             String variantName = optionsSuffix.isEmpty() ? product.getName() : product.getName() + " - " + optionsSuffix;
             variant.setProductVariantName(variantName);         
@@ -270,7 +278,7 @@ public class AdminProductService {
         return AdminProductVariantDto.builder()
                 .id(productVariant.getId())
                 .productId(productVariant.getProduct().getId())
-                .productImageUrl(productVariant.getProductImageUrl())
+                .productImageUrl(productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).collect(Collectors.toList()))
                 .productName(productVariant.getProduct().getName())
                 .price(productVariant.getPrice())
                 .promotionPrice(productVariant.getPromotionPrice())
@@ -305,19 +313,19 @@ public class AdminProductService {
         }
     }
 
-    public UpdateProductResponseDto updateProduct(UpdateProductRequestDto requestDto) {
+    public UpdateProductResponseDto updateProduct(UpdateProductRequestDto requestDto, List<MultipartFile> images) {
 
         return productRepository.findById(requestDto.getId())
-                .map(products -> applyUpdateProduct(products, requestDto))
+                .map(products -> applyUpdateProduct(products, requestDto, images))
                 .map(productRepository::save)
                 .map(this::toUpdateProduct)
                 .orElseThrow(() -> new ProductNotFoundException("Product Not Found"));
     }
 
-    private Product applyUpdateProduct(Product updateProduct, UpdateProductRequestDto dto) {
+    private Product applyUpdateProduct(Product updateProduct, UpdateProductRequestDto dto, List<MultipartFile> images) {
         Optional.ofNullable(dto.getDescription()).ifPresent(updateProduct::setDescription);
         Optional.ofNullable(dto.getName()).ifPresent(updateProduct::setName);
-        Optional.ofNullable(dto.getImage()).ifPresent(updateProduct::setImage);
+
         if (dto.getProductCategories() != null) {
             Set<ProductCategory> categories = dto.getProductCategories().stream()
                     .map(productCategoryRepository::findById)
@@ -325,6 +333,11 @@ public class AdminProductService {
                     .collect(Collectors.toSet());
             updateProduct.setCategories(categories);
         }
+        updateProduct = productRepository.saveAndFlush(updateProduct);
+        List<String> productImages = s3Service.uploadProductImages(updateProduct.getId(),images);
+        List<String> curImages = dto.getImageUrl();
+        curImages.addAll(productImages);
+        updateProduct.setImages(curImages.stream().map(ProductImage::new).collect(Collectors.toList()));
 
         return updateProduct;
     }
@@ -334,14 +347,14 @@ public class AdminProductService {
         return UpdateProductResponseDto.builder()
                 .name(product.getName())
                 .productCategories(categories)
-                .image(product.getImage())
+                .image(product.getImages().stream().map(ProductImage::getImageUrl).collect(Collectors.toList()))
                 .description(product.getDescription())
                 .build();
     }
 
-    public UpdateProductVariantResponseDto updateProductVariant(UpdateProductVariantRequestDto requestDto) {
+    public UpdateProductVariantResponseDto updateProductVariant(UpdateProductVariantRequestDto requestDto, List<MultipartFile> images) {
         return productVariantRepository.findById(requestDto.getId())
-                .map(productVariant -> applyUpdateProductVariant(productVariant, requestDto))
+                .map(productVariant -> applyUpdateProductVariant(productVariant, requestDto, images))
                 .map(productVariantRepository::save)
                 .map(this::toUpdateProductVariant)
                 .orElseThrow(() -> new ProductVariantNotFoundException("Product variant not Found"));
@@ -349,20 +362,26 @@ public class AdminProductService {
     }
 
     private ProductVariant applyUpdateProductVariant(ProductVariant productVariant,
-            UpdateProductVariantRequestDto dto) {
+            UpdateProductVariantRequestDto dto, List<MultipartFile> images) {
         Optional.ofNullable(dto.getProductVariantName()).ifPresent(productVariant::setProductVariantName);
-        Optional.ofNullable(dto.getProductImageUrl()).ifPresent(productVariant::setProductImageUrl);
+
         Optional.ofNullable(dto.getStockQuantity()).ifPresent(productVariant::setStockQuantity);
         Optional.ofNullable(dto.getDescription()).ifPresent(productVariant::setDescription);
+        ProductVariant finalProductVariant = productVariant;
         Optional.ofNullable(dto.getPrice()).ifPresent(price -> {
-            boolean noActivePromotion = productVariant.getPromotionPrice() == null || 
-                                        productVariant.getPromotionPrice().compareTo(productVariant.getPrice()) == 0;
-            productVariant.setPrice(price);
+            boolean noActivePromotion = finalProductVariant.getPromotionPrice() == null ||
+                                        finalProductVariant.getPromotionPrice().compareTo(finalProductVariant.getPrice()) == 0;
+            finalProductVariant.setPrice(price);
             if (noActivePromotion) {
-                productVariant.setPromotionPrice(price);
+                finalProductVariant.setPromotionPrice(price);
             }
         });
         Optional.ofNullable(dto.getStatus()).ifPresent(productVariant::setStatus);
+        productVariant = productVariantRepository.saveAndFlush(productVariant);
+        List<String> imgUrls = s3Service.uploadVariantImages(productVariant.getId(),images);
+        List<String> currentUrls = productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).toList();
+        currentUrls.addAll(imgUrls);
+        productVariant.setProductImageUrls(currentUrls.stream().map(ProductImage::new).collect(Collectors.toList()));
         return productVariant;
     }
 
@@ -371,7 +390,7 @@ public class AdminProductService {
                 .productVariantName(productVariant.getProductVariantName())
                 .description(productVariant.getDescription())
                 .productName(productVariant.getProduct().getName())
-                .productImageUrl(productVariant.getProductImageUrl())
+                .productImageUrl(productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).toList())
                 .price(productVariant.getPrice())
                 .stockQuantity(productVariant.getStockQuantity())
                 .optionValues(

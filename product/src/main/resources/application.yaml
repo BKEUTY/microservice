@@ -84,6 +84,13 @@ service-base-url:
   promotion-service: ${PROMOTION_SERVICE_URL:http://promotion-service}
   review-service: ${REVIEW_SERVICE_URL:http://review-service}
   order-service: ${ORDER_SERVICE_URL:http://order}
-
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:bkeuty-bucket}
+    region: ${AWS_REGION:us-east-1}
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    product-image-folder: product
+    product-variant-image-folder: variant
 
 

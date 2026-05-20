@@ -55,11 +55,18 @@ public class InventoryService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, 
                     "Insufficient stock for variant: " + productVariant.getProductVariantName());
             }
-
+            String imgUrl =  null;
+            if(productVariant.getProductImageUrls()!=null){
+                if(productVariant.getProductImageUrls().getFirst()!=null){
+                    if(productVariant.getProductImageUrls().getFirst().getImageUrl()!=null){
+                        imgUrl = productVariant.getProductImageUrls().getFirst().getImageUrl();
+                    }
+                }
+            }
             decreaseStockResponseDtos.add(new DecreaseStockResponseDto(
                     productVariant.getId(),
                     productVariant.getProductVariantName(),
-                    productVariant.getProductImageUrl(),
+                    imgUrl,
                     orderItem.getQuantity(),
                     productVariant.getPrice(),
                     productVariant.getPromotionPrice()

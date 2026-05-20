@@ -3,8 +3,12 @@ package com.bkeuty.product.entity;
 import com.bkeuty.product.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.type.SqlTypes;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -28,7 +32,10 @@ public class Product {
     )
     @Builder.Default
     private Set<ProductCategory> categories =  new HashSet<>();
-    private String image;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private List<ProductImage> images;
+
     @ManyToOne
     @JoinColumn(name = "product_brand")
     private ProductBrand brand;

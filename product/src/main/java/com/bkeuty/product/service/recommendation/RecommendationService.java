@@ -105,7 +105,7 @@ public class RecommendationService {
                             .productId(v.getId())
                             .variantName(v.getProductVariantName())
                             .description(v.getDescription())
-                            .imageUrl(v.getProductImageUrl())
+                            .imageUrl(v.getProductImageUrls()!=null && !v.getProductImageUrls().isEmpty() ? v.getProductImageUrls().getFirst().getImageUrl():null)
                             .originPrice(v.getPrice())
                             .discountPrice(promo != null ? promo.getNewPrice() : v.getPrice())
                             .stockQuantity(v.getStockQuantity())

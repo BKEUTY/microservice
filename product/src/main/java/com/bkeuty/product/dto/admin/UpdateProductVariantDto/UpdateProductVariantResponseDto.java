@@ -19,7 +19,7 @@ public class UpdateProductVariantResponseDto {
     private String productVariantName;
     private Integer stockQuantity;
     private String description;
-    private String productImageUrl;
+    private List<String> productImageUrl;
     private List<String> optionValues;
     private ProductStatus status;
     private String productName;

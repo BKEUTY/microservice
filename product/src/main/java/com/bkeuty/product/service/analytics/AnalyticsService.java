@@ -76,9 +76,14 @@ public class AnalyticsService {
                         .categoryName(categoryNames.isEmpty() ? null : categoryNames)
                         .build();
             });
-
-            PerformanceResultDto variantResult = variantMapResult.computeIfAbsent(variant.getId(), 
-                k -> new PerformanceResultDto(variant.getId(), variant.getProductVariantName(), variant.getProductImageUrl(), 0L, BigDecimal.ZERO));
+            String imageUrl;
+            if(variant.getProductImageUrls()!=null && !variant.getProductImageUrls().isEmpty()){
+                 imageUrl = variant.getProductImageUrls().getFirst().getImageUrl();
+            } else {
+                imageUrl = null;
+            }
+            PerformanceResultDto variantResult = variantMapResult.computeIfAbsent(variant.getId(),
+                k -> new PerformanceResultDto(variant.getId(), variant.getProductVariantName(),imageUrl, 0L, BigDecimal.ZERO));
             variantResult.setQuantity(variantResult.getQuantity() + (vp.getQuantity() != null ? vp.getQuantity() : 0L));
             variantResult.setRevenue(variantResult.getRevenue().add(vp.getRevenue() != null ? vp.getRevenue() : BigDecimal.ZERO));
             variantResult.setProfit(variantResult.getRevenue().multiply(BigDecimal.valueOf(0.40)));

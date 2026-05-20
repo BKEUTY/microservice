@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -18,7 +19,7 @@ public class ProductVariantDto {
     private BigDecimal discount;
     private Integer stockQuantity;
     private Integer sold;
-    private String productImageUrl;
+    private List<String> productImageUrl;
     private String productVariantName;
     private Map<String, String> variantOptions;
 }

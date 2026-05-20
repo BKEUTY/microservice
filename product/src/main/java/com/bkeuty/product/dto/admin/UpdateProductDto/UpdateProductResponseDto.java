@@ -22,5 +22,5 @@ public class UpdateProductResponseDto {
     private String name;
     private String description ;
     private List<String> productCategories ;
-    private String image;
+    private List<String> image;
 }

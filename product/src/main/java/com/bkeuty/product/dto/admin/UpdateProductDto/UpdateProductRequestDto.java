@@ -21,5 +21,5 @@ public class UpdateProductRequestDto {
     private String name = null;
     private String description = null;
     private List<Integer> productCategories = null;
-    private String image = null;
+    private List<String> imageUrl;
 }

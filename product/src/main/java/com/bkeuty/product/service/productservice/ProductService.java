@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.bkeuty.product.entity.*;
 import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.data.domain.Page;
@@ -24,10 +25,6 @@ import com.bkeuty.product.dto.user.product.ProductDto;
 import com.bkeuty.product.dto.user.product.ProductOptionDto;
 import com.bkeuty.product.dto.user.product.ProductVariantDto;
 import com.bkeuty.product.dto.user.product.PromotionPriceDto;
-import com.bkeuty.product.entity.Product;
-import com.bkeuty.product.entity.ProductCategory;
-import com.bkeuty.product.entity.ProductOptionValue;
-import com.bkeuty.product.entity.ProductVariant;
 import com.bkeuty.product.enums.ProductStatus;
 import com.bkeuty.product.exception.ProductVariantNotFoundException;
 import com.bkeuty.product.microservicecommunication.PromotionService;
@@ -146,7 +143,7 @@ public class ProductService {
                 .productId(productVariant.getId())
                 .variantName(productVariant.getProductVariantName())
                 .stockQuantity(productVariant.getStockQuantity())
-                .imageUrl(productVariant.getProductImageUrl())
+                .imageUrl(productVariant.getProductImageUrls()!=null && !productVariant.getProductImageUrls().isEmpty() ? productVariant.getProductImageUrls().getFirst().getImageUrl() : null)
                 .originPrice(productVariant.getPrice())
                 .discountPrice(displayPrice)
                 .appliedPromotionType(promoType)
@@ -219,7 +216,7 @@ public class ProductService {
                 .id(product.getId())
                 .name(product.getName())
                 .description(product.getDescription())
-                .image(product.getImage())
+                .image(product.getImages().stream().map(ProductImage::getImageUrl).toList())
                 .minPrice(minPrice)
                 .categories(product.getCategories().stream().map(this::toCategoryDto).collect(Collectors.toList()))
                 .build();
@@ -240,7 +237,7 @@ public class ProductService {
                 .id(productVariant.getId())
                 .name(productVariant.getProductVariantName())
                 .description(productVariant.getDescription())
-                .image(productVariant.getProductImageUrl())
+                .image(productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).toList())
                 .originPrice(productVariant.getPrice())
                 .promotionPrice(promotionPrice.getNewPrice())
                 .appliedPromotionType(promotionPrice.getAppliedPromotionType())
@@ -276,7 +273,7 @@ public class ProductService {
                 .productVariantName(productVariant.getProductVariantName())
                 .id(productVariant.getId())
                 .price(productVariant.getPrice())
-                .productImageUrl(productVariant.getProductImageUrl())
+                .productImageUrl(productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).toList())
                 .stockQuantity(productVariant.getStockQuantity())
                 .sold(productVariant.getSold())
                 .variantOptions(options)
