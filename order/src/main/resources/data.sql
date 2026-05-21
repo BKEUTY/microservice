@@ -1,7 +1,5 @@
-DELETE FROM order_item;
-DELETE FROM orders;
-DELETE FROM cart_item;
-DELETE FROM payment_transaction;
+TRUNCATE TABLE order_item, orders, cart_item, payment_transaction RESTART IDENTITY CASCADE;
+
 
 INSERT INTO orders (id, total, payment_method, order_date, address, user_id, status, user_name, shipping_fee, estimated_shipping_date, shipping_status, payment_status, buyer_name, buyer_number, buyer_note, shipping_code, voucher_id, voucher_discount_amount, membership_level) VALUES
 (1, 910000, 0, '2026-01-01 14:24:00', 'Phúc Kiến, Xã Tân Xuân, Huyện Vân Hồ, Sơn La|141211:2255:266', 'cc5cd1e9-1fa4-4097-a819-8a4192549c4d', 3, 'Địch Lệ Nhiệt Ba', 0, '2026-01-03', 'CANCELLED', 0, NULL, NULL, NULL, NULL, 9, 50000.00, 0),

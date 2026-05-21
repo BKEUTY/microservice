@@ -91,6 +91,27 @@ public class AdminDashboardService {
 
 
         List<ChartDataDto> chartData = orderRepository.findRevenueChartDataByDateRange(start, end, COMPLETED_STATUSES);
+        List<Object[]> shippingFeeData = orderRepository.findShippingFeeChartDataByDateRange(start, end, COMPLETED_STATUSES);
+
+        Map<LocalDate, BigDecimal> shippingFeeMap = new HashMap<>();
+        if (shippingFeeData != null) {
+            for (Object[] row : shippingFeeData) {
+                LocalDate date = convertToLocalDate(row[0]);
+                BigDecimal fee = row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+                if (date != null) {
+                    shippingFeeMap.put(date, fee);
+                }
+            }
+        }
+
+        if (chartData != null) {
+            for (ChartDataDto dto : chartData) {
+                if (dto.getDate() != null && shippingFeeMap.containsKey(dto.getDate())) {
+                    dto.setShippingFee(shippingFeeMap.get(dto.getDate()));
+                }
+            }
+        }
+
         List<DailyProductPerformanceDto> productDetail = orderRepository.findDetailedItemPerformance(start, end, COMPLETED_STATUSES);
         if (productDetail == null) productDetail = new ArrayList<>();
 
@@ -109,13 +130,13 @@ public class AdminDashboardService {
                     brandDetail.add(new TransactionalPerformanceDto(
                         item.getDate(), mapping.getBrandId(), mapping.getBrandName(),
                         item.getVariantId(), mapping.getVariantName(),
-                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice(), item.getVoucherDiscount()));
+                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice(), item.getVoucherDiscount(), item.getIsRefunded()));
                 }
                 if (mapping.getCategoryId() != null) {
                     categoryDetail.add(new TransactionalPerformanceDto(
                         item.getDate(), mapping.getCategoryId(), mapping.getCategoryName(),
                         item.getVariantId(), mapping.getVariantName(),
-                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice(), item.getVoucherDiscount()));
+                        item.getQuantity(), item.getRevenue(), item.getOriginalPrice(), item.getPromotionalPrice(), item.getVoucherDiscount(), item.getIsRefunded()));
                 }
             });
         }
@@ -246,5 +267,19 @@ public class AdminDashboardService {
                 .topCategories(Collections.emptyList())
                 .variantMappings(Collections.emptyMap())
                 .build();
+    }
+
+    private LocalDate convertToLocalDate(Object dateObj) {
+        if (dateObj == null) return null;
+        if (dateObj instanceof java.sql.Date sqlDate) {
+            return sqlDate.toLocalDate();
+        } else if (dateObj instanceof java.time.LocalDate localDate) {
+            return localDate;
+        } else if (dateObj instanceof java.util.Date date) {
+            return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        } else if (dateObj instanceof java.time.LocalDateTime localDateTime) {
+            return localDateTime.toLocalDate();
+        }
+        return null;
     }
 }

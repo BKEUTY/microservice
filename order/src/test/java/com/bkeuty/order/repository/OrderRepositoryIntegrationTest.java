@@ -1,6 +1,7 @@
 package com.bkeuty.order.repository;
 
 import com.bkeuty.order.dto.admin.ChartDataDto;
+import com.bkeuty.order.dto.admin.DashboardOrderDto;
 import com.bkeuty.order.dto.admin.TopCustomerDto;
 import com.bkeuty.order.dto.admin.VariantPerformanceDto;
 import com.bkeuty.order.entity.Order;
@@ -121,8 +122,8 @@ class OrderRepositoryIntegrationTest {
     @Test
     void sumRevenueByDateRangeAndStatus_ShouldSumOnlySucceededOrders() {
         BigDecimal revenue = orderRepository.sumRevenueByDateRangeAndStatus(START, END, COMPLETED_STATUSES);
-        assertEquals(0, new BigDecimal("1300000").compareTo(revenue),
-                "Revenue should be 500000 + 800000 = 1300000");
+        assertEquals(0, new BigDecimal("1280000").compareTo(revenue),
+                "Revenue should be 500000 + 780000 = 1280000");
     }
 
     @Test
@@ -196,5 +197,19 @@ class OrderRepositoryIntegrationTest {
     void findByShippingCode_ShouldReturnNull_WhenCodeNotFound() {
         Order order = orderRepository.findByShippingCode("NONEXISTENT-CODE");
         assertNull(order);
+    }
+
+    @Test
+    void findRecentOrders_ShouldReturnCorrectDto() {
+        List<DashboardOrderDto> recentOrders = orderRepository.findRecentOrders(PageRequest.of(0, 10));
+        assertNotNull(recentOrders);
+        assertFalse(recentOrders.isEmpty());
+    }
+
+    @Test
+    void findAllOrdersInDateRange_ShouldReturnCorrectDto() {
+        List<DashboardOrderDto> orders = orderRepository.findAllOrdersInDateRange(START, END, COMPLETED_STATUSES);
+        assertNotNull(orders);
+        assertEquals(2, orders.size());
     }
 }

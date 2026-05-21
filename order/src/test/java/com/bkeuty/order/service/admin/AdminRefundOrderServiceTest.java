@@ -209,10 +209,13 @@ class AdminRefundOrderServiceTest {
     void processMoneyRefund_ShouldSendKafkaEvent_WhenDelivered() {
         refundOrder.setStatus(RefundStatus.DELIVERED);
         when(refundOrderRepository.findById(100)).thenReturn(Optional.of(refundOrder));
+        when(refundOrderRepository.save(any(RefundOrder.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         AdminRefundOrderDto dto = adminRefundOrderService.processMoneyRefund(100);
 
         assertNotNull(dto);
+        assertEquals(RefundStatus.REFUNDING, dto.getStatus());
+        verify(refundOrderRepository, times(1)).save(any(RefundOrder.class));
         verify(kafkaEventTemplate, times(1))
                 .send(eq("process-refund-topic"), any());
     }

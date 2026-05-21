@@ -220,6 +220,9 @@ public class AdminRefundOrderService {
                             + refundOrder.getStatus());
         }
 
+        refundOrder.setStatus(RefundStatus.REFUNDING);
+        RefundOrder saved = refundOrderRepository.save(refundOrder);
+
         ProcessRefundEventDto event = ProcessRefundEventDto.builder()
                 .refundOrderId(refundOrder.getId())
                 .orderId(refundOrder.getOrderId())
@@ -231,7 +234,7 @@ public class AdminRefundOrderService {
         log.info("Published process-refund-topic for refundOrderId={}, userId={}, amount={}",
                 refundOrder.getId(), refundOrder.getUserId(), refundOrder.getTotal());
 
-        return toDto(refundOrder);
+        return toDto(saved);
     }
 
     // -----------------------------------------------------------------------

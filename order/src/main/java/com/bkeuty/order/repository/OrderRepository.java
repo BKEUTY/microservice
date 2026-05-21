@@ -32,25 +32,41 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
 
     Order findByIdAndUserId(Integer orderId,String userId);
     Order findByShippingCode(String shippingCode);
-    @Query("SELECT COUNT(o) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    @Query("""
+        SELECT COUNT(o) FROM Order o
+        WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+          AND EXISTS (SELECT 1 FROM OrderItem i WHERE i.order = o AND i.refundOrder IS NULL)""")
     Long countOrdersByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
         @Param("statuses") Collection<OrderStatus> statuses);
 
-    @Query("SELECT SUM(COALESCE(o.total, 0)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    @Query("""
+        SELECT SUM(
+            (CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
+                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity)
+            - COALESCE(i.voucherDiscountAmount, 0.0)
+        ) FROM OrderItem i JOIN i.order o
+        WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+          AND i.refundOrder IS NULL""")
     BigDecimal sumRevenueByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
         @Param("statuses") Collection<OrderStatus> statuses);
 
-    @Query("SELECT SUM(COALESCE(o.shippingFee, 0)) FROM Order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    @Query("""
+        SELECT SUM(COALESCE(o.shippingFee, 0)) FROM Order o
+        WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+          AND EXISTS (SELECT 1 FROM OrderItem i WHERE i.order = o AND i.refundOrder IS NULL)""")
     BigDecimal sumShippingFeeByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
         @Param("statuses") Collection<OrderStatus> statuses);
 
-    @Query("SELECT SUM(i.quantity) FROM OrderItem i JOIN i.order o WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate")
+    @Query("""
+        SELECT SUM(i.quantity) FROM OrderItem i JOIN i.order o
+        WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+          AND i.refundOrder IS NULL""")
     Long sumProductsSoldByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
@@ -64,6 +80,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
                 THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0.0))
         ) FROM OrderItem i JOIN i.order o
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+          AND i.refundOrder IS NULL
         GROUP BY i.productVariantId""")
     List<VariantPerformanceDto> findVariantPerformanceByDateRangeAndStatus(
         @Param("startDate") LocalDateTime startDate,
@@ -72,9 +89,14 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
 
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.ChartDataDto(
-            CAST(o.orderDate AS date), SUM(COALESCE(o.total, 0)), SUM(COALESCE(o.shippingFee, 0)), COUNT(o)
-        ) FROM Order o
+            CAST(o.orderDate AS date),
+            SUM((CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
+                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0.0)),
+            CAST(0.0 AS big_decimal),
+            COUNT(DISTINCT o.id)
+        ) FROM Order o JOIN o.orderItems i
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+          AND i.refundOrder IS NULL
         GROUP BY CAST(o.orderDate AS date)
         ORDER BY CAST(o.orderDate AS date) ASC""")
     List<ChartDataDto> findRevenueChartDataByDateRange(
@@ -83,12 +105,47 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
         @Param("statuses") Collection<OrderStatus> statuses);
 
     @Query("""
+        SELECT CAST(o.orderDate AS date) as date,
+               SUM(COALESCE(o.shippingFee, 0)) as shippingFee
+        FROM Order o
+        WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
+          AND EXISTS (SELECT 1 FROM OrderItem i WHERE i.order = o AND i.refundOrder IS NULL)
+        GROUP BY CAST(o.orderDate AS date)""")
+    List<Object[]> findShippingFeeChartDataByDateRange(
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate,
+        @Param("statuses") Collection<OrderStatus> statuses);
+
+    @Query("""
         SELECT new com.bkeuty.order.dto.admin.TopCustomerDto(
-            o.userId, MIN(o.userName), COUNT(o), SUM(COALESCE(o.total, 0) + COALESCE(o.shippingFee, 0))
+            o.userId, 
+            MIN(o.userName), 
+            COUNT(DISTINCT CASE WHEN EXISTS (SELECT 1 FROM OrderItem i2 WHERE i2.order = o AND i2.refundOrder IS NULL) THEN o.id ELSE NULL END), 
+            SUM(COALESCE(o.total, 0) + COALESCE(o.shippingFee, 0)) - 
+            COALESCE(
+                (SELECT SUM(
+                    (CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
+                        THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity)
+                    - COALESCE(i.voucherDiscountAmount, 0.0)
+                 ) FROM OrderItem i JOIN i.order o2 
+                 WHERE o2.userId = o.userId AND o2.status IN :statuses AND o2.orderDate >= :startDate AND o2.orderDate <= :endDate
+                   AND i.refundOrder IS NOT NULL), 
+                0.0
+            )
         ) FROM Order o
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
         GROUP BY o.userId
-        ORDER BY SUM(COALESCE(o.total, 0) + COALESCE(o.shippingFee, 0)) DESC""")
+        ORDER BY (SUM(COALESCE(o.total, 0) + COALESCE(o.shippingFee, 0)) - 
+            COALESCE(
+                (SELECT SUM(
+                    (CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
+                        THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity)
+                    - COALESCE(i.voucherDiscountAmount, 0.0)
+                 ) FROM OrderItem i JOIN i.order o2 
+                 WHERE o2.userId = o.userId AND o2.status IN :statuses AND o2.orderDate >= :startDate AND o2.orderDate <= :endDate
+                   AND i.refundOrder IS NOT NULL), 
+                0.0
+            )) DESC""")
     List<TopCustomerDto> findTopCustomers(
         @Param("startDate") LocalDateTime startDate,
         @Param("endDate") LocalDateTime endDate,
@@ -98,13 +155,16 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.DashboardOrderDto(
             cast(o.id as string), o.userName, o.orderDate, 
-            SUM(i.productVariantPrice * i.quantity),
-            SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity),
+            COALESCE(SUM(i.productVariantPrice * i.quantity), 0),
+            COALESCE(SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity), 0),
             COALESCE(o.voucherDiscountAmount, 0),
             COALESCE(o.shippingFee, 0),
-            COALESCE(o.total, 0),
+            CASE WHEN COUNT(i.id) > 0 
+                 THEN (SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(o.voucherDiscountAmount, 0)) 
+                 ELSE 0 END,
+            COALESCE(SUM(CASE WHEN i.refundOrder IS NOT NULL THEN ((CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0)) ELSE 0 END), 0),
             cast(o.status as string)
-        ) FROM Order o JOIN o.orderItems i
+        ) FROM Order o LEFT JOIN o.orderItems i
         GROUP BY o.id, o.userName, o.orderDate, o.total, o.shippingFee, o.status, o.voucherDiscountAmount
         ORDER BY o.id DESC""")
     List<DashboardOrderDto> findRecentOrders(Pageable pageable);
@@ -112,13 +172,16 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
     @Query("""
         SELECT new com.bkeuty.order.dto.admin.DashboardOrderDto(
             cast(o.id as string), o.userName, o.orderDate,
-            SUM(i.productVariantPrice * i.quantity),
-            SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity),
+            COALESCE(SUM(i.productVariantPrice * i.quantity), 0),
+            COALESCE(SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity), 0),
             COALESCE(o.voucherDiscountAmount, 0),
             COALESCE(o.shippingFee, 0),
-            COALESCE(o.total, 0),
+            CASE WHEN COUNT(i.id) > 0 
+                 THEN (SUM(CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(o.voucherDiscountAmount, 0)) 
+                 ELSE 0 END,
+            COALESCE(SUM(CASE WHEN i.refundOrder IS NOT NULL THEN ((CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0)) ELSE 0 END), 0),
             cast(o.status as string)
-        ) FROM Order o JOIN o.orderItems i
+        ) FROM Order o LEFT JOIN o.orderItems i
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
         GROUP BY o.id, o.userName, o.orderDate, o.total, o.shippingFee, o.status, o.voucherDiscountAmount
         ORDER BY o.orderDate DESC""")
@@ -134,7 +197,9 @@ public interface OrderRepository extends JpaRepository<Order, Integer>, JpaSpeci
         SELECT new com.bkeuty.order.dto.admin.DailyProductPerformanceDto(
             o.orderDate, i.productVariantId, i.productVariantName, CAST(i.quantity AS long),
             (CASE WHEN i.promotionPrice IS NOT NULL AND i.promotionPrice < i.productVariantPrice
-                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0.0), i.productVariantPrice, i.promotionPrice, COALESCE(i.voucherDiscountAmount, 0.0)
+                THEN i.promotionPrice ELSE i.productVariantPrice END * i.quantity) - COALESCE(i.voucherDiscountAmount, 0.0),
+            i.productVariantPrice, i.promotionPrice, COALESCE(i.voucherDiscountAmount, 0.0),
+            CASE WHEN i.refundOrder IS NOT NULL THEN true ELSE false END
         ) FROM OrderItem i JOIN i.order o
         WHERE o.status IN :statuses AND o.orderDate >= :startDate AND o.orderDate <= :endDate
         ORDER BY o.orderDate DESC""")

@@ -21,5 +21,6 @@ public class DashboardOrderDto {
     private BigDecimal voucherDiscount;
     private BigDecimal shippingFee;
     private BigDecimal total;
+    private BigDecimal refundAmount;
     private String status;
 }

@@ -24,18 +24,21 @@ public class TransactionalPerformanceDto {
     private BigDecimal originalPrice;
     private BigDecimal promotionalPrice;
     private BigDecimal voucherDiscount;
+    private Boolean isRefunded;
 
-    public TransactionalPerformanceDto(LocalDateTime date, Integer entityId, String entityName, Integer productId, String productVariantName, Long quantity, BigDecimal revenue, BigDecimal originalPrice, BigDecimal promotionalPrice, BigDecimal voucherDiscount) {
+    public TransactionalPerformanceDto(LocalDateTime date, Integer entityId, String entityName, Integer productId, String productVariantName, Long quantity, BigDecimal revenue, BigDecimal originalPrice, BigDecimal promotionalPrice, BigDecimal voucherDiscount, Boolean isRefunded) {
         this.date = date;
         this.entityId = entityId;
         this.entityName = entityName;
         this.productId = productId;
         this.productVariantName = productVariantName;
         this.quantity = quantity;
-        this.revenue = revenue;
+        this.isRefunded = isRefunded;
+        this.revenue = revenue != null ? revenue : BigDecimal.ZERO;
         this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
         this.originalPrice = originalPrice;
         this.promotionalPrice = promotionalPrice;
         this.voucherDiscount = voucherDiscount;
     }
 }
+
