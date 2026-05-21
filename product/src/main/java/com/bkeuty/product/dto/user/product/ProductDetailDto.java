@@ -14,6 +14,9 @@ import java.util.List;
 @Builder
 public class ProductDetailDto {
     private Integer id;
+    private Integer productId;
+    private List<String> productImages;
+    private String productName;
     private String name;
     private String description;
     private List<String> image;

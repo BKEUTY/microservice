@@ -7,6 +7,7 @@ import com.bkeuty.product.entity.ProductCategory;
 import com.bkeuty.product.entity.ProductVariant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PromotionService {
     private final WebClient promotionWebClient;
-    public PromotionService(WebClient promotionWebClient) {
+    public PromotionService(@Qualifier("promotionWebClient") WebClient promotionWebClient) {
         this.promotionWebClient = promotionWebClient;
     }
     public PromotionPriceDto getPromotionPrice(ProductVariant productVariant, String userId, Integer membershipLevel){

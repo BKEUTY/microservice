@@ -2,6 +2,7 @@ package com.bkeuty.product.service.authservice;
 
 import com.bkeuty.product.dto.auth.TokenValidationRequestDto;
 import com.bkeuty.product.dto.auth.TokenValidationResponseDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -9,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class AuthService {
     private final WebClient authWebClient;
 
-    public AuthService(WebClient authWebClient) {
+    public AuthService(@Qualifier("authWebClient") WebClient authWebClient) {
         this.authWebClient = authWebClient;
     }
 

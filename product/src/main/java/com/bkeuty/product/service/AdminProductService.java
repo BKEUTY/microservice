@@ -110,10 +110,10 @@ public class AdminProductService {
         return AdminProductDto.builder()
                 .productId(product.getId())
                 .name(product.getName())
-                .images(product.getImages())
+                .images(product.getImages() != null ? product.getImages() : new ArrayList<>())
                 .description(product.getDescription())
-                .categories(product.getCategories().stream().map(ProductCategory::getCategoryName)
-                        .collect(Collectors.toList()))
+                .categories(product.getCategories() != null ? product.getCategories().stream().map(ProductCategory::getCategoryName)
+                        .collect(Collectors.toList()) : new ArrayList<>())
                 .build();
     }
 
@@ -163,25 +163,25 @@ public class AdminProductService {
     }
 
     private AdminProductVariantDto toAdminProductVariantDto(ProductVariant productVariant) {
-        Map<String, String> options = productVariant.getOptionValues().stream()
+        Map<String, String> options = productVariant.getOptionValues() != null ? productVariant.getOptionValues().stream()
                 .collect(Collectors.toMap(
                         ov -> ov.getOption().getOptionName(),
                         ov -> ov.getOptionValueName(),
-                        (existing, replacement) -> existing));
+                        (existing, replacement) -> existing)) : new HashMap<>();
 
-        List<String> categories = productVariant.getProduct().getCategories().stream()
+        List<String> categories = productVariant.getProduct() != null && productVariant.getProduct().getCategories() != null ? productVariant.getProduct().getCategories().stream()
                 .map(ProductCategory::getCategoryName)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : new ArrayList<>();
 
         return AdminProductVariantDto.builder()
                 .id(productVariant.getId())
-                .productId(productVariant.getProduct().getId())
-                .productImageUrl(productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).collect(Collectors.toList()))
-                .productName(productVariant.getProduct().getName())
+                .productId(productVariant.getProduct() != null ? productVariant.getProduct().getId() : null)
+                .productImageUrl(productVariant.getProductImageUrls() != null ? productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).collect(Collectors.toList()) : new ArrayList<>())
+                .productName(productVariant.getProduct() != null ? productVariant.getProduct().getName() : null)
                 .price(productVariant.getPrice())
                 .promotionPrice(productVariant.getPromotionPrice())
                 .optionValues(
-                        productVariant.getOptionValues().stream().map(ProductOptionValue::getOptionValueName).toList())
+                        productVariant.getOptionValues() != null ? productVariant.getOptionValues().stream().map(ProductOptionValue::getOptionValueName).toList() : new ArrayList<>())
                 .variantOptions(options)
                 .status(productVariant.getStatus())
                 .stockQuantity(productVariant.getStockQuantity())
@@ -221,10 +221,10 @@ public class AdminProductService {
         createProductResponseDto.setId(product.getId());
         createProductResponseDto.setName(product.getName());
         createProductResponseDto.setDescription(product.getDescription());
-        createProductResponseDto.setImage(product.getImages());
+        createProductResponseDto.setImage(product.getImages() != null ? product.getImages() : new ArrayList<>());
         createProductResponseDto.setCategories(
-                product.getCategories().stream().map(ProductCategory::getCategoryName).collect(Collectors.toList()));
-        createProductResponseDto.setBrandName(product.getBrand()!= null ? product.getBrand().getBrandName(): null);
+                product.getCategories() != null ? product.getCategories().stream().map(ProductCategory::getCategoryName).collect(Collectors.toList()) : new ArrayList<>());
+        createProductResponseDto.setBrandName(product.getBrand() != null ? product.getBrand().getBrandName() : null);
         return createProductResponseDto;
 
     }
@@ -335,7 +335,7 @@ public class AdminProductService {
         }
         updateProduct = productRepository.saveAndFlush(updateProduct);
         List<String> productImages = s3Service.uploadProductImages(updateProduct.getId(),images);
-        List<String> curImages = dto.getImageUrl();
+        List<String> curImages = dto.getImageUrl() != null ? new ArrayList<>(dto.getImageUrl()) : new ArrayList<>();
         curImages.addAll(productImages);
         updateProduct.setImages(curImages.stream().map(ProductImage::new).collect(Collectors.toList()));
 
@@ -370,7 +370,7 @@ public class AdminProductService {
         ProductVariant finalProductVariant = productVariant;
         Optional.ofNullable(dto.getPrice()).ifPresent(price -> {
             boolean noActivePromotion = finalProductVariant.getPromotionPrice() == null ||
-                                        finalProductVariant.getPromotionPrice().compareTo(finalProductVariant.getPrice()) == 0;
+                                         finalProductVariant.getPromotionPrice().compareTo(finalProductVariant.getPrice()) == 0;
             finalProductVariant.setPrice(price);
             if (noActivePromotion) {
                 finalProductVariant.setPromotionPrice(price);
@@ -378,8 +378,8 @@ public class AdminProductService {
         });
         Optional.ofNullable(dto.getStatus()).ifPresent(productVariant::setStatus);
         productVariant = productVariantRepository.saveAndFlush(productVariant);
-        List<String> imgUrls = s3Service.uploadVariantImages(productVariant.getId(),images);
-        List<String> currentUrls = productVariant.getProductImageUrls().stream().map(ProductImage::getImageUrl).toList();
+        List<String> imgUrls = s3Service.uploadVariantImages(productVariant.getId(), images);
+        List<String> currentUrls = dto.getProductImageUrl() != null ? new ArrayList<>(dto.getProductImageUrl()) : new ArrayList<>();
         currentUrls.addAll(imgUrls);
         productVariant.setProductImageUrls(currentUrls.stream().map(ProductImage::new).collect(Collectors.toList()));
         return productVariant;

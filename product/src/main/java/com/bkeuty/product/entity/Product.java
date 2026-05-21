@@ -33,7 +33,6 @@ public class Product {
     @Builder.Default
     private Set<ProductCategory> categories =  new HashSet<>();
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
     private List<ProductImage> images;
 
     @ManyToOne

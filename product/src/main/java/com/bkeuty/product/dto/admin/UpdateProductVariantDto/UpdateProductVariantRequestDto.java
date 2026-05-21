@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -16,6 +17,6 @@ public class UpdateProductVariantRequestDto {
     private BigDecimal price = null;
     private Integer stockQuantity = null;
     private String description = null;
-    private String productImageUrl = null;
+    private List<String> productImageUrl = null;
     private ProductStatus status = null;
 }

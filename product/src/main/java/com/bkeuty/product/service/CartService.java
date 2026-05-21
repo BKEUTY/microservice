@@ -45,7 +45,7 @@ public class CartService {
         return CartProductVariantDto.builder()
                 .id(productVariant.getId())
                 .price(productVariant.getPrice())
-                .productImageUrl(productVariant.getProductImageUrls().getFirst().getImageUrl()!=null?productVariant.getProductImageUrls().getFirst().getImageUrl():null)
+                .productImageUrl(getFirstImageUrl(productVariant))
                 .productVariantName(productVariant.getProductVariantName())
                 .productVariantDescription(productVariant.getDescription())
                 .promotionPrice(promotionPriceDto.getNewPrice())
@@ -56,12 +56,19 @@ public class CartService {
         return CartProductVariantDto.builder()
                 .id(productVariant.getId())
                 .price(productVariant.getPrice())
-                .productImageUrl(productVariant.getProductImageUrls().getFirst().getImageUrl()!=null?productVariant.getProductImageUrls().getFirst().getImageUrl():null)
+                .productImageUrl(getFirstImageUrl(productVariant))
                 .productVariantName(productVariant.getProductVariantName())
                 .productVariantDescription(productVariant.getDescription())
                 .promotionPrice(promotionPriceDto.getNewPrice())
                 .stockQuantity(productVariant.getStockQuantity())
                 .build();
+    }
+
+    private String getFirstImageUrl(ProductVariant productVariant) {
+        if (productVariant.getProductImageUrls() == null || productVariant.getProductImageUrls().isEmpty()) {
+            return null;
+        }
+        return productVariant.getProductImageUrls().getFirst().getImageUrl();
     }
 
 }

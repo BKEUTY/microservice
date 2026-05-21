@@ -35,7 +35,6 @@ public class ProductVariant {
     private Integer stockQuantity = 0;
     private String description;
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
     private List<ProductImage> productImageUrls;
     private String productVariantName;
     @ManyToMany

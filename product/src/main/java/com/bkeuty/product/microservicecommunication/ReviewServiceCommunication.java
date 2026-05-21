@@ -1,5 +1,6 @@
 package com.bkeuty.product.microservicecommunication;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 public class ReviewServiceCommunication {
     private final WebClient reviewWebClient;
 
-    public ReviewServiceCommunication(WebClient reviewWebClient) {
+    public ReviewServiceCommunication(@Qualifier("reviewWebClient") WebClient reviewWebClient) {
         this.reviewWebClient = reviewWebClient;
     }
 

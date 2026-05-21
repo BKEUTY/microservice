@@ -1,5 +1,6 @@
 package com.bkeuty.product.microservicecommunication;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.Map;
 public class OrderServiceCommunication {
     private final WebClient orderWebClient;
 
-    public OrderServiceCommunication(WebClient orderWebClient) {
+    public OrderServiceCommunication(@Qualifier("orderWebClient") WebClient orderWebClient) {
         this.orderWebClient = orderWebClient;
     }
 
