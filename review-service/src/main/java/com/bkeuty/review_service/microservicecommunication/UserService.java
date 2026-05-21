@@ -1,6 +1,7 @@
 package com.bkeuty.review_service.microservicecommunication;
 
 import com.bkeuty.review_service.dto.internal.UserInternalResponseDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -12,7 +13,7 @@ import java.util.Map;
 public class UserService {
     private final WebClient userWebClient;
 
-    public UserService(WebClient userWebClient) {
+    public UserService(@Qualifier("userWebClient") WebClient userWebClient) {
         this.userWebClient = userWebClient;
     }
 

@@ -1,6 +1,5 @@
-DELETE FROM admin_replies;
-DELETE FROM review_images;
-DELETE FROM reviews;
+TRUNCATE TABLE admin_replies, review_images, reviews RESTART IDENTITY CASCADE;
+
 
 INSERT INTO reviews (id, user_id, variant_id, rating, comment, is_hidden, is_replied, created_at, updated_at) VALUES
 (1, '593547b7-eb5c-453e-84dd-73b70a331198', 1, 5, 'Sản phẩm giao nhanh, chất lượng tuyệt vời, mình rất thích!', false, false, NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),

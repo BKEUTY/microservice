@@ -34,6 +34,7 @@ public class ReviewService {
     private final OrderService orderService;
     private final ProductService productService;
     private final UserService userService;
+    private final S3Service s3Service;
 
     @Transactional
     public ReviewResponse createReview(String userId, ReviewRequest request, String token) {
@@ -110,11 +111,7 @@ public class ReviewService {
     }
 
     public String uploadImage(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
-        }
-        return "https://res.cloudinary.com/demo/image/upload/v1/reviews/" + UUID.randomUUID() + "-"
-                + file.getOriginalFilename();
+        return s3Service.uploadReviewImage(file);
     }
 
     @Transactional

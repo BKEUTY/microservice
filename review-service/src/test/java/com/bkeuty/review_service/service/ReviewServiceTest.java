@@ -44,6 +44,8 @@ class ReviewServiceTest {
     private ProductService productService;
     @Mock
     private UserService userService;
+    @Mock
+    private S3Service s3Service;
 
     @InjectMocks
     private ReviewService reviewService;
@@ -224,5 +226,17 @@ class ReviewServiceTest {
         assertEquals(3L, stats.get("5"));
         assertEquals(1L, stats.get("4"));
         assertEquals(0L, stats.get("1"));
+    }
+
+    @Test
+    void uploadImage_ShouldCallS3ServiceUpload_AndReturnUrl() {
+        org.springframework.web.multipart.MultipartFile mockFile = mock(org.springframework.web.multipart.MultipartFile.class);
+        String expectedUrl = "https://bkeuty-bucket.s3.us-east-1.amazonaws.com/review-images/uuid_test.jpg";
+        when(s3Service.uploadReviewImage(mockFile)).thenReturn(expectedUrl);
+
+        String resultUrl = reviewService.uploadImage(mockFile);
+
+        assertEquals(expectedUrl, resultUrl);
+        verify(s3Service, times(1)).uploadReviewImage(mockFile);
     }
 }

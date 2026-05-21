@@ -31,7 +31,7 @@ spring:
 #              uri: lb://order
               uri: ${ORDER_SERVICE_URL:http://localhost:8082}
               predicates:
-                - Path= /api/order/**,/api/cart/**, /api/admin/order/**, /api/admin/cart/**, /api/admin/dashboard/**, /api/admin/reports/**
+                - Path= /api/order/**,/api/cart/**, /api/admin/order/**, /api/admin/cart/**, /api/admin/dashboard/**, /api/admin/reports/**, /api/admin/refund-order/**
               filters:
                 - RemoveResponseHeader=Access-Control-Allow-Origin
                 - RemoveResponseHeader=Access-Control-Allow-Methods

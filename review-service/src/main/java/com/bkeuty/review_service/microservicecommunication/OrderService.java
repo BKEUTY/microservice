@@ -1,6 +1,7 @@
 package com.bkeuty.review_service.microservicecommunication;
 
 import com.bkeuty.review_service.dto.internal.CheckOrderDeliveredRequestDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -8,7 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class OrderService {
     private final WebClient orderWebClient;
 
-    public OrderService(WebClient orderWebClient) {
+    public OrderService(@Qualifier("orderWebClient") WebClient orderWebClient) {
         this.orderWebClient = orderWebClient;
     }
 

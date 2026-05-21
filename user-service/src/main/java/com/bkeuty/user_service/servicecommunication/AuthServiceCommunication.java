@@ -2,13 +2,14 @@ package com.bkeuty.user_service.servicecommunication;
 
 import com.bkeuty.user_service.dto.auth.TokenValidationRequestDto;
 import com.bkeuty.user_service.dto.auth.TokenValidationResponseDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 @Service
 public class AuthServiceCommunication {
     private final WebClient authWebClient;
 
-    public AuthServiceCommunication(WebClient authWebClient) {
+    public AuthServiceCommunication(@Qualifier("authWebClient") WebClient authWebClient) {
         this.authWebClient = authWebClient;
     }
 

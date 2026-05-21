@@ -1,9 +1,5 @@
-DELETE FROM promotion_membership_level;
-DELETE FROM promotion_birthday_month;
-DELETE FROM promotion_brand_ids;
-DELETE FROM promotion_product_ids;
-DELETE FROM promotion_category_ids;
-DELETE FROM promotion;
+TRUNCATE TABLE promotion_membership_level, promotion_birthday_month, promotion_brand_ids, promotion_product_ids, promotion_category_ids, promotion RESTART IDENTITY CASCADE;
+
  
 INSERT INTO promotion (id, title, description, start_at, end_at, status, discount_type, discount_value, max_discount, promotion_type, code, total_quantity, remaining_quantity, min_order_value, usage_limit_per_user) VALUES
  

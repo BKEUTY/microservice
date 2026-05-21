@@ -1,6 +1,7 @@
 package com.bkeuty.review_service.microservicecommunication;
 
 import com.bkeuty.review_service.dto.internal.UpdateRatingRequestDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -8,7 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class ProductService {
     private final WebClient productWebClient;
 
-    public ProductService(WebClient productWebClient) {
+    public ProductService(@Qualifier("productWebClient") WebClient productWebClient) {
         this.productWebClient = productWebClient;
     }
 

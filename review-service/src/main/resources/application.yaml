@@ -1,4 +1,8 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
   application:
     name: review-service
   datasource:
@@ -32,3 +36,11 @@ service-base-url:
   product-service: ${PRODUCT_SERVICE_URL:http://product}
   user-service: ${USER_SERVICE_URL:http://user-service}
   order-service: ${ORDER_SERVICE_URL:http://order}
+
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:bkeuty-bucket}
+    region: ${AWS_REGION:us-east-1}
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    review-images-folder: review-images
