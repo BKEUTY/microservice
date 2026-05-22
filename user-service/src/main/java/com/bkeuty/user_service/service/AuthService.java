@@ -14,7 +14,7 @@ public class AuthService {
 
     public TokenValidationResponseDto validateToken(String authorizationHeader){
         if(authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")){
-            return null;
+            return new TokenValidationResponseDto();
         }
         String token = authorizationHeader.substring(7);
         try {

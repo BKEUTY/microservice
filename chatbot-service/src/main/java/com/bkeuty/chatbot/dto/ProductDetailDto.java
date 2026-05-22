@@ -28,7 +28,12 @@ public class ProductDetailDto {
     private BigDecimal discountPrice;
 
     @JsonProperty("image")
-    private String imageUrl;
+    private List<String> image;
+
+    @JsonProperty("imageUrl")
+    public String getImageUrl() {
+        return (image != null && !image.isEmpty()) ? image.get(0) : null;
+    }
 
     private Integer stockQuantity;
     private Integer sold;
