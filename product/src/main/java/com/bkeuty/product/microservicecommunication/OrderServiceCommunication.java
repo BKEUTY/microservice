@@ -3,6 +3,7 @@ package com.bkeuty.product.microservicecommunication;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.core.ParameterizedTypeReference;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ public class OrderServiceCommunication {
             return orderWebClient.get()
                     .uri("/api/order/internal/history/" + userId)
                     .retrieve()
-                    .bodyToFlux(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .collectList()
                     .block();
         } catch (Exception e) {
@@ -32,7 +33,7 @@ public class OrderServiceCommunication {
             return orderWebClient.get()
                     .uri("/api/order/internal/cart/" + userId)
                     .retrieve()
-                    .bodyToFlux(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
+                    .bodyToFlux(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .collectList()
                     .block();
         } catch (Exception e) {

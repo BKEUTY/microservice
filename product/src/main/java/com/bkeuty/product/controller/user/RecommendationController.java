@@ -35,7 +35,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/related")
-    public ResponseEntity<RecommendationResponse> getRelatedProducts(@RequestParam String productName) {
+    public ResponseEntity<RecommendationResponse> getRelatedProducts(@RequestParam(name = "productName") String productName) {
         return ResponseEntity.ok(recommendationService.getRelatedProducts(productName));
     }
 }

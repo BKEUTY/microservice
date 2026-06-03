@@ -1,12 +1,13 @@
 package com.bkeuty.promotion_service.util;
 
 import org.springframework.data.domain.Sort;
+import java.util.Set;
 
 public final class PromotionSortUtils {
     private PromotionSortUtils() {
     }
 
-    private static final java.util.Set<String> ALLOWED_FIELDS = java.util.Set.of("id", "title", "startAt", "endAt", "discountValue", "createAt");
+    private static final Set<String> ALLOWED_FIELDS = Set.of("id", "title", "startAt", "endAt", "discountValue", "createAt");
 
     public static Sort parseSort(String[] sort) {
         String sortField = "id";

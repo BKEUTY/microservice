@@ -16,7 +16,7 @@ public class ProductClient {
 
     public String getProductContext(String userId, Integer membershipLevel) {
         try {
-            String url = "https://backend.bkeuty.xyz/api/product?size=50&status=ACTIVE&minStock=1";
+            String url = "https://backend.bkeuty.xyz/api/product?size=100&sort=sold,desc&status=ACTIVE&minStock=1";
             if (userId != null) {
                 url += "&userId=" + userId;
                 if (membershipLevel != null) {

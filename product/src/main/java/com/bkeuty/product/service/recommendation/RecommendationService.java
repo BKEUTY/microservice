@@ -41,7 +41,7 @@ public class RecommendationService {
         this.reviewServiceCommunication = reviewServiceCommunication;
     }
 
-    @Cacheable(value = "recommendations", key = "'guest:' + T(java.time.LocalDateTime).now().getHour()", condition = "#userId == null")
+    @Cacheable(value = "recommendations", key = "'guest:' + T(java.time.LocalDateTime).now().getHour()", condition = "#a0 == null")
     public RecommendationResponse getPersonalizedRecommendations(String userId) {
         List<ProductVariant> candidates = productVariantRepository.findActiveVariantsWithStock(PageRequest.of(0, 30));
 

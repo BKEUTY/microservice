@@ -23,7 +23,7 @@ public class InternalReviewController {
     }
 
     @GetMapping("/history/{userId}")
-    public ResponseEntity<List<Review>> getUserReviews(@PathVariable String userId) {
+    public ResponseEntity<List<Review>> getUserReviews(@PathVariable(name = "userId") String userId) {
         return ResponseEntity.ok(reviewRepository.findByUserId(userId));
     }
 }

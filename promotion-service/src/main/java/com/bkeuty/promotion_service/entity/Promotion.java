@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Entity
@@ -39,6 +40,6 @@ public abstract class Promotion {
     )
     @Column(name = "membership_level")
     @BatchSize(size = 100)
-    private java.util.Set<Integer> membershipLevels;
+    private Set<Integer> membershipLevels;
 }
 

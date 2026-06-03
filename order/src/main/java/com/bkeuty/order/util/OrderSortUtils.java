@@ -1,12 +1,13 @@
 package com.bkeuty.order.util;
 
 import org.springframework.data.domain.Sort;
+import java.util.Set;
 
 public final class OrderSortUtils {
     private OrderSortUtils() {
     }
 
-    private static final java.util.Set<String> ALLOWED_FIELDS = java.util.Set.of("id", "orderDate", "total", "status");
+    private static final Set<String> ALLOWED_FIELDS = Set.of("id", "orderDate", "total", "status");
 
     public static Sort parseSort(String[] sort) {
         Sort defaultSort = Sort.by(Sort.Direction.ASC, "id");

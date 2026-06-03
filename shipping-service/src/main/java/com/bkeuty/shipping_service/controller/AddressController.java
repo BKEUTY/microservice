@@ -24,11 +24,11 @@ public class AddressController {
         return ResponseEntity.ok(addressService.getGHNProvinceList());
     }
     @GetMapping("/district")
-    public ResponseEntity<Mono<GHNDistrictListResponse>> getGHNDistrictList(@RequestParam String provinceId) {
+    public ResponseEntity<Mono<GHNDistrictListResponse>> getGHNDistrictList(@RequestParam(name = "provinceId") String provinceId) {
         return ResponseEntity.ok(addressService.getGHNDistrictList(provinceId));
     }
     @GetMapping("/ward")
-    public ResponseEntity<Mono<GHNWardListResponse>> getGHNWardList(@RequestParam String districtId) {
+    public ResponseEntity<Mono<GHNWardListResponse>> getGHNWardList(@RequestParam(name = "districtId") String districtId) {
         return ResponseEntity.ok(addressService.getGHNWardList(districtId));
     }
 

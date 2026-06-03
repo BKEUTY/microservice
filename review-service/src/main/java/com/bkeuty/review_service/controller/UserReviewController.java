@@ -37,7 +37,7 @@ public class UserReviewController {
     @PutMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> updateReview(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Long reviewId,
+            @PathVariable(name = "reviewId") Long reviewId,
             @RequestBody ReviewRequest request) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -50,7 +50,7 @@ public class UserReviewController {
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<Void> deleteReview(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Long reviewId) {
+            @PathVariable(name = "reviewId") Long reviewId) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"USER".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {

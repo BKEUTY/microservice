@@ -41,9 +41,9 @@ public class AdminRefundOrderController {
     @GetMapping
     public ResponseEntity<Page<AdminRefundOrderDto>> getAllRefundOrders(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
-            @RequestParam(required = false) String status) {
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(name = "status", required = false) String status) {
 
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
@@ -59,7 +59,7 @@ public class AdminRefundOrderController {
     @GetMapping("/{refundOrderId}")
     public ResponseEntity<AdminRefundOrderDto> getRefundOrderById(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer refundOrderId) {
+            @PathVariable(name = "refundOrderId") Integer refundOrderId) {
 
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
@@ -76,7 +76,7 @@ public class AdminRefundOrderController {
     @PutMapping("/{refundOrderId}/approve")
     public ResponseEntity<AdminRefundOrderDto> approveRefundOrder(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer refundOrderId) {
+            @PathVariable(name = "refundOrderId") Integer refundOrderId) {
 
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
@@ -93,7 +93,7 @@ public class AdminRefundOrderController {
     @PutMapping("/{refundOrderId}/reject")
     public ResponseEntity<AdminRefundOrderDto> rejectRefundOrder(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer refundOrderId) {
+            @PathVariable(name = "refundOrderId") Integer refundOrderId) {
 
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
@@ -110,7 +110,7 @@ public class AdminRefundOrderController {
     @PutMapping("/{refundOrderId}/complete")
     public ResponseEntity<AdminRefundOrderDto> completeRefundOrder(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer refundOrderId) {
+            @PathVariable(name = "refundOrderId") Integer refundOrderId) {
 
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
@@ -130,7 +130,7 @@ public class AdminRefundOrderController {
     @PostMapping("/{refundOrderId}/process-refund")
     public ResponseEntity<AdminRefundOrderDto> processMoneyRefund(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer refundOrderId) {
+            @PathVariable(name = "refundOrderId") Integer refundOrderId) {
 
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 

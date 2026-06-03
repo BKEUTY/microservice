@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.bkeuty.order.entity.OrderItem;
 import com.bkeuty.order.entity.CartItem;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/order/internal")
@@ -49,12 +50,12 @@ public class InternalOrderController {
     }
 
     @GetMapping("/history/{userId}")
-    public ResponseEntity<java.util.List<OrderItem>> getOrderHistory(@PathVariable String userId) {
+    public ResponseEntity<List<OrderItem>> getOrderHistory(@PathVariable(name = "userId") String userId) {
         return ResponseEntity.ok(orderItemRepository.findAllByOrder_UserId(userId));
     }
 
     @GetMapping("/cart/{userId}")
-    public ResponseEntity<java.util.List<CartItem>> getCartItems(@PathVariable String userId) {
+    public ResponseEntity<List<CartItem>> getCartItems(@PathVariable(name = "userId") String userId) {
         return ResponseEntity.ok(cartItemRepository.findByUserIdAndIsBuyNowFalse(userId));
     }
 }

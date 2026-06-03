@@ -54,7 +54,7 @@ public class PromotionController {
     @PutMapping("/{id}")
     public ResponseEntity<CreatePromotionResponse> updatePromotion(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer id, @RequestBody CreatePromotionRequest request) {
+            @PathVariable(name = "id") Integer id, @RequestBody CreatePromotionRequest request) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -67,14 +67,14 @@ public class PromotionController {
     @GetMapping
     public ResponseEntity<Page<PromotionResponseDto>> getPromotion(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) PromotionStatus status,
-            @RequestParam(required = false) String promotionType,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort) {
+            @RequestParam(name = "title", required = false) String title,
+            @RequestParam(name = "status", required = false) PromotionStatus status,
+            @RequestParam(name = "promotionType", required = false) String promotionType,
+            @RequestParam(name = "startAt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
+            @RequestParam(name = "endAt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(name = "sort", defaultValue = "id,asc") String[] sort) {
         
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null

@@ -10,6 +10,7 @@ import com.bkeuty.promotion_service.repository.UserPromotionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -50,7 +51,7 @@ public class UserPromotionStrategy implements PromotionStrategy {
         updateCollectionSafely(existing.getBirthdayMonth(), userReq.getBirthdayMonth());
         if (userReq.getMembershipLevels() != null) {
             if (existing.getMembershipLevels() == null) {
-                existing.setMembershipLevels(new java.util.HashSet<>());
+                existing.setMembershipLevels(new HashSet<>());
             }
             existing.getMembershipLevels().clear();
             existing.getMembershipLevels().addAll(userReq.getMembershipLevels());

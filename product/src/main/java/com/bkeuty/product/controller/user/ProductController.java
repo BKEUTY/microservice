@@ -34,17 +34,17 @@ public class ProductController {
     }
     @GetMapping()
     public ResponseEntity<Page<DisplayProductDto>> getProducts(
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) String[] sort,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @Min(0) Integer minStock,
-            @RequestParam(required = false) @Min(0) BigDecimal minPrice,
-            @RequestParam(required = false) @Min(0) BigDecimal maxPrice,
-            @RequestParam(required = false) String userId,
-            @RequestParam(required = false) Integer membershipLevel) {
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "categoryId", required = false) Integer categoryId,
+            @RequestParam(name = "sort", required = false) String[] sort,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "minStock", required = false) @Min(0) Integer minStock,
+            @RequestParam(name = "minPrice", required = false) @Min(0) BigDecimal minPrice,
+            @RequestParam(name = "maxPrice", required = false) @Min(0) BigDecimal maxPrice,
+            @RequestParam(name = "userId", required = false) String userId,
+            @RequestParam(name = "membershipLevel", required = false) Integer membershipLevel) {
 
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
@@ -60,9 +60,9 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ResponseEntity<ProductDetailDto> getProductById(@PathVariable Integer productId, 
-                                                           @RequestParam(required = false) String userId,
-                                                           @RequestParam(required = false) Integer membershipLevel) {
+    public ResponseEntity<ProductDetailDto> getProductById(@PathVariable(name = "productId") Integer productId, 
+                                                           @RequestParam(name = "userId", required = false) String userId,
+                                                           @RequestParam(name = "membershipLevel", required = false) Integer membershipLevel) {
         ProductDetailDto dto = productService.getProductVariantById(productId, userId, membershipLevel);
         if (dto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -71,9 +71,9 @@ public class ProductController {
     }
 
     @GetMapping("/name/{variantName}")
-    public ResponseEntity<ProductDetailDto> getProductByName(@PathVariable String variantName,
-                                                             @RequestParam(required = false) String userId,
-                                                             @RequestParam(required = false) Integer membershipLevel) {
+    public ResponseEntity<ProductDetailDto> getProductByName(@PathVariable(name = "variantName") String variantName,
+                                                             @RequestParam(name = "userId", required = false) String userId,
+                                                             @RequestParam(name = "membershipLevel", required = false) Integer membershipLevel) {
         ProductDetailDto dto = productService.getProductVariantByName(variantName, userId, membershipLevel);
         if (dto == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

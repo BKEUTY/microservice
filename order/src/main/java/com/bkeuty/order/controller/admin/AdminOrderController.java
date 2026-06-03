@@ -36,13 +36,13 @@ public class AdminOrderController {
     @GetMapping
     public ResponseEntity<Page<AdminOrderDto>> getAllOrders(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String[] sort,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "sort", required = false) String[] sort,
+            @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
             
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 
@@ -60,7 +60,7 @@ public class AdminOrderController {
     @GetMapping("/{orderId}")
     public ResponseEntity<AdminOrderDto> getOrderById(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer orderId) {
+            @PathVariable(name = "orderId") Integer orderId) {
             
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         
@@ -70,7 +70,7 @@ public class AdminOrderController {
     @PutMapping("/{orderId}/status")
     public ResponseEntity<AdminOrderDto> updateOrderStatus(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer orderId,
+            @PathVariable(name = "orderId") Integer orderId,
             @RequestBody AdminUpdateOrderStatusRequestDto request) {
             
         if (!isAdmin(bearerToken)) return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);

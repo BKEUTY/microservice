@@ -17,7 +17,7 @@ import com.bkeuty.product.enums.ProductStatus;
 
 public interface ProductVariantRepository extends JpaRepository<ProductVariant,Integer>, JpaSpecificationExecutor<ProductVariant> {
         @Query("SELECT pv FROM ProductVariant pv WHERE pv.product.id = :productId")
-        List<ProductVariant> findAllByProductId(Integer productId);
+        List<ProductVariant> findAllByProductId(@Param("productId") Integer productId);
 
         @Query("SELECT pv FROM ProductVariant pv WHERE pv.status = com.bkeuty.product.enums.ProductStatus.ACTIVE AND pv.stockQuantity > 0")
         List<ProductVariant> findActiveVariantsWithStock(Pageable pageable);

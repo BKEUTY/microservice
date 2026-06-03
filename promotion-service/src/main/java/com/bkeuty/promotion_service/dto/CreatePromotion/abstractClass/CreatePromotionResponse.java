@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 @Data
 @SuperBuilder
 @AllArgsConstructor
@@ -23,5 +24,5 @@ public abstract class CreatePromotionResponse {
     private PromotionStatus status;
     private Integer discountValue;
     private Integer maxDiscountValue;
-    private java.util.Set<Integer> membershipLevels;
+    private Set<Integer> membershipLevels;
 }

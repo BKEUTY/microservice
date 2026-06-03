@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
@@ -230,7 +231,7 @@ class ReviewServiceTest {
 
     @Test
     void uploadImage_ShouldCallS3ServiceUpload_AndReturnUrl() {
-        org.springframework.web.multipart.MultipartFile mockFile = mock(org.springframework.web.multipart.MultipartFile.class);
+        MultipartFile mockFile = mock(MultipartFile.class);
         String expectedUrl = "https://bkeuty-bucket.s3.us-east-1.amazonaws.com/review-images/uuid_test.jpg";
         when(s3Service.uploadReviewImage(mockFile)).thenReturn(expectedUrl);
 

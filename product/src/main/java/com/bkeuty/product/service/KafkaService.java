@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -29,7 +30,7 @@ public class KafkaService {
         List<DecreaseStockResponseDto> failDecreaseStockItem = new ArrayList<>();
         boolean decreaseFailed = false;
         List<OrderItemDto> sortedOrderItems = new ArrayList<>(message.getOrderItems());
-        sortedOrderItems.sort(java.util.Comparator.comparing(OrderItemDto::getProductVariantId));
+        sortedOrderItems.sort(Comparator.comparing(OrderItemDto::getProductVariantId));
 
         for(OrderItemDto item : sortedOrderItems){
             ProductVariant productVariant = productVariantRepository.findById(item.getProductVariantId()).orElse(null);

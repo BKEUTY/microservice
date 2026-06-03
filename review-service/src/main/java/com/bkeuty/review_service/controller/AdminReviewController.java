@@ -32,14 +32,14 @@ public class AdminReviewController {
     @GetMapping
     public ResponseEntity<Page<ReviewResponse>> getAllReviews(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(required = false) Integer rating,
-            @RequestParam(required = false) Boolean hasImage,
-            @RequestParam(required = false) Boolean isReplied,
-            @RequestParam(required = false) Boolean isHidden,
-            @RequestParam(required = false) Long variantId,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+            @RequestParam(name = "rating", required = false) Integer rating,
+            @RequestParam(name = "hasImage", required = false) Boolean hasImage,
+            @RequestParam(name = "isReplied", required = false) Boolean isReplied,
+            @RequestParam(name = "isHidden", required = false) Boolean isHidden,
+            @RequestParam(name = "variantId", required = false) Long variantId,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(name = "sort", defaultValue = "createdAt,desc") String sort) {
 
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -59,7 +59,7 @@ public class AdminReviewController {
     @PostMapping("/{reviewId}/reply")
     public ResponseEntity<ReplyResponse> replyToReview(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Long reviewId,
+            @PathVariable(name = "reviewId") Long reviewId,
             @RequestBody ReplyRequest request) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -72,7 +72,7 @@ public class AdminReviewController {
     @PutMapping("/replies/{replyId}")
     public ResponseEntity<ReplyResponse> updateReply(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Long replyId,
+            @PathVariable(name = "replyId") Long replyId,
             @RequestBody ReplyRequest request) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -85,7 +85,7 @@ public class AdminReviewController {
     @DeleteMapping("/replies/{replyId}")
     public ResponseEntity<Void> deleteReply(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Long replyId) {
+            @PathVariable(name = "replyId") Long replyId) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"ADMIN".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {
@@ -98,7 +98,7 @@ public class AdminReviewController {
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<Void> deleteReview(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Long reviewId) {
+            @PathVariable(name = "reviewId") Long reviewId) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"ADMIN".equalsIgnoreCase(tokenValidationResponseDto.getUserRole())) {

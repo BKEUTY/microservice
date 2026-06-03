@@ -114,7 +114,7 @@ public class OrderService {
         }
         
         Order order = Order.builder()
-                .orderDate(java.time.LocalDateTime.now())
+                .orderDate(LocalDateTime.now())
                 .address(addressDtoToAddress(request.getAddress()))
                 .paymentMethod(request.getPaymentMethod())
                 .userId(userInfo.getUserId())

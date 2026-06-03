@@ -31,7 +31,7 @@ public class GeminiService {
     private final ObjectMapper objectMapper;
     @Qualifier("externalRestTemplate")
     private final RestTemplate externalRestTemplate;
-    private static final String GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
+    private static final String GEMINI_MODEL = "gemini-3.1-flash-lite";
 
     private final Map<Integer, String> cachedCatalogs = new ConcurrentHashMap<>();
     private final Map<Integer, Long> lastCacheUpdates = new ConcurrentHashMap<>();

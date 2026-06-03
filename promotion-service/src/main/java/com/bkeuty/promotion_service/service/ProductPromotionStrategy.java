@@ -11,6 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -93,7 +94,7 @@ public class ProductPromotionStrategy implements PromotionStrategy {
         updateCollectionSafely(existingPromotion.getBrandIds(), productReq.getBrandIds());
         if (productReq.getMembershipLevels() != null) {
             if (existingPromotion.getMembershipLevels() == null) {
-                existingPromotion.setMembershipLevels(new java.util.HashSet<>());
+                existingPromotion.setMembershipLevels(new HashSet<>());
             }
             existingPromotion.getMembershipLevels().clear();
             existingPromotion.getMembershipLevels().addAll(productReq.getMembershipLevels());

@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -45,7 +46,7 @@ class PaymentServiceTest {
         PaymentWebhookData webhookData = new PaymentWebhookData();
         webhookData.setContent("Thanh toan don hang DH123");
         webhookData.setId(999);
-        webhookData.setTransferAmount(new java.math.BigDecimal("500000"));
+        webhookData.setTransferAmount(new BigDecimal("500000"));
 
         Order mockOrder = Order.builder()
                 .id(123)

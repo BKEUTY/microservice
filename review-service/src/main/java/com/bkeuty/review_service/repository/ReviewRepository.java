@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT r FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false " +
            "AND (:rating IS NULL OR r.rating = :rating) " +
            "AND (:hasImage IS NULL OR (:hasImage = true AND r.images IS NOT EMPTY) OR (:hasImage = false AND r.images IS EMPTY))")
-    Page<Review> findByFilters(Long variantId, Integer rating, Boolean hasImage, Pageable pageable);
+    Page<Review> findByFilters(@Param("variantId") Long variantId, @Param("rating") Integer rating, @Param("hasImage") Boolean hasImage, Pageable pageable);
 
     @Query("SELECT r FROM Review r WHERE " +
            "(:variantId IS NULL OR r.variantId = :variantId) " +
@@ -25,24 +26,24 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
            "AND (:hasImage IS NULL OR (:hasImage = true AND r.images IS NOT EMPTY) OR (:hasImage = false AND r.images IS EMPTY)) " +
            "AND (:isReplied IS NULL OR r.isReplied = :isReplied) " +
            "AND (:isHidden IS NULL OR r.isHidden = :isHidden)")
-    Page<Review> findByAdminFilters(Integer rating, Boolean hasImage, Boolean isReplied, Boolean isHidden, Long variantId, Pageable pageable);
+    Page<Review> findByAdminFilters(@Param("rating") Integer rating, @Param("hasImage") Boolean hasImage, @Param("isReplied") Boolean isReplied, @Param("isHidden") Boolean isHidden, @Param("variantId") Long variantId, Pageable pageable);
 
     @Query("SELECT r FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false AND r.rating = :rating")
-    Page<Review> findByVariantIdAndRatingAndIsHiddenFalse(Long variantId, Integer rating, Pageable pageable);
+    Page<Review> findByVariantIdAndRatingAndIsHiddenFalse(@Param("variantId") Long variantId, @Param("rating") Integer rating, Pageable pageable);
 
     @Query("SELECT r FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false AND r.images IS NOT EMPTY")
-    Page<Review> findByVariantIdWithImagesAndIsHiddenFalse(Long variantId, Pageable pageable);
+    Page<Review> findByVariantIdWithImagesAndIsHiddenFalse(@Param("variantId") Long variantId, Pageable pageable);
     
     Optional<Review> findByIdAndUserId(Long id, String userId);
 
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false")
-    Double getAverageRating(Long variantId);
+    Double getAverageRating(@Param("variantId") Long variantId);
 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false")
-    Long getReviewCount(Long variantId);
+    Long getReviewCount(@Param("variantId") Long variantId);
 
     @Query("SELECT r.rating, COUNT(r) FROM Review r WHERE r.variantId = :variantId AND r.isHidden = false GROUP BY r.rating")
-    List<Object[]> countRatingByVariantId(Long variantId);
+    List<Object[]> countRatingByVariantId(@Param("variantId") Long variantId);
 
     List<Review> findByUserId(String userId);
 }

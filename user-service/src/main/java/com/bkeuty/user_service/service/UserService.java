@@ -238,7 +238,7 @@ public class UserService {
         return null;
     }
 
-    public void updateMembershipLevel(String userId, Integer level, java.math.BigDecimal totalSpending) {
+    public void updateMembershipLevel(String userId, Integer level, BigDecimal totalSpending) {
         try {
             UsersResource usersResource = keycloak.realm(realmName).users();
             UserResource userResource = usersResource.get(userId);

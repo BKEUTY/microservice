@@ -10,6 +10,8 @@ import com.bkeuty.promotion_service.repository.VoucherRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
+
 @Service
 public class VoucherPromotionStrategy implements PromotionStrategy {
     private final VoucherRepository voucherRepository;
@@ -82,7 +84,7 @@ public class VoucherPromotionStrategy implements PromotionStrategy {
         if (req.getMaxDiscount() != null) promotion.setMaxDiscount(req.getMaxDiscount());
         if (req.getMembershipLevels() != null) {
             if (promotion.getMembershipLevels() == null) {
-                promotion.setMembershipLevels(new java.util.HashSet<>());
+                promotion.setMembershipLevels(new HashSet<>());
             }
             promotion.getMembershipLevels().clear();
             promotion.getMembershipLevels().addAll(req.getMembershipLevels());

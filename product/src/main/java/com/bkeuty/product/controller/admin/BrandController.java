@@ -36,10 +36,10 @@ public class BrandController {
     @GetMapping
     public ResponseEntity<Page<BrandDto>> getAllBrands(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
-            @RequestParam(required = false) String[] sort) {
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(name = "sort", required = false) String[] sort) {
             
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -65,7 +65,7 @@ public class BrandController {
     @PutMapping("/{brandId}")
     public ResponseEntity<UpdateProductBrandResponseDto> updateBrand(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer brandId, 
+            @PathVariable(name = "brandId") Integer brandId, 
             @RequestBody UpdateProductBrandRequestDto requestDto) {
             
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
@@ -78,7 +78,7 @@ public class BrandController {
     @DeleteMapping("/{brandId}")
     public ResponseEntity<?> deleteBrand(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer brandId) {
+            @PathVariable(name = "brandId") Integer brandId) {
             
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null

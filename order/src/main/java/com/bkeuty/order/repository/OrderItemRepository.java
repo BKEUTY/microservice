@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import com.bkeuty.order.enums.PaymentStatus;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
@@ -15,5 +16,5 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
     OrderItem findByOrderIdAndProductVariantId(Integer orderId, Integer productVariantId);
     boolean existsByOrder_UserIdAndProductVariantIdAndOrder_StatusAndIsReviewedFalse(String userId, Integer variantId, OrderStatus status);
     List<OrderItem> findAllByOrder_UserId(String userId);
-    java.util.Optional<OrderItem> findFirstByOrder_UserIdAndProductVariantIdAndOrder_StatusAndIsReviewedFalse(String userId, Integer variantId, OrderStatus status);
+    Optional<OrderItem> findFirstByOrder_UserIdAndProductVariantIdAndOrder_StatusAndIsReviewedFalse(String userId, Integer variantId, OrderStatus status);
 }

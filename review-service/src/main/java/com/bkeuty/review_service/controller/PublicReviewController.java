@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.bkeuty.review_service.util.ReviewSortUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -22,12 +23,12 @@ public class PublicReviewController {
 
     @GetMapping("/product/{variantId}")
     public ResponseEntity<ReviewPageResponse> getReviewsByProduct(
-            @PathVariable Long variantId,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(required = false) Integer rating,
-            @RequestParam(required = false) Boolean hasImage,
-            @RequestParam(required = false) String[] sort) {
+            @PathVariable(name = "variantId") Long variantId,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(name = "rating", required = false) Integer rating,
+            @RequestParam(name = "hasImage", required = false) Boolean hasImage,
+            @RequestParam(name = "sort", required = false) String[] sort) {
         
         Pageable pageable = PageRequest.of(page - 1, size, ReviewSortUtils.parseSort(sort, "createdAt"));
         return ResponseEntity.ok(reviewService.getReviewsByVariantId(variantId, rating, hasImage, pageable));
@@ -38,7 +39,7 @@ public class PublicReviewController {
     }
 
     @GetMapping("/product/{variantId}/stats")
-    public ResponseEntity<java.util.Map<String, Long>> getReviewStats(@PathVariable Long variantId) {
+    public ResponseEntity<Map<String, Long>> getReviewStats(@PathVariable(name = "variantId") Long variantId) {
         return ResponseEntity.ok(reviewService.getReviewStats(variantId));
     }
 }

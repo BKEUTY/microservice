@@ -36,7 +36,7 @@ public class AIRankingService {
         private List<Integer> productIds;
     }
 
-    @Cacheable(value = "recommendations", key = "#cacheKey", unless = "#result == null")
+    @Cacheable(value = "recommendations", key = "#a5", unless = "#result == null")
     public AIResult getRankedAIResult(String profile, List<Map<String, Object>> history, List<Map<String, Object>> cart, List<Map<String, Object>> reviews, List<ProductVariant> candidates, String cacheKey) {
         try {
             String candidateJson = candidates.stream()

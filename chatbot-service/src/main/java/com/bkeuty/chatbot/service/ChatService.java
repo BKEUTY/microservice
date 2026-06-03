@@ -31,17 +31,22 @@ public class ChatService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public List<ChatMessage> getChatHistory(String sessionId) {
-        List<ChatMessage> allMessages = bucketRepository.findAllBySessionIdOrderByBucketIndexAsc(sessionId)
-                .stream()
-                .flatMap(bucket -> Optional.ofNullable(bucket.getMessages())
-                        .orElseGet(Collections::emptyList)
-                        .stream())
-                .collect(Collectors.toList());
+        try {
+            List<ChatMessage> allMessages = bucketRepository.findAllBySessionIdOrderByBucketIndexAsc(sessionId)
+                    .stream()
+                    .flatMap(bucket -> Optional.ofNullable(bucket.getMessages())
+                            .orElseGet(Collections::emptyList)
+                            .stream())
+                    .collect(Collectors.toList());
 
-        int total = allMessages.size();
-        int maxHistory = 50;
-        if (total <= maxHistory) return allMessages;
-        return allMessages.subList(total - maxHistory, total);
+            int total = allMessages.size();
+            int maxHistory = 50;
+            if (total <= maxHistory) return allMessages;
+            return allMessages.subList(total - maxHistory, total);
+        } catch (Exception e) {
+            log.error("Failed to fetch chat history from MongoDB for session {}: {}", sessionId, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     public ChatResponse processChatMessage(ChatRequest request) {

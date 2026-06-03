@@ -30,8 +30,8 @@ public class AdminCategoryController {
     @GetMapping
     public ResponseEntity<List<ProductCategory>> getAllCategories(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String[] sort) {
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "sort", required = false) String[] sort) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -73,7 +73,7 @@ public class AdminCategoryController {
     @PutMapping("/{id}")
     public ResponseEntity<ProductCategory> updateCategory(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer id, 
+            @PathVariable(name = "id") Integer id, 
             @RequestBody ProductCategory categoryDetails) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
@@ -89,7 +89,7 @@ public class AdminCategoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer id) {
+            @PathVariable(name = "id") Integer id) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {

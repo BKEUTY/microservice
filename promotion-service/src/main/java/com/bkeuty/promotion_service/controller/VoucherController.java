@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/promotion/internal/vouchers")
@@ -16,15 +17,15 @@ public class VoucherController {
 
     @PostMapping("/{voucherId}/apply")
     public ResponseEntity<?> applyVoucher(
-            @PathVariable Integer voucherId,
-            @RequestParam String userId,
-            @RequestParam Integer membershipLevel,
-            @RequestParam BigDecimal subtotal) {
+            @PathVariable(name = "voucherId") Integer voucherId,
+            @RequestParam(name = "userId") String userId,
+            @RequestParam(name = "membershipLevel") Integer membershipLevel,
+            @RequestParam(name = "subtotal") BigDecimal subtotal) {
         try {
             BigDecimal discountAmount = promotionService.applyVoucher(userId, membershipLevel, voucherId, subtotal);
             return ResponseEntity.ok(discountAmount);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }

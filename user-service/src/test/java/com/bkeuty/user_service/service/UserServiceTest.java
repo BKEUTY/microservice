@@ -201,7 +201,7 @@ class UserServiceTest {
 
     @Test
     void updateUserWallet_ShouldAddAmountToWallet_WhenSuccess() {
-        mockUserRepresentation.getAttributes().put("wallet", new java.util.ArrayList<>(List.of("100000")));
+        mockUserRepresentation.getAttributes().put("wallet", new ArrayList<>(List.of("100000")));
 
         when(usersResource.get(USER_ID)).thenReturn(userResource);
         when(userResource.toRepresentation()).thenReturn(mockUserRepresentation);

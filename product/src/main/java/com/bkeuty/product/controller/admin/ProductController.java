@@ -43,10 +43,10 @@ public class ProductController {
     @GetMapping()
     public ResponseEntity<Page<AdminProductDto>> getAllProducts(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
-            @RequestParam(required = false) String[] sort) {
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(name = "sort", required = false) String[] sort) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -59,7 +59,7 @@ public class ProductController {
     @GetMapping("/{productId}/variants")
     public ResponseEntity<List<AdminProductVariantDto>> getAllProductVariants(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @PathVariable Integer productId) {
+            @PathVariable(name = "productId") Integer productId) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {
@@ -71,13 +71,13 @@ public class ProductController {
     @GetMapping("/variants/page")
     public ResponseEntity<Page<AdminProductVariantDto>> getAllVariantsPaginated(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) Integer categoryId,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(1000) int size,
-            @RequestParam(required = false) String[] sort,
-            @RequestParam(required = false) @Min(0) BigDecimal minPrice,
-            @RequestParam(required = false) @Min(0) BigDecimal maxPrice) {
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "categoryId", required = false) Integer categoryId,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(1000) int size,
+            @RequestParam(name = "sort", required = false) String[] sort,
+            @RequestParam(name = "minPrice", required = false) @Min(0) BigDecimal minPrice,
+            @RequestParam(name = "maxPrice", required = false) @Min(0) BigDecimal maxPrice) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if (tokenValidationResponseDto.getUserId() == null || tokenValidationResponseDto.getUserRole() == null
                 || !"admin".equals(tokenValidationResponseDto.getUserRole())) {

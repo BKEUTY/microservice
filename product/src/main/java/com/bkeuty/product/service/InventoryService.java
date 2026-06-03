@@ -1,6 +1,7 @@
 package com.bkeuty.product.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class InventoryService {
         
         List<DecreaseStockResponseDto> decreaseStockResponseDtos = new ArrayList<>();
         List<OrderItemDto> sortedOrderItems = new ArrayList<>(orderItems);
-        sortedOrderItems.sort(java.util.Comparator.comparing(OrderItemDto::getProductVariantId));
+        sortedOrderItems.sort(Comparator.comparing(OrderItemDto::getProductVariantId));
 
         for (OrderItemDto orderItem : sortedOrderItems) {
             if (orderItem.getProductVariantId() == null) {

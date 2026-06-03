@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -23,5 +24,5 @@ public class PerformanceAggregationResponseDto {
     private List<PerformanceResultDto> topCategories;
  
     @JsonProperty("variantMappings")
-    private java.util.Map<Integer, VariantMappingDto> variantMappings;
+    private Map<Integer, VariantMappingDto> variantMappings;
 }

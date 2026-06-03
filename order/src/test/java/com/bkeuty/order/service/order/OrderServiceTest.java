@@ -19,10 +19,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -124,7 +130,7 @@ class OrderServiceTest {
     @Test
     void getListOrders_ShouldReturnPageOfOrders_WhenValidInputsProvided() {
         String userId = "user123";
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        Pageable pageable = PageRequest.of(0, 10);
         
         Order mockOrder = Order.builder()
                 .id(1)
@@ -136,16 +142,16 @@ class OrderServiceTest {
                 .orderItems(Collections.emptyList())
                 .build();
         
-        org.springframework.data.domain.Page<Order> pageOrders = new org.springframework.data.domain.PageImpl<>(java.util.List.of(mockOrder));
+        Page<Order> pageOrders = new PageImpl<>(List.of(mockOrder));
         
-        when(orderRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+        when(orderRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(pageOrders);
 
-        org.springframework.data.domain.Page<OrderResponseDto> response = orderService.getListOrders(userId, pageable, null, null, null, null);
+        Page<OrderResponseDto> response = orderService.getListOrders(userId, pageable, null, null, null, null);
 
         assertNotNull(response);
         assertEquals(1, response.getTotalElements());
         assertEquals("Phong Nguyễn", response.getContent().get(0).getUserName());
-        verify(orderRepository, times(1)).findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable));
+        verify(orderRepository, times(1)).findAll(any(Specification.class), eq(pageable));
     }
 }

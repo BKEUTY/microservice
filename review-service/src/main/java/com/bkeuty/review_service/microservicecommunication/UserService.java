@@ -6,6 +6,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +27,7 @@ public class UserService {
                     .bodyToMono(new ParameterizedTypeReference<Map<String, String>>() {})
                     .block();
         } catch (Exception e) {
-            Map<String, String> fallback = new java.util.HashMap<>();
+            Map<String, String> fallback = new HashMap<>();
             for (String id : userIds) {
                 fallback.put(id, "User " + id);
             }

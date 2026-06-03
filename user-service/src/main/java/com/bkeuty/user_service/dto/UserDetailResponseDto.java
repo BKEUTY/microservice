@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -22,6 +23,6 @@ public class UserDetailResponseDto {
     private String gender;
     private String userRole;
     private Integer membershipLevel;
-    private java.math.BigDecimal totalSpending;
-    private java.math.BigDecimal wallet;
+    private BigDecimal totalSpending;
+    private BigDecimal wallet;
 }

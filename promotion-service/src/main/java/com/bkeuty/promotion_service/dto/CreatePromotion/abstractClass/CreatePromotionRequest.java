@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @JsonTypeInfo(
@@ -33,5 +34,5 @@ public abstract class CreatePromotionRequest {
     private PromotionStatus status;
     private Integer discountValue;
     private Integer maxDiscount;
-    private java.util.Set<Integer> membershipLevels;
+    private Set<Integer> membershipLevels;
 }

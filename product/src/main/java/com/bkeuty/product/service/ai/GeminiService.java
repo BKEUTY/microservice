@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GeminiService {
     private static final Logger logger = LoggerFactory.getLogger(GeminiService.class);
-    private static final String GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
+    private static final String GEMINI_MODEL = "gemini-3.1-flash-lite";
     
     @Value("${gemini.api-key}")
     private String geminiApiKey;

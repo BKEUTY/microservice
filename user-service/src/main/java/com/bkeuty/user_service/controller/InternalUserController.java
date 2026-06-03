@@ -5,6 +5,7 @@ import com.bkeuty.user_service.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class InternalUserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDetailResponseDto> getUserDetail(@PathVariable String userId) {
+    public ResponseEntity<UserDetailResponseDto> getUserDetail(@PathVariable(name = "userId") String userId) {
         return ResponseEntity.ok(userService.getUserDetailById(userId));
     }
     
@@ -29,23 +30,23 @@ public class InternalUserController {
 
     @GetMapping("/count")
     public ResponseEntity<Long> countUsers(
-            @RequestParam(required = false) Long startDate,
-            @RequestParam(required = false) Long endDate) {
+            @RequestParam(name = "startDate", required = false) Long startDate,
+            @RequestParam(name = "endDate", required = false) Long endDate) {
         return ResponseEntity.ok(userService.countUsersByDateRange(startDate, endDate));
     }
 
     @GetMapping("/list")
     public ResponseEntity<List<UserDetailResponseDto>> listNewUsers(
-            @RequestParam(required = false) Long startDate,
-            @RequestParam(required = false) Long endDate) {
+            @RequestParam(name = "startDate", required = false) Long startDate,
+            @RequestParam(name = "endDate", required = false) Long endDate) {
         return ResponseEntity.ok(userService.getNewUsersByDateRange(startDate, endDate));
     }
 
     @PatchMapping("/{userId}/membership-level")
     public ResponseEntity<Void> updateMembershipLevel(
-            @PathVariable String userId,
-            @RequestParam Integer level,
-            @RequestParam(required = false) java.math.BigDecimal totalSpending) {
+            @PathVariable(name = "userId") String userId,
+            @RequestParam(name = "level") Integer level,
+            @RequestParam(name = "totalSpending", required = false) BigDecimal totalSpending) {
         userService.updateMembershipLevel(userId, level, totalSpending);
         return ResponseEntity.ok().build();
     }

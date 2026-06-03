@@ -31,15 +31,15 @@ public class UserPromotionController {
     }
     @GetMapping
     public ResponseEntity<Page<PromotionResponseDto>> getPromotions(
-            @RequestParam(required = false) String title,
-            @RequestParam(required = false) PromotionStatus status,
-            @RequestParam(required = false) String promotionType,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
-            @RequestParam(required = false) String userId,
-            @RequestParam(defaultValue = "1") @Min(1) int page,
-            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort) {
+            @RequestParam(name = "title", required = false) String title,
+            @RequestParam(name = "status", required = false) PromotionStatus status,
+            @RequestParam(name = "promotionType", required = false) String promotionType,
+            @RequestParam(name = "startAt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAt,
+            @RequestParam(name = "endAt", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endAt,
+            @RequestParam(name = "userId", required = false) String userId,
+            @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
+            @RequestParam(name = "size", defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(name = "sort", defaultValue = "id,asc") String[] sort) {
         
         Pageable pageable = PageRequest.of(page - 1, size, PromotionSortUtils.parseSort(sort));
         

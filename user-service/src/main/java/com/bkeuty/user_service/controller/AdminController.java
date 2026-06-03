@@ -24,7 +24,7 @@ public class AdminController {
     @GetMapping
     public ResponseEntity<List<UserDetailResponseDto>> getListUserDetail(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String bearerToken,
-            @RequestParam(required = false) String role) {
+            @RequestParam(name = "role", required = false) String role) {
         TokenValidationResponseDto tokenValidationResponseDto = authService.validateToken(bearerToken);
         if(tokenValidationResponseDto == null || tokenValidationResponseDto.getUserRole() == null || !tokenValidationResponseDto.getUserRole().equalsIgnoreCase("admin")){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);

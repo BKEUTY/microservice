@@ -1,12 +1,12 @@
 package com.bkeuty.order.dto.admin;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -30,11 +30,10 @@ public class DailyProductPerformanceDto {
         this.name = name;
         this.quantity = quantity;
         this.isRefunded = isRefunded;
-        this.revenue = revenue != null ? revenue : BigDecimal.ZERO;
-        this.profit = revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO;
+        this.revenue = Boolean.TRUE.equals(isRefunded) ? BigDecimal.ZERO : (revenue != null ? revenue : BigDecimal.ZERO);
+        this.profit = Boolean.TRUE.equals(isRefunded) ? BigDecimal.ZERO : (revenue != null ? revenue.multiply(BigDecimal.valueOf(0.40)) : BigDecimal.ZERO);
         this.originalPrice = originalPrice;
         this.promotionalPrice = promotionalPrice;
         this.voucherDiscount = voucherDiscount;
     }
 }
-

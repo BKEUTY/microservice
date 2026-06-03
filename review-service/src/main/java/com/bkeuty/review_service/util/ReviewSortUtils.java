@@ -1,12 +1,13 @@
 package com.bkeuty.review_service.util;
 
 import org.springframework.data.domain.Sort;
+import java.util.Set;
 
 public final class ReviewSortUtils {
     private ReviewSortUtils() {
     }
 
-    private static final java.util.Set<String> ALLOWED_FIELDS = java.util.Set.of("id", "rating", "createdAt", "variantId", "userId");
+    private static final Set<String> ALLOWED_FIELDS = Set.of("id", "rating", "createdAt", "variantId", "userId");
 
     public static Sort parseSort(String[] sort, String defaultField) {
         String sortField = (defaultField != null && ALLOWED_FIELDS.contains(defaultField)) ? defaultField : "createdAt";
